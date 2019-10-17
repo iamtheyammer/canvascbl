@@ -1,5 +1,5 @@
 {
-  "name": "canvas-grade-calculator-heroku",
+  "name": "canvascbl-heroku",
   "version": "0.0.0",
   "description": "this is here because heroku requires a package.json in the root dir",
   "dependencies": {},

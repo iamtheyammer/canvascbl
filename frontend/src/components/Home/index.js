@@ -8,6 +8,8 @@ import toc from '../../util/getTermsAndConditions';
 
 import { Card, Typography, Button, Checkbox, Modal } from 'antd';
 import getUrlPrefix from '../../util/getUrlPrefix';
+import PopoutLink from '../PopoutLink';
+import env from '../../util/env';
 
 function Home(props) {
   const [enableSignin, setEnableSignin] = useState(false);
@@ -28,11 +30,14 @@ function Home(props) {
         </div>
         <div>
           <Checkbox
-            siz
             onChange={e => setEnableSignin(e.target.checked)}
             className="center-checkbox"
           >
             I accept the{' '}
+            <PopoutLink url={env.privacyPolicyUrl}>
+              privacy policy
+            </PopoutLink>{' '}
+            and{' '}
             <Button
               type="link"
               style={{ marginLeft: '-15px' }}

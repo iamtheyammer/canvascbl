@@ -33,6 +33,7 @@ import ConnectedErrorModal from '../../ErrorModal';
 import { ReactComponent as PopOutIcon } from '../../../../assets/pop_out.svg';
 
 import OutcomeInfo from './OutcomeInfo';
+import PopoutLink from "../../../PopoutLink";
 
 const outcomeTableColumns = [
   {
@@ -118,13 +119,9 @@ const assignmentTableOutcomes = [
     key: 'actions',
     render: (text, record) => (
       <div>
-        <a
-          target="_blank"
-          rel="noopener noreferrer"
-          href={record.assignmentUrl}
-        >
+        <PopoutLink url={record.assignmentUrl}>
           Open on Canvas <Icon component={PopOutIcon} />
-        </a>
+        </PopoutLink>
       </div>
     )
   }
