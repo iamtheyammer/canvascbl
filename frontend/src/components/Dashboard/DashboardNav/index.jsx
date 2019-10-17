@@ -4,7 +4,7 @@ import './index.css';
 import logo from '../../../assets/banner-light.svg';
 
 import { Layout, Menu } from 'antd';
-import PopoutLink from "../../PopoutLink";
+import PopoutLink from '../../PopoutLink';
 
 const { Header } = Layout;
 
@@ -43,12 +43,18 @@ function DashboardNav(props) {
       >
         <Menu.SubMenu key="moreActions" title="More Actions">
           <Menu.Item key="openIssue">
-            <PopoutLink url={'https://github.com/iamtheyammer/canvas-grade-calculator/issues/new/choose'}>
+            <PopoutLink
+              url={
+                'https://github.com/iamtheyammer/canvas-grade-calculator/issues/new/choose'
+              }
+            >
               Submit Feedback/Report a Bug
             </PopoutLink>
           </Menu.Item>
           <Menu.Item key="forkOnGitHub">
-            <PopoutLink url={'https://github.com/iamtheyammer/canvas-grade-calculator'}>
+            <PopoutLink
+              url={'https://github.com/iamtheyammer/canvas-grade-calculator'}
+            >
               Fork this project on GitHub
             </PopoutLink>
           </Menu.Item>

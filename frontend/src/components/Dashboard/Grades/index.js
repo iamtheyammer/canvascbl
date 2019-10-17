@@ -17,7 +17,7 @@ import ErrorModal from '../ErrorModal';
 
 import { ReactComponent as PopOutIcon } from '../../../assets/pop_out.svg';
 import { desc } from '../../../util/stringSorter';
-import PopoutLink from "../../PopoutLink";
+import PopoutLink from '../../PopoutLink';
 
 const tableColumns = [
   {
@@ -57,8 +57,10 @@ const tableColumns = [
               {' | '}
             </span>
           )}
-        <PopoutLink url={`https://${localStorage.subdomain ||
-        'canvas'}.instructure.com/courses/${record.id}`}>
+        <PopoutLink
+          url={`https://${localStorage.subdomain ||
+            'canvas'}.instructure.com/courses/${record.id}`}
+        >
           Open on Canvas <Icon component={PopOutIcon} />
         </PopoutLink>
       </div>

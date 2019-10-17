@@ -33,7 +33,7 @@ import ConnectedErrorModal from '../../ErrorModal';
 import { ReactComponent as PopOutIcon } from '../../../../assets/pop_out.svg';
 
 import OutcomeInfo from './OutcomeInfo';
-import PopoutLink from "../../../PopoutLink";
+import PopoutLink from '../../../PopoutLink';
 
 const outcomeTableColumns = [
   {

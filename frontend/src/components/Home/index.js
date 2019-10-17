@@ -34,9 +34,7 @@ function Home(props) {
             className="center-checkbox"
           >
             I accept the{' '}
-            <PopoutLink url={env.privacyPolicyUrl}>
-              privacy policy
-            </PopoutLink>{' '}
+            <PopoutLink url={env.privacyPolicyUrl}>privacy policy</PopoutLink>{' '}
             and{' '}
             <Button
               type="link"
