@@ -7,11 +7,9 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"log"
 	"net/http"
-	"strings"
 )
 
 var router = getRouter()
-var staticRouter = getStaticRouter()
 
 func getRouter() *httprouter.Router {
 	// init http server
@@ -42,25 +40,9 @@ func getRouter() *httprouter.Router {
 	return router
 }
 
-func getStaticRouter() *httprouter.Router {
-	router := httprouter.New()
-
-	router.ServeFiles("/*filepath", http.Dir("./build"))
-
-	return router
-}
-
 type MiddlewareRouter map[string]string
 
 func (_ MiddlewareRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// handle serving react static, if enabled
-	if env.ShouldServeStatic == "true" {
-		if !strings.HasPrefix(r.URL.Path, "/api/") {
-			staticRouter.ServeHTTP(w, r)
-			return
-		}
-	}
-
 	// apply CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", env.ProxyAllowedCORSOrigins)
 	w.Header().Set("Access-Control-Allow-Methods", "GET, DELETE")
