@@ -2,8 +2,8 @@ package users
 
 import (
 	"fmt"
-	"github.com/iamtheyammer/canvas-grade-calculator/backend/src/canvasapis/services"
-	"github.com/iamtheyammer/canvas-grade-calculator/backend/src/util"
+	"github.com/iamtheyammer/canvascbl/backend/src/canvasapis/services"
+	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"net/http"
 )
 

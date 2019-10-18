@@ -1,7 +1,7 @@
 package util
 
 import (
-	"github.com/iamtheyammer/canvas-grade-calculator/backend/src/env"
+	"github.com/iamtheyammer/canvascbl/backend/src/env"
 	"regexp"
 	"strings"
 )

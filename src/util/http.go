@@ -2,7 +2,7 @@ package util
 
 import (
 	"fmt"
-	"github.com/iamtheyammer/canvas-grade-calculator/backend/src/env"
+	"github.com/iamtheyammer/canvascbl/backend/src/env"
 	"log"
 	"net/http"
 	"net/url"

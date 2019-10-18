@@ -1,8 +1,8 @@
 package canvasapis
 
 import (
-	"github.com/iamtheyammer/canvas-grade-calculator/backend/src/canvasapis/services/users"
-	"github.com/iamtheyammer/canvas-grade-calculator/backend/src/util"
+	"github.com/iamtheyammer/canvascbl/backend/src/canvasapis/services/users"
+	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 )

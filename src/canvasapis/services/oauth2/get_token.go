@@ -1,9 +1,9 @@
 package oauth2
 
 import (
-	"github.com/iamtheyammer/canvas-grade-calculator/backend/src/canvasapis/services"
-	"github.com/iamtheyammer/canvas-grade-calculator/backend/src/env"
-	"github.com/iamtheyammer/canvas-grade-calculator/backend/src/util"
+	"github.com/iamtheyammer/canvascbl/backend/src/canvasapis/services"
+	"github.com/iamtheyammer/canvascbl/backend/src/env"
+	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"net/http"
 )
 

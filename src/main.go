@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/iamtheyammer/canvas-grade-calculator/backend/src/canvasapis"
-	"github.com/iamtheyammer/canvas-grade-calculator/backend/src/env"
+	"github.com/iamtheyammer/canvascbl/backend/src/canvasapis"
+	"github.com/iamtheyammer/canvascbl/backend/src/env"
+	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
 	"log"
 	"net/http"
@@ -66,6 +67,9 @@ func main() {
 	}
 
 	fmt.Println(fmt.Sprintf("Canvas proxy running on %s", env.HTTPPort))
+
+	// Close db
+	defer util.DB.Close()
 
 	log.Fatal(http.ListenAndServe(env.HTTPPort, mw))
 }
