@@ -2,6 +2,7 @@ package canvasapis
 
 import (
 	"github.com/iamtheyammer/canvascbl/backend/src/canvasapis/services/outcomes"
+	"github.com/iamtheyammer/canvascbl/backend/src/db"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
@@ -36,5 +37,8 @@ func GetOutcomeByIDHandler(w http.ResponseWriter, r *http.Request, ps httprouter
 	}
 
 	util.HandleCanvasResponse(w, resp, body)
+
+	// db
+	db.InsertOutcome(&body)
 	return
 }

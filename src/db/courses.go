@@ -35,3 +35,31 @@ func UpsertMultipleCourses(cr *string) {
 
 	return
 }
+
+// InsertMultipleAssignments takes an assignments response from Canvas and inserts the assignments
+func InsertMultipleAssignments(ar *string) {
+	car, err := courses.AssignmentsFromJSON(ar)
+	if err != nil {
+		handleError(errors.Wrap(err, "error getting CanvasAssignmentsResponse from JSON"))
+		return
+	}
+
+	var air []coursessvc.AssignmentInsertRequest
+
+	for _, a := range *car {
+		air = append(air, coursessvc.AssignmentInsertRequest{
+			CourseID: a.CourseID,
+			CanvasID: a.ID,
+			IsQuiz:   a.IsQuizAssignment,
+			Name:     a.Name,
+		})
+	}
+
+	err = coursessvc.InsertMultipleAssignments(util.DB, &air)
+	if err != nil {
+		handleError(errors.Wrap(err, "error inserting multiple assignments"))
+		return
+	}
+
+	return
+}

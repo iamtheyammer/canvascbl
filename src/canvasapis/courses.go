@@ -230,5 +230,8 @@ func GetAssignmentsByCourseHandler(w http.ResponseWriter, r *http.Request, ps ht
 	}
 
 	util.HandleCanvasResponse(w, resp, body)
+
+	// db
+	db.InsertMultipleAssignments(&body)
 	return
 }
