@@ -143,6 +143,9 @@ func GetOutcomeResultsByCourseHandler(w http.ResponseWriter, r *http.Request, ps
 
 	util.HandleCanvasResponse(w, resp, body)
 
+	// db
+	db.InsertMultipleOutcomeResults(&body, &courseID)
+
 	return
 }
 
@@ -192,7 +195,7 @@ func GetOutcomeRollupsByCourseHandler(w http.ResponseWriter, r *http.Request, ps
 
 	util.HandleCanvasResponse(w, resp, body)
 
-	// send to db
+	// send to db; using go funcs so they run at the same time
 
 	// grades
 	go db.InsertGrade(&body, &courseID, &userID)

@@ -35,7 +35,7 @@ func getRouter() *httprouter.Router {
 		"/api/canvas/courses/:courseID/outcome_groups/:outcomeGroupID/outcomes",
 		canvasapis.GetOutcomesByCourseAndOutcomeGroupHandler,
 	)
-	// TODO: save to db
+	// saves to db
 	router.GET("/api/canvas/courses/:courseID/outcome_results", canvasapis.GetOutcomeResultsByCourseHandler)
 	// saves grades and specific outcome scores to DB
 	router.GET("/api/canvas/courses/:courseID/outcome_rollups", canvasapis.GetOutcomeRollupsByCourseHandler)
