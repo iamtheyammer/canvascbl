@@ -22,6 +22,21 @@ type CanvasAssignmentsResponse []struct {
 	OmitFromFinalGrade bool   `json:"omit_from_final_grade"`
 }
 
+type CanvasOutcomeRollupsResponse struct {
+	Rollups []struct {
+		Links struct {
+			User string `json:"user"`
+		} `json:"links"`
+		Scores []struct {
+			Count int64 `json:"count"`
+			Links struct {
+				Outcome string `json:"outcome"`
+			} `json:"links"`
+			Score float64 `json:"score"`
+		} `json:"scores"`
+	} `json:"rollups"`
+}
+
 func FromJSON(j *string) (*CanvasCoursesResponse, error) {
 	var c CanvasCoursesResponse
 
@@ -42,4 +57,15 @@ func AssignmentsFromJSON(j *string) (*CanvasAssignmentsResponse, error) {
 	}
 
 	return &a, nil
+}
+
+func OutcomeRollupsFromJSON(j *string) (*CanvasOutcomeRollupsResponse, error) {
+	var or CanvasOutcomeRollupsResponse
+
+	err := json.Unmarshal([]byte(*j), &or)
+	if err != nil {
+		return nil, errors.Wrap(err, "error unmarshaling into CanvasOutcomeRollupsResponse")
+	}
+
+	return &or, nil
 }
