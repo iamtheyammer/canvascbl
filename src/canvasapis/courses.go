@@ -2,6 +2,7 @@ package canvasapis
 
 import (
 	"github.com/iamtheyammer/canvascbl/backend/src/canvasapis/services/courses"
+	"github.com/iamtheyammer/canvascbl/backend/src/db"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
 	"log"
@@ -21,6 +22,10 @@ func GetCoursesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Para
 	}
 
 	util.HandleCanvasResponse(w, resp, body)
+
+	// db
+	db.UpsertMultipleCourses(&body)
+
 	return
 }
 
@@ -185,6 +190,9 @@ func GetOutcomeRollupsByCourseHandler(w http.ResponseWriter, r *http.Request, ps
 	}
 
 	util.HandleCanvasResponse(w, resp, body)
+
+	// send to db
+	db.InsertGrade(&body, &courseID, &userID)
 	return
 }
 

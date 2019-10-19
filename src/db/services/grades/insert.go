@@ -1,28 +1,33 @@
 package grades
 
 import (
-	"github.com/Masterminds/squirrel"
+	"database/sql"
+	sq "github.com/Masterminds/squirrel"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/pkg/errors"
 )
 
 type InsertRequest struct {
-	CourseID      string
-	Grade         string
-	UserLTIUserID string
+	Grade    string
+	CourseID int
+	UserID   int
 }
 
-func Insert(req InsertRequest) error {
-	query, args, err := squirrel.Insert("grades").SetMap(map[string]interface{}{
-		"course_id":        req.CourseID,
-		"grade":            req.Grade,
-		"user_lti_user_id": req.UserLTIUserID,
-	}).ToSql()
+func Insert(db *sql.DB, req *InsertRequest) error {
+	query, args, err := util.Sq.
+		Insert("grades").
+		SetMap(map[string]interface{}{
+			"course_id": req.CourseID,
+			"grade":     req.Grade,
+			// using an Expr because if I don't, it will set it to $1 instead of $3, which is required
+			"user_lti_user_id": sq.Expr("(SELECT lti_user_id FROM users WHERE canvas_user_id=?)", req.UserID),
+		}).
+		ToSql()
 	if err != nil {
 		return errors.Wrap(err, "error building insert grade sql")
 	}
 
-	_, err = util.DB.Exec(query, args...)
+	_, err = db.Exec(query, args...)
 	if err != nil {
 		return errors.Wrap(err, "error executing insert grade sql")
 	}

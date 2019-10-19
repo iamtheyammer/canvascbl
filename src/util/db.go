@@ -2,12 +2,16 @@ package util
 
 import (
 	"database/sql"
+	"github.com/Masterminds/squirrel"
 	"github.com/iamtheyammer/canvascbl/backend/src/env"
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 )
 
-var DB = ConnectDB()
+var (
+	DB = ConnectDB()
+	Sq = squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
+)
 
 // ConnectDB connects to the database. Should only be called once.
 func ConnectDB() *sql.DB {
