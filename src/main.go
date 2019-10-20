@@ -3,9 +3,11 @@ package main
 import (
 	"fmt"
 	"github.com/iamtheyammer/canvascbl/backend/src/canvasapis"
+	"github.com/iamtheyammer/canvascbl/backend/src/checkout"
 	"github.com/iamtheyammer/canvascbl/backend/src/env"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
+	"github.com/stripe/stripe-go"
 	"log"
 	"net/http"
 )
@@ -45,6 +47,9 @@ func getRouter() *httprouter.Router {
 	router.GET("/api/canvas/oauth2/refresh_token", canvasapis.OAuth2RefreshTokenHandler)
 	router.DELETE("/api/canvas/oauth2/token", canvasapis.DeleteOAuth2TokenHandler)
 
+	router.GET("/api/checkout/session", checkout.CreateCheckoutSessionHandler)
+	router.GET("/api/checkout/products", checkout.ListProductsHandler)
+
 	return router
 }
 
@@ -72,6 +77,8 @@ func main() {
 		fmt.Println("WARN: Your CANVAS_PROXY_ALLOWED_CORS_ORIGINS env var is currently set to \"*\", " +
 			"which will allow any site to make requests to this server.")
 	}
+
+	stripe.Key = env.StripeAPIKey
 
 	fmt.Println(fmt.Sprintf("Canvas proxy running on %s", env.HTTPPort))
 

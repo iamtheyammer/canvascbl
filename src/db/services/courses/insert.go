@@ -1,7 +1,6 @@
 package courses
 
 import (
-	"database/sql"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
@@ -34,7 +33,7 @@ type OutcomeResultInsertRequest struct {
 	SubmissionTime  string
 }
 
-func InsertMultipleAssignments(db *sql.DB, req *[]AssignmentInsertRequest) error {
+func InsertMultipleAssignments(db services.DB, req *[]AssignmentInsertRequest) error {
 	q := util.Sq.
 		Insert("assignments").
 		Columns(
@@ -67,7 +66,7 @@ func InsertMultipleAssignments(db *sql.DB, req *[]AssignmentInsertRequest) error
 	return nil
 }
 
-func InsertMultipleOutcomeRollups(db *sql.DB, uID uint64, req *[]OutcomeRollupInsertRequest) error {
+func InsertMultipleOutcomeRollups(db services.DB, uID uint64, req *[]OutcomeRollupInsertRequest) error {
 	q := util.Sq.
 		Insert("outcome_rollups").
 		Prefix("WITH users_meta AS (SELECT lti_user_id FROM users WHERE canvas_user_id=?)", uID).

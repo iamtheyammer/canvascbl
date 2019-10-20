@@ -9,6 +9,7 @@ import DashboardNav from './DashboardNav';
 import ConnectedUserProfile from './UserProfile';
 import ConnectedGrades from './Grades';
 import ConnectedGradeBreakdown from './Grades/GradeBreakdown';
+import ConnectedUpgrades from "./Upgrades";
 import ConnectedLogout from './Logout';
 import UpdateHandler from './UpdateHandler';
 import env from '../../util/env';
@@ -19,7 +20,8 @@ const getBreadcrumbNameMap = (courses = []) => {
   const routes = {
     '/dashboard': 'Dashboard',
     '/dashboard/profile': 'Profile',
-    '/dashboard/grades': 'Grades'
+    '/dashboard/grades': 'Grades',
+    '/dashboard/upgrades': 'Upgrades'
   };
 
   courses.forEach(
@@ -93,6 +95,10 @@ function Dashboard(props) {
               path="/dashboard/grades/:courseId"
               component={ConnectedGradeBreakdown}
             />
+            <Route
+              exact
+              path="/dashboard/upgrades"
+              component={ConnectedUpgrades} />
             <Route exact path="/dashboard/logout" component={ConnectedLogout} />
             <Route render={() => <Redirect to="/dashboard" />} />
           </Switch>

@@ -38,6 +38,10 @@ func GetOutcomeByIDHandler(w http.ResponseWriter, r *http.Request, ps httprouter
 
 	util.HandleCanvasResponse(w, resp, body)
 
+	if resp.StatusCode != http.StatusOK {
+		return
+	}
+
 	// db
 	db.InsertOutcome(&body)
 	return

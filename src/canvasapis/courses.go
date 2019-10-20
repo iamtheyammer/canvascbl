@@ -23,6 +23,10 @@ func GetCoursesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Para
 
 	util.HandleCanvasResponse(w, resp, body)
 
+	if resp.StatusCode != http.StatusOK {
+		return
+	}
+
 	// db
 	db.UpsertMultipleCourses(&body)
 
@@ -143,6 +147,10 @@ func GetOutcomeResultsByCourseHandler(w http.ResponseWriter, r *http.Request, ps
 
 	util.HandleCanvasResponse(w, resp, body)
 
+	if resp.StatusCode != http.StatusOK {
+		return
+	}
+
 	// db
 	db.InsertMultipleOutcomeResults(&body, &courseID)
 
@@ -195,6 +203,10 @@ func GetOutcomeRollupsByCourseHandler(w http.ResponseWriter, r *http.Request, ps
 
 	util.HandleCanvasResponse(w, resp, body)
 
+	if resp.StatusCode != http.StatusOK {
+		return
+	}
+
 	// send to db; using go funcs so they run at the same time
 
 	// grades
@@ -239,6 +251,10 @@ func GetAssignmentsByCourseHandler(w http.ResponseWriter, r *http.Request, ps ht
 	}
 
 	util.HandleCanvasResponse(w, resp, body)
+
+	if resp.StatusCode != http.StatusOK {
+		return
+	}
 
 	// db
 	db.InsertMultipleAssignments(&body)

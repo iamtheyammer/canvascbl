@@ -34,6 +34,9 @@ function DashboardNav(props) {
         <Menu.Item key="/dashboard/grades">
           <Link to="/dashboard/grades">Grades</Link>
         </Menu.Item>
+        <Menu.Item key="/dashboard/upgrades">
+          <Link to="/dashboard/upgrades">Upgrades</Link>
+        </Menu.Item>
       </Menu>
       <Menu
         theme="dark"
