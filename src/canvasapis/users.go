@@ -6,6 +6,8 @@ import (
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
+	"strings"
+	"time"
 )
 
 func GetOwnUserProfileHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -20,10 +22,32 @@ func GetOwnUserProfileHandler(w http.ResponseWriter, r *http.Request, _ httprout
 		util.SendInternalServerError(w)
 	}
 
+	shouldGenerateSession := strings.ToLower(r.URL.Query().Get("generateSession")) == "true"
+	if shouldGenerateSession {
+		ss, err := db.UpsertProfileAndGenerateSession(&body)
+		if err != nil {
+			util.SendInternalServerError(w)
+			return
+		}
+
+		// for API use, possibly (can't hurt!)
+		w.Header().Set("X-Session-String", *ss)
+
+		http.SetCookie(w, &http.Cookie{
+			Name:  "session_string",
+			Value: *ss,
+			Path:  "/",
+			// 2 weeks
+			Expires: time.Now().Add(time.Hour * 336),
+		})
+	}
+
 	util.HandleCanvasResponse(w, resp, body)
 
 	// db
-	db.UpsertProfile(&body)
+	if !shouldGenerateSession {
+		db.UpsertProfile(&body)
+	}
 
 	return
 }

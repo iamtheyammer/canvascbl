@@ -1,8 +1,8 @@
 package grades
 
 import (
-	"database/sql"
 	sq "github.com/Masterminds/squirrel"
+	"github.com/iamtheyammer/canvascbl/backend/src/db/services"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/pkg/errors"
 )
@@ -13,7 +13,7 @@ type InsertRequest struct {
 	UserID   int
 }
 
-func Insert(db *sql.DB, req *InsertRequest) error {
+func Insert(db services.DB, req *InsertRequest) error {
 	query, args, err := util.Sq.
 		Insert("grades").
 		SetMap(map[string]interface{}{

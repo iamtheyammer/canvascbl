@@ -1,13 +1,13 @@
 package outcomes
 
 import (
-	"database/sql"
+	"github.com/iamtheyammer/canvascbl/backend/src/db/services"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/pkg/errors"
 )
 
 // UpsertOutcome upserts an outcome
-func UpsertOutcome(db *sql.DB, req *InsertRequest) error {
+func UpsertOutcome(db services.DB, req *InsertRequest) error {
 	query, args, err := util.Sq.
 		Insert("outcomes").
 		SetMap(map[string]interface{}{

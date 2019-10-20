@@ -16,3 +16,5 @@ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZN
 github.com/str1ngs/jflect v0.0.0-20160330193300-13c4f307d0c9 h1:xNkcdpumJI0Xq7NIiHzPjUqQ8Alkk6aSNHKwrbwM2ro=
 github.com/str1ngs/jflect v0.0.0-20160330193300-13c4f307d0c9/go.mod h1:L/2GZcnl0rlI9kjndy7PliIaWYvLGLKt6QGFGDxW9Tg=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
+github.com/stripe/stripe-go v66.0.0+incompatible h1:YsbO7OGm4TI2uu0qnDJpObsQtmxRliqqRBCQEckmQi4=
+github.com/stripe/stripe-go v66.0.0+incompatible/go.mod h1:A1dQZmO/QypXmsL0T8axYZkSN/uA/T/A64pfKdBAMiY=

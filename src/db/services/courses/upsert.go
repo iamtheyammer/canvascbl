@@ -1,7 +1,7 @@
 package courses
 
 import (
-	"database/sql"
+	"github.com/iamtheyammer/canvascbl/backend/src/db/services"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/pkg/errors"
 )
@@ -15,7 +15,7 @@ type UpsertRequest struct {
 }
 
 // UpsertMultiple takes a course and if it already exists in the database, it ignores it (otherwise it's inserted)
-func UpsertMultiple(db *sql.DB, c *[]UpsertRequest) error {
+func UpsertMultiple(db services.DB, c *[]UpsertRequest) error {
 	q := util.Sq.
 		Insert("courses").
 		Columns(

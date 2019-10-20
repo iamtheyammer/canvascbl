@@ -33,6 +33,7 @@ No query string parameters from Canvas or otherwise, except otherwise noted, are
 ### Users
 
 - `GET` `/api/canvas/users/profile/self` - Mirror of [this](https://canvas.instructure.com/doc/api/users.html#method.users.api_show) Canvas endpoint, with `:id` replaced with `self`.
+    - Supports a custom `generateSession` param which will generate a CanvasCBL session as a cookie (`session_string`) and as a header (`X-Session-String`). Can be used for future CanvasCBL+ calls.
 
 ### Courses
 
@@ -42,15 +43,25 @@ No query string parameters from Canvas or otherwise, except otherwise noted, are
 - `GET` `/api/canvas/courses/:courseID/outcome_groups` - Mirror of [this](https://canvas.instructure.com/doc/api/outcome_groups.html#method.outcome_groups_api.index) Canvas endpoint.
 - `GET` `/api/canvas/courses/:courseID/outcome_groups/:outcomeGroupID/outcomes` - Mirror of [this](https://canvas.instructure.com/doc/api/outcome_groups.html#method.outcome_groups_api.outcomes) Canvas endpoint.
 - `GET` `/api/canvas/courses/:courseID/outcome_results` - Mirror of [this](https://canvas.instructure.com/doc/api/outcome_results.html#method.outcome_results.index) Canvas endpoint.
-  - Requires the [`userId` param](#userId-param)
+  - Requires the [`userId` param](#userid-param)
   - Supports the `include[]` query param from Canvas
 - `GET` `/api/canvas/courses/:courseID/outcome_rollups` - Mirror of [this](https://canvas.instructure.com/doc/api/outcome_results.html#method.outcome_results.rollups) Canvas endpoint.
-  - Requires the [`userId` param](#userId-param)
+  - Requires the [`userId` param](#userid-param)
   - Supports the `include[]` query param from Canvas
 
-### `userId` param
+#### `userId` param
 
 Sets the `user_ids[]` param to the value of the `userId` param. It should be equal to the ID of the user the token is for. This is required because students only have permission to list their own outcome results, and this endpoint defaults to listing results for all students. Ex: `userId=12345`
+
+### CanvasCBL Plus
+
+Contains a set of APIs users need CanvasCBL+ to use. In the future, it will include things like average grades, average outcome scores and more.
+
+#### Sessions
+
+These endpoints require a session, generated from the `/api/canvas/users/profile/self` endpoint with `?generateSession=true`.
+Provide it in the X-Session-String header or as a cookie.
+
 
 ## OAuth2
 
@@ -121,4 +132,10 @@ export CANVAS_PROXY_DEFAULT_SUBDOMAIN="canvas"
 
 # Whether the proxy should serve static from the build folder. Defaults to false.
 export CANVAS_PROXY_SERVE_STATIC="false"
+
+# Database connection string
+export DATABASE_DSN="postgres://postgres@localhost:5432/canvascbl"
+
+# Stripe API Key
+export STRIPE_API_KEY="sk_test_jsdfsdgeYe9myfunapikeypGnwxsfklsjdoib8jL"
 ```

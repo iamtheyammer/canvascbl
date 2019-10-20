@@ -1,7 +1,7 @@
 package outcomes
 
 import (
-	"database/sql"
+	"github.com/iamtheyammer/canvascbl/backend/src/db/services"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/pkg/errors"
 )
@@ -17,7 +17,7 @@ type InsertRequest struct {
 }
 
 // InsertOutcome inserts an outcome
-func InsertOutcome(db *sql.DB, req *InsertRequest) error {
+func InsertOutcome(db services.DB, req *InsertRequest) error {
 	vals := map[string]interface{}{
 		"canvas_id":       req.CanvasID,
 		"course_id":       req.CourseID,

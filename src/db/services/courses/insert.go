@@ -3,6 +3,7 @@ package courses
 import (
 	"database/sql"
 	sq "github.com/Masterminds/squirrel"
+	"github.com/iamtheyammer/canvascbl/backend/src/db/services"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/pkg/errors"
 )
@@ -101,7 +102,7 @@ func InsertMultipleOutcomeRollups(db *sql.DB, uID uint64, req *[]OutcomeRollupIn
 	return nil
 }
 
-func InsertMultipleOutcomeResults(db *sql.DB, req *[]OutcomeResultInsertRequest) error {
+func InsertMultipleOutcomeResults(db services.DB, req *[]OutcomeResultInsertRequest) error {
 	q := util.Sq.
 		Insert("outcome_results").
 		Columns(

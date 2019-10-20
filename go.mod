@@ -7,4 +7,5 @@ require (
 	github.com/julienschmidt/httprouter v1.2.0
 	github.com/lib/pq v1.2.0
 	github.com/pkg/errors v0.8.1
+	github.com/stripe/stripe-go v66.0.0+incompatible
 )

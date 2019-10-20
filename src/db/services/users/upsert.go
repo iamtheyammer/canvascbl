@@ -1,7 +1,7 @@
 package users
 
 import (
-	"database/sql"
+	"github.com/iamtheyammer/canvascbl/backend/src/db/services"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/pkg/errors"
 )
@@ -14,7 +14,7 @@ type UpsertRequest struct {
 }
 
 // UpsertProfile upserts a user profile
-func UpsertProfile(db *sql.DB, ur *UpsertRequest) error {
+func UpsertProfile(db services.DB, ur *UpsertRequest) error {
 	query, args, err := util.Sq.
 		Insert("users").
 		SetMap(map[string]interface{}{

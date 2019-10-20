@@ -20,6 +20,8 @@ var DefaultSubdomain = getEnv("CANVAS_PROXY_DEFAULT_SUBDOMAIN", "canvas")
 
 var DatabaseDSN = getEnvOrPanic("DATABASE_DSN")
 
+var StripeAPIKey = getEnvOrPanic("STRIPE_API_KEY")
+
 func getEnvOrPanic(key string) string {
 	value, ok := os.LookupEnv(key)
 	if !ok {
