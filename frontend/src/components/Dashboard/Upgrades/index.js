@@ -30,6 +30,7 @@ function Upgrades(props) {
       dispatch(getUser(userId, token, subdomain));
       setGetUserId(userId);
     }
+    // eslint-disable-next-line
   }, []);
 
   if (!user || !checkout.products || loading.includes(getProductsId)) {
@@ -42,7 +43,7 @@ function Upgrades(props) {
     );
   }
 
-  if (error[getProductsId]) {
+  if (error[getProductsId] || error[getUserId]) {
     return (
       <div align="center">
         <Typography.Title level={3}>
