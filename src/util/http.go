@@ -9,6 +9,15 @@ import (
 	"strings"
 )
 
+func SendJSONResponse(w http.ResponseWriter, j []byte) {
+	w.Header().Set("Content-Type", "application/json")
+	_, err := fmt.Fprint(w, string(j))
+	if err != nil {
+		log.Fatal(err)
+	}
+	return
+}
+
 func HandleCanvasResponse(w http.ResponseWriter, resp *http.Response, body string) {
 	sc := resp.StatusCode
 	if sc < 200 || sc > 399 {

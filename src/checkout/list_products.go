@@ -2,7 +2,6 @@ package checkout
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/iamtheyammer/canvascbl/backend/src/db"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
@@ -34,6 +33,5 @@ func ListProductsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 
 	j, err := json.Marshal(prods)
 
-	w.Header().Set("Content-Type", "application/json")
-	_, _ = fmt.Fprint(w, string(j))
+	util.SendJSONResponse(w, j)
 }

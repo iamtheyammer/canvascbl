@@ -1,6 +1,8 @@
 package checkout
 
 import (
+	"database/sql"
+	sq "github.com/Masterminds/squirrel"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/pkg/errors"
@@ -8,15 +10,22 @@ import (
 
 type Product struct {
 	ID        uint64
+	StripeID  string
 	Name      string
 	ShortName string
 	Price     float64
 	Type      string
 }
 
-func GetAllProducts(db services.DB) (*[]Product, error) {
+type ListProductRequest struct {
+	ID        uint64
+	ShortName string
+}
+
+// ListProducts lists all products
+func ListProducts(db services.DB) (*[]Product, error) {
 	query, args, err := util.Sq.
-		Select("id", "name", "short_name", "price", "type").
+		Select("id", "stripe_id", "name", "short_name", "price", "type").
 		From("products").
 		ToSql()
 	if err != nil {
@@ -35,7 +44,7 @@ func GetAllProducts(db services.DB) (*[]Product, error) {
 	for rows.Next() {
 		var p Product
 
-		err := rows.Scan(&p.ID, &p.Name, &p.ShortName, &p.Price, &p.Type)
+		err := rows.Scan(&p.ID, &p.StripeID, &p.Name, &p.ShortName, &p.Price, &p.Type)
 		if err != nil {
 			return nil, errors.Wrap(err, "error scanning list products rows")
 		}
@@ -48,4 +57,41 @@ func GetAllProducts(db services.DB) (*[]Product, error) {
 	}
 
 	return &ps, nil
+}
+
+// ListProduct lists a single product based on short name, id or both.
+func ListProduct(db services.DB, req *ListProductRequest) (*Product, error) {
+	if req.ID == 0 && len(req.ShortName) == 0 {
+		return nil, nil
+	}
+
+	q := util.Sq.
+		Select("id", "stripe_id", "name", "short_name", "price", "type").
+		From("products")
+
+	if req.ID != 0 {
+		q = q.Where(sq.Eq{"id": req.ID})
+	}
+
+	if len(req.ShortName) > 0 {
+		q = q.Where(sq.Eq{"short_name": req.ShortName})
+	}
+
+	query, args, err := q.ToSql()
+	if err != nil {
+		return nil, errors.Wrap(err, "error building list product sql")
+	}
+
+	var p Product
+
+	row := db.QueryRow(query, args...)
+	err = row.Scan(&p.ID, &p.StripeID, &p.Name, &p.ShortName, &p.Price, &p.Type)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, errors.Wrap(err, "error scanning list product row")
+	}
+
+	return &p, nil
 }

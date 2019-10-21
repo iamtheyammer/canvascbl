@@ -1,5 +1,14 @@
 .logo {
-    width: 215px;
+    width: 126px;
+    /*height: 31px;*/
+    height: auto;
+    /*background: rgba(255, 255, 255, 0.2);*/
+    margin: 13px 18px 0 0;
+    float: left;
+}
+
+.logo-plus {
+    width: 140px;
     /*height: 31px;*/
     height: auto;
     /*background: rgba(255, 255, 255, 0.2);*/

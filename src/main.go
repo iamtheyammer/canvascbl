@@ -49,6 +49,7 @@ func getRouter() *httprouter.Router {
 
 	router.GET("/api/checkout/session", checkout.CreateCheckoutSessionHandler)
 	router.GET("/api/checkout/products", checkout.ListProductsHandler)
+	router.POST("/api/checkout/webhook", checkout.StripeWebhookHandler)
 
 	return router
 }

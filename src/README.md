@@ -57,6 +57,13 @@ Sets the `user_ids[]` param to the value of the `userId` param. It should be equ
 
 Contains a set of APIs users need CanvasCBL+ to use. In the future, it will include things like average grades, average outcome scores and more.
 
+#### Checkout
+
+- `GET` `/api/checkout/products` - Lists all products as JSON.
+- `GET` `/api/checkout/session` - Gets a Stripe checkout session ID by product ID.
+  - Requires the `productId` param, received from `/api/checkout/products`.
+- `POST` `/api/checkout/webhook` - To be used as the Stripe webhook URL.
+
 #### Sessions
 
 These endpoints require a session, generated from the `/api/canvas/users/profile/self` endpoint with `?generateSession=true`.

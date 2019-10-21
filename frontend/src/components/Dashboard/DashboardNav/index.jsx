@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, withRouter } from 'react-router-dom';
 import './index.css';
 import logo from '../../../assets/banner-light.svg';
+// import logoPlus from '../../../assets/banner-light-plus.svg';
 
 import { Layout, Menu } from 'antd';
 import PopoutLink from '../../PopoutLink';
