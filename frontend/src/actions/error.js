@@ -16,5 +16,5 @@ export function checkoutError(id, res) {
     type: CHECKOUT_ERROR,
     id,
     res
-  }
+  };
 }

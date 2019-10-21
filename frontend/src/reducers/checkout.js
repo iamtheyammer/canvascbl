@@ -1,7 +1,10 @@
-import {CHECKOUT_GOT_CHECKOUT_SESSION, CHECKOUT_GOT_PRODUCTS} from "../actions/checkout";
+import {
+  CHECKOUT_GOT_CHECKOUT_SESSION,
+  CHECKOUT_GOT_PRODUCTS
+} from '../actions/checkout';
 
 export default function checkout(state = {}, action) {
-  switch(action.type) {
+  switch (action.type) {
     case CHECKOUT_GOT_PRODUCTS:
       return {
         ...state,

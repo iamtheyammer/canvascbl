@@ -9,7 +9,7 @@ import DashboardNav from './DashboardNav';
 import ConnectedUserProfile from './UserProfile';
 import ConnectedGrades from './Grades';
 import ConnectedGradeBreakdown from './Grades/GradeBreakdown';
-import ConnectedUpgrades from "./Upgrades";
+import ConnectedUpgrades from './Upgrades';
 import ConnectedLogout from './Logout';
 import UpdateHandler from './UpdateHandler';
 import env from '../../util/env';
@@ -98,7 +98,8 @@ function Dashboard(props) {
             <Route
               exact
               path="/dashboard/upgrades"
-              component={ConnectedUpgrades} />
+              component={ConnectedUpgrades}
+            />
             <Route exact path="/dashboard/logout" component={ConnectedLogout} />
             <Route render={() => <Redirect to="/dashboard" />} />
           </Switch>
