@@ -57,3 +57,7 @@ func UpsertProfileAndGenerateSession(pj *string) (*string, error) {
 
 	return ss, nil
 }
+
+func VerifySession(sessionString string) (*sessions.VerifiedSession, error) {
+	return sessions.Verify(util.DB, sessionString)
+}

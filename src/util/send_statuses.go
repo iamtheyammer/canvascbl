@@ -60,6 +60,11 @@ func SendNotFoundWithReason(w http.ResponseWriter, reason string) {
 	return
 }
 
+func SendNoContent(w http.ResponseWriter) {
+	w.WriteHeader(http.StatusNoContent)
+	return
+}
+
 func SendRedirect(w http.ResponseWriter, to string) {
 	w.Header().Set("Location", to)
 	w.WriteHeader(http.StatusFound)

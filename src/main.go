@@ -12,6 +12,8 @@ import (
 	"net/http"
 )
 
+type MiddlewareRouter struct{}
+
 var router = getRouter()
 
 func getRouter() *httprouter.Router {
@@ -49,12 +51,13 @@ func getRouter() *httprouter.Router {
 
 	router.GET("/api/checkout/session", checkout.CreateCheckoutSessionHandler)
 	router.GET("/api/checkout/products", checkout.ListProductsHandler)
+	router.GET("/api/checkout/subscriptions", checkout.ListSubscriptionsHandler)
+	router.DELETE("/api/checkout/subscriptions", checkout.CancelSubscriptionHandler)
+	// stripe webhook handler
 	router.POST("/api/checkout/webhook", checkout.StripeWebhookHandler)
 
 	return router
 }
-
-type MiddlewareRouter map[string]string
 
 func (_ MiddlewareRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// apply CORS headers
@@ -67,7 +70,7 @@ func (_ MiddlewareRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	mw := make(MiddlewareRouter)
+	mw := MiddlewareRouter{}
 
 	if env.ProxyAllowedSubdomains[0] == "*" {
 		fmt.Println("WARN: Your CANVAS_PROXY_ALLOW_SUBDOMAINS env var is currently set to \"*\", " +

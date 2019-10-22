@@ -3,7 +3,7 @@ package checkout
 import (
 	"encoding/json"
 	"github.com/iamtheyammer/canvascbl/backend/src/db"
-	"github.com/iamtheyammer/canvascbl/backend/src/db/services/checkout"
+	productssvc "github.com/iamtheyammer/canvascbl/backend/src/db/services/products"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
 	"github.com/pkg/errors"
@@ -46,7 +46,7 @@ func CreateCheckoutSessionHandler(w http.ResponseWriter, r *http.Request, _ http
 		return
 	}
 
-	product, err := db.CheckoutListProduct(&checkout.ListProductRequest{ID: uint64(pID)})
+	product, err := db.CheckoutListProduct(&productssvc.ListRequest{ID: uint64(pID)})
 	if err != nil {
 		util.SendInternalServerError(w)
 		return

@@ -1,15 +1,16 @@
 package db
 
 import (
-	"github.com/iamtheyammer/canvascbl/backend/src/db/services/checkout"
+	"github.com/iamtheyammer/canvascbl/backend/src/db/services/products"
+	"github.com/iamtheyammer/canvascbl/backend/src/db/services/subscriptions"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/users"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/pkg/errors"
 	"github.com/stripe/stripe-go"
 )
 
-func CheckoutListProducts() (*[]checkout.Product, error) {
-	products, err := checkout.ListProducts(util.DB)
+func CheckoutListProducts() (*[]products.Product, error) {
+	products, err := products.ListProducts(util.DB)
 	if err != nil {
 		return nil, errors.Wrap(err, "error listing products")
 	}
@@ -17,8 +18,8 @@ func CheckoutListProducts() (*[]checkout.Product, error) {
 	return products, nil
 }
 
-func CheckoutListProduct(req *checkout.ListProductRequest) (*checkout.Product, error) {
-	return checkout.ListProduct(util.DB, req)
+func CheckoutListProduct(req *products.ListRequest) (*products.Product, error) {
+	return products.ListProduct(util.DB, req)
 }
 
 func CheckoutWebhookInsertSubscription(req stripe.Subscription) error {
@@ -38,7 +39,7 @@ func CheckoutWebhookInsertSubscription(req stripe.Subscription) error {
 
 	user := (*us)[0]
 
-	err = checkout.InsertSubscription(util.DB, &checkout.InsertSubscriptionRequest{
+	err = subscriptions.Insert(util.DB, &subscriptions.InsertRequest{
 		StripeID:           req.ID,
 		UserID:             user.ID,
 		CustomerStripeID:   req.Customer.ID,
@@ -58,7 +59,7 @@ func CheckoutWebhookInsertSubscription(req stripe.Subscription) error {
 }
 
 func CheckoutWebhookUpdateSubscription(req stripe.Subscription) error {
-	return checkout.UpdateSubscription(util.DB, &checkout.UpdateSubscriptionRequest{
+	return subscriptions.Update(util.DB, &subscriptions.UpdateRequest{
 		Identifier: struct {
 			StripeID string
 			ID       uint64

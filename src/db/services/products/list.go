@@ -1,4 +1,4 @@
-package checkout
+package products
 
 import (
 	"database/sql"
@@ -17,7 +17,7 @@ type Product struct {
 	Type      string
 }
 
-type ListProductRequest struct {
+type ListRequest struct {
 	ID        uint64
 	ShortName string
 }
@@ -60,7 +60,7 @@ func ListProducts(db services.DB) (*[]Product, error) {
 }
 
 // ListProduct lists a single product based on short name, id or both.
-func ListProduct(db services.DB, req *ListProductRequest) (*Product, error) {
+func ListProduct(db services.DB, req *ListRequest) (*Product, error) {
 	if req.ID == 0 && len(req.ShortName) == 0 {
 		return nil, nil
 	}

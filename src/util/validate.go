@@ -8,6 +8,7 @@ import (
 
 var lowercaseStringRegex = regexp.MustCompile("[a-z]{1,64}")
 var numberRegex = regexp.MustCompile("[0-9.,]{1,32}")
+var uuidRegex = regexp.MustCompile("([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}){1}")
 
 // ValidateSubdomain takes a subdomain and ensures it's allowed per the environment variable.
 func ValidateSubdomain(req string) bool {
@@ -42,4 +43,8 @@ func ValidateIncludes(req string) bool {
 	return !(strings.Contains(req, "?") ||
 		strings.Contains(req, "&") ||
 		strings.Contains(req, "/"))
+}
+
+func ValidateUUIDString(req string) bool {
+	return uuidRegex.FindString(req) == req
 }
