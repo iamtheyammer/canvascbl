@@ -23,21 +23,14 @@ func CheckoutListProduct(req *products.ListRequest) (*products.Product, error) {
 }
 
 func CheckoutWebhookInsertSubscription(req stripe.Subscription) error {
-	trx, err := util.DB.Begin()
-	if err != nil {
-		return errors.Wrap(err, "error beginning insert subscription transaction")
-	}
-
-	us, err := users.List(trx, &users.ListRequest{Email: req.Customer.Email})
+	user, err := users.GetByStripeID(util.DB, req.Customer.ID)
 	if err != nil {
 		return errors.Wrap(err, "error listing users")
 	}
 
-	if len(*us) < 1 {
-		return errors.New("couldn't find a user for the supplied email")
+	if user == nil {
+		return errors.New("no customer with that ID")
 	}
-
-	user := (*us)[0]
 
 	err = subscriptions.Insert(util.DB, &subscriptions.InsertRequest{
 		StripeID:           req.ID,

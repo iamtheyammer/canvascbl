@@ -8,7 +8,8 @@ import (
 )
 
 type InsertRequest struct {
-	StripeID           string
+	StripeID string
+	// users.id
 	UserID             uint64
 	CustomerStripeID   string
 	Plan               string

@@ -5,6 +5,7 @@ import (
 	"github.com/iamtheyammer/canvascbl/backend/src/canvasapis"
 	"github.com/iamtheyammer/canvascbl/backend/src/checkout"
 	"github.com/iamtheyammer/canvascbl/backend/src/env"
+	"github.com/iamtheyammer/canvascbl/backend/src/plus"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
 	"github.com/stripe/stripe-go"
@@ -55,6 +56,8 @@ func getRouter() *httprouter.Router {
 	router.DELETE("/api/checkout/subscriptions", checkout.CancelSubscriptionHandler)
 	// stripe webhook handler
 	router.POST("/api/checkout/webhook", checkout.StripeWebhookHandler)
+
+	router.GET("/api/plus/courses/:courseID/avg", plus.GetAverageGradeForCourseHandler)
 
 	return router
 }

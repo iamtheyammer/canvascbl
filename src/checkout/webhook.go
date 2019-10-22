@@ -77,6 +77,22 @@ func StripeWebhookHandler(w http.ResponseWriter, req *http.Request, _ httprouter
 			return
 		}
 		return
+	case "customer.created":
+		var cust stripe.Customer
+		err := json.Unmarshal(event.Data.Raw, &cust)
+		if err != nil {
+			util.HandleError(errors.Wrap(err, "error unmarshaling into stripe.Customer"))
+			util.SendBadRequest(w, "unable to unmarshal payload")
+			return
+		}
+
+		err = db.UpsertStripeCustomer(cust)
+		if err != nil {
+			util.HandleError(errors.Wrap(err, "error upserting stripe customer"))
+			util.SendInternalServerError(w)
+			return
+		}
+		return
 	default:
 		util.SendBadRequest(w, "that event isn't handled by this endpoint at this time")
 		return

@@ -1,7 +1,9 @@
 package db
 
-import "fmt"
+import (
+	"github.com/iamtheyammer/canvascbl/backend/src/util"
+)
 
 func handleError(err error) {
-	fmt.Println("Error from db", err.Error())
+	util.HandleError(err)
 }

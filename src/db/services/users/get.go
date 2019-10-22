@@ -1,6 +1,7 @@
 package users
 
 import (
+	"database/sql"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
@@ -18,12 +19,14 @@ type ListRequest struct {
 }
 
 type User struct {
-	ID           uint64
-	Name         string
-	Email        string
-	LTIUserID    string
-	CanvasUserID uint64
-	InsertedAt   time.Time
+	ID   uint64
+	Name string
+	// almost always blank
+	StripeCustomerID string
+	Email            string
+	LTIUserID        string
+	CanvasUserID     uint64
+	InsertedAt       time.Time
 }
 
 func List(db services.DB, req *ListRequest) (*[]User, error) {
@@ -88,4 +91,43 @@ func List(db services.DB, req *ListRequest) (*[]User, error) {
 	}
 
 	return &users, nil
+}
+
+func GetByStripeID(db services.DB, stripeID string) (*User, error) {
+	query, args, err := util.Sq.
+		Select("users.id AS user_id",
+			"name",
+			"stripe_customers.user_id AS stripe_user_id",
+			"users.email",
+			"users.lti_user_id",
+			"users.canvas_user_id",
+			"users.inserted_at").
+		From("users").
+		Join("stripe_customers ON users.id = stripe_customers.user_id").
+		Where(sq.Eq{"stripe_customers.stripe_id": stripeID}).
+		ToSql()
+	if err != nil {
+		return nil, errors.Wrap(err, "error building get user by stripe id sql")
+	}
+
+	row := db.QueryRow(query, args...)
+
+	var u User
+	err = row.Scan(
+		&u.ID,
+		&u.Name,
+		&u.StripeCustomerID,
+		&u.Email,
+		&u.LTIUserID,
+		&u.CanvasUserID,
+		&u.InsertedAt,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, errors.Wrap(err, "error scanning get user by stripe id")
+	}
+
+	return &u, nil
 }
