@@ -28,6 +28,7 @@ var SendGridFromName = getEnvOrPanic("SENDGRID_FROM_NAME")
 var SendGridFromEmail = getEnvOrPanic("SENDGRID_FROM_EMAIL")
 var SendGridWelcomeTemplateID = getEnvOrPanic("SENDGRID_WELCOME_TEMPLATE_ID")
 var SendGridPurchaseAcknowledgementTemplateID = getEnvOrPanic("SENDGRID_PURCHASE_ACKNOWLEDGEMENT_TEMPLATE_ID")
+var SendGridCancellationAcknowledgementTemplateID = getEnvOrPanic("SENDGRID_CANCELLATION_ACKNOWLEDGEMENT_TEMPLATE_ID")
 
 func getEnvOrPanic(key string) string {
 	value, ok := os.LookupEnv(key)

@@ -41,3 +41,22 @@ func SendPurchaseAcknowledgement(sub *stripe.Subscription) {
 		user.Name,
 	)
 }
+
+func SendCancellationAcknowledgement(sub *stripe.Subscription) {
+	user := db.GetUserFromStripeSubscriptionID(sub.ID)
+	if user == nil {
+		util.HandleError(errors.New("error sending cancellation acknowledgement: error listing products by stripe id"))
+		return
+	}
+
+	fmt.Println(user)
+
+	send(
+		env.SendGridCancellationAcknowledgementTemplateID,
+		map[string]interface{}{
+			"first_name": strings.Split(user.Name, " ")[0],
+		},
+		user.Email,
+		user.Name,
+	)
+}

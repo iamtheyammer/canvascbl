@@ -78,6 +78,7 @@ func StripeWebhookHandler(w http.ResponseWriter, req *http.Request, _ httprouter
 			util.HandleError(errors.Wrap(err, "error deleting subscription"))
 			return
 		}
+		go email.SendCancellationAcknowledgement(sub)
 		return
 	case "customer.created":
 		var cust stripe.Customer
