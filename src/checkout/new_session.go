@@ -2,6 +2,7 @@ package checkout
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/iamtheyammer/canvascbl/backend/src/db"
 	productssvc "github.com/iamtheyammer/canvascbl/backend/src/db/services/products"
 	"github.com/iamtheyammer/canvascbl/backend/src/middlewares"
@@ -12,7 +13,6 @@ import (
 	"github.com/stripe/stripe-go/checkout/session"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -44,14 +44,8 @@ func CreateCheckoutSessionHandler(w http.ResponseWriter, req *http.Request, _ ht
 		return
 	}
 
-	email := req.URL.Query().Get("email")
-	if len(email) < 1 {
-		util.SendBadRequest(w, "missing email in query")
-		return
-	} else if !strings.Contains(email, "@") || !strings.Contains(email, ".") {
-		util.SendBadRequest(w, "what was supplied in the email query param doesn't look like an email")
-		return
-	}
+	cust, err := db.GetStripeCustomer(browserSession.UserID)
+	fmt.Println(cust)
 
 	product, err := db.CheckoutListProduct(&productssvc.ListRequest{ID: uint64(pID)})
 	if err != nil {
@@ -68,7 +62,6 @@ func CreateCheckoutSessionHandler(w http.ResponseWriter, req *http.Request, _ ht
 		PaymentMethodTypes: stripe.StringSlice([]string{
 			"card",
 		}),
-		CustomerEmail: stripe.String(email),
 		SubscriptionData: &stripe.CheckoutSessionSubscriptionDataParams{
 			Items: []*stripe.CheckoutSessionSubscriptionDataItemsParams{
 				{
@@ -79,6 +72,12 @@ func CreateCheckoutSessionHandler(w http.ResponseWriter, req *http.Request, _ ht
 		},
 		SuccessURL: stripe.String("http://localhost:3000/#/dashboard/checkout/thanks"),
 		CancelURL:  stripe.String("http://localhost:3000/#/dashboard/checkout"),
+	}
+
+	if cust != nil {
+		params.Customer = stripe.String(cust.StripeID)
+	} else {
+		params.CustomerEmail = stripe.String(browserSession.Email)
 	}
 
 	sess, err := session.New(params)

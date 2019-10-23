@@ -7,9 +7,12 @@ import (
 )
 
 func UpsertStripeCustomer(cust stripe.Customer) error {
-
 	return stripe_customers.Upsert(util.DB, &stripe_customers.UpsertRequest{
 		StripeID: cust.ID,
 		Email:    cust.Email,
 	})
+}
+
+func GetStripeCustomer(userID uint64) (*stripe_customers.StripeCustomer, error) {
+	return stripe_customers.Get(util.DB, userID)
 }

@@ -35,7 +35,7 @@ func SendPurchaseAcknowledgement(sub *stripe.Subscription) {
 		map[string]interface{}{
 			"first_name":   strings.Split(user.Name, " ")[0],
 			"product_name": prod.Name,
-			"price":        fmt.Sprintf("$%f", float64(sub.Plan.Amount)/float64(100)),
+			"price":        fmt.Sprintf("$%.2f", float64(sub.Plan.Amount)/float64(100)),
 		},
 		user.Email,
 		user.Name,
@@ -48,8 +48,6 @@ func SendCancellationAcknowledgement(sub *stripe.Subscription) {
 		util.HandleError(errors.New("error sending cancellation acknowledgement: error listing products by stripe id"))
 		return
 	}
-
-	fmt.Println(user)
 
 	send(
 		env.SendGridCancellationAcknowledgementTemplateID,
