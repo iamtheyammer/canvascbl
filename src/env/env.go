@@ -23,6 +23,12 @@ var DatabaseDSN = getEnvOrPanic("DATABASE_DSN")
 var StripeAPIKey = getEnvOrPanic("STRIPE_API_KEY")
 var StripeWebhookSecret = getEnvOrPanic("STRIPE_WEBHOOK_SECRET")
 
+var SendGridAPIKey = getEnvOrPanic("SENDGRID_API_KEY")
+var SendGridFromName = getEnvOrPanic("SENDGRID_FROM_NAME")
+var SendGridFromEmail = getEnvOrPanic("SENDGRID_FROM_EMAIL")
+var SendGridWelcomeTemplateID = getEnvOrPanic("SENDGRID_WELCOME_TEMPLATE_ID")
+var SendGridPurchaseAcknowledgementTemplateID = getEnvOrPanic("SENDGRID_PURCHASE_ACKNOWLEDGEMENT_TEMPLATE_ID")
+
 func getEnvOrPanic(key string) string {
 	value, ok := os.LookupEnv(key)
 	if !ok {

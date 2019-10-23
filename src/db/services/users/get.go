@@ -3,6 +3,7 @@ package users
 import (
 	"database/sql"
 	sq "github.com/Masterminds/squirrel"
+	"github.com/iamtheyammer/canvascbl/backend/src/db/canvas/users"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/pkg/errors"
@@ -91,6 +92,14 @@ func List(db services.DB, req *ListRequest) (*[]User, error) {
 	}
 
 	return &users, nil
+}
+
+func ListFromCanvasResponse(db services.DB, req *users.CanvasProfileResponse) (*[]User, error) {
+	return List(db, &ListRequest{
+		Email:        req.PrimaryEmail,
+		LTIUserID:    req.LtiUserID,
+		CanvasUserID: uint64(req.ID),
+	})
 }
 
 func GetByStripeID(db services.DB, stripeID string) (*User, error) {

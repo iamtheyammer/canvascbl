@@ -15,5 +15,6 @@ export default (
       'X-Canvas-Token': token,
       'X-Canvas-Subdomain': subdomain
     },
-    params: query
+    params: query,
+    withCredentials: true
   });

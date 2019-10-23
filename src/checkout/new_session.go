@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/iamtheyammer/canvascbl/backend/src/db"
 	productssvc "github.com/iamtheyammer/canvascbl/backend/src/db/services/products"
+	"github.com/iamtheyammer/canvascbl/backend/src/middlewares"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
 	"github.com/pkg/errors"
@@ -12,6 +13,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type CreateCheckoutSessionResponse struct {
@@ -19,8 +21,13 @@ type CreateCheckoutSessionResponse struct {
 	ForProductID uint64 `json:"forProductId"`
 }
 
-func CreateCheckoutSessionHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	productID := r.URL.Query().Get("productId")
+func CreateCheckoutSessionHandler(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+	browserSession := middlewares.Session(w, req)
+	if browserSession == nil {
+		return
+	}
+
+	productID := req.URL.Query().Get("productId")
 	if len(productID) < 1 {
 		util.SendBadRequest(w, "missing productId in query")
 		return
@@ -37,7 +44,7 @@ func CreateCheckoutSessionHandler(w http.ResponseWriter, r *http.Request, _ http
 		return
 	}
 
-	email := r.URL.Query().Get("email")
+	email := req.URL.Query().Get("email")
 	if len(email) < 1 {
 		util.SendBadRequest(w, "missing email in query")
 		return
@@ -55,6 +62,8 @@ func CreateCheckoutSessionHandler(w http.ResponseWriter, r *http.Request, _ http
 		return
 	}
 
+	trialEnd := time.Now().Add(time.Hour * 168).Unix()
+
 	params := &stripe.CheckoutSessionParams{
 		PaymentMethodTypes: stripe.StringSlice([]string{
 			"card",
@@ -66,6 +75,7 @@ func CreateCheckoutSessionHandler(w http.ResponseWriter, r *http.Request, _ http
 					Plan: stripe.String(product.StripeID),
 				},
 			},
+			TrialEnd: &trialEnd,
 		},
 		SuccessURL: stripe.String("http://localhost:3000/#/dashboard/checkout/thanks"),
 		CancelURL:  stripe.String("http://localhost:3000/#/dashboard/checkout"),

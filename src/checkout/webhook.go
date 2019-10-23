@@ -3,6 +3,7 @@ package checkout
 import (
 	"encoding/json"
 	"github.com/iamtheyammer/canvascbl/backend/src/db"
+	"github.com/iamtheyammer/canvascbl/backend/src/email"
 	"github.com/iamtheyammer/canvascbl/backend/src/env"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
@@ -50,6 +51,7 @@ func StripeWebhookHandler(w http.ResponseWriter, req *http.Request, _ httprouter
 			util.HandleError(errors.Wrap(err, "error inserting subscription"))
 			return
 		}
+		go email.SendPurchaseAcknowledgement(sub)
 		return
 	case "customer.subscription.updated":
 		sub, err := stripeWebhookProcessSubscription(event.Data.Raw)

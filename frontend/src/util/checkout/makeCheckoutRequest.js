@@ -5,5 +5,6 @@ export default (path, query = {}, method = 'get') =>
   axios({
     method,
     url: `${getUrlPrefix}/api/checkout/${path}`,
-    params: query
+    params: query,
+    withCredentials: true
   });

@@ -137,7 +137,8 @@ export function getUser(id, token, subdomain) {
       const userRes = await makeCanvasRequest(
         'users/profile/self',
         token,
-        subdomain
+        subdomain,
+        { generateSession: true }
       );
       dispatch(gotUser(userRes.data));
     } catch (e) {

@@ -3,6 +3,7 @@ package canvasapis
 import (
 	"github.com/iamtheyammer/canvascbl/backend/src/canvasapis/services/users"
 	"github.com/iamtheyammer/canvascbl/backend/src/db"
+	"github.com/iamtheyammer/canvascbl/backend/src/email"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
@@ -20,6 +21,7 @@ func GetOwnUserProfileHandler(w http.ResponseWriter, r *http.Request, _ httprout
 	resp, body, err := users.GetSelfProfile(rd)
 	if err != nil {
 		util.SendInternalServerError(w)
+		return
 	}
 
 	shouldGenerateSession := strings.ToLower(r.URL.Query().Get("generateSession")) == "true"
@@ -44,7 +46,13 @@ func GetOwnUserProfileHandler(w http.ResponseWriter, r *http.Request, _ httprout
 
 	util.HandleCanvasResponse(w, resp, body)
 
+	if resp.StatusCode != http.StatusOK {
+		return
+	}
+
 	// db
+	go email.SendWelcomeIfNecessary(&body)
+
 	if !shouldGenerateSession {
 		db.UpsertProfile(&body)
 	}

@@ -68,6 +68,7 @@ func (_ MiddlewareRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Methods", "GET, DELETE")
 	w.Header().Set("Access-Control-Allow-Headers", "X-Canvas-Token, X-Canvas-Subdomain, X-Session-String")
 	w.Header().Set("Access-Control-Expose-Headers", "X-Canvas-Url, X-Canvas-Status-Code")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
 
 	router.ServeHTTP(w, r)
 }

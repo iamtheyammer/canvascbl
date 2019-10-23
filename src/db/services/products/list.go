@@ -19,6 +19,7 @@ type Product struct {
 
 type ListRequest struct {
 	ID        uint64
+	StripeID  string
 	ShortName string
 }
 
@@ -61,7 +62,7 @@ func ListProducts(db services.DB) (*[]Product, error) {
 
 // ListProduct lists a single product based on short name, id or both.
 func ListProduct(db services.DB, req *ListRequest) (*Product, error) {
-	if req.ID == 0 && len(req.ShortName) == 0 {
+	if req.ID == 0 && len(req.StripeID) == 0 && len(req.ShortName) == 0 {
 		return nil, nil
 	}
 
@@ -71,6 +72,10 @@ func ListProduct(db services.DB, req *ListRequest) (*Product, error) {
 
 	if req.ID != 0 {
 		q = q.Where(sq.Eq{"id": req.ID})
+	}
+
+	if len(req.StripeID) > 0 {
+		q = q.Where(sq.Eq{"stripe_id": req.StripeID})
 	}
 
 	if len(req.ShortName) > 0 {
