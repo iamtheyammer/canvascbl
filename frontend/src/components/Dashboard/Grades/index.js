@@ -106,7 +106,8 @@ function Grades(props) {
     }
 
     if (
-      (user && !outcomeRollups || activeCourses.some(c => !outcomeRollups[c.id])) &&
+      ((user && !outcomeRollups) ||
+        activeCourses.some(c => !outcomeRollups[c.id])) &&
       !getOutcomeRollupsForCourseIds.length
     ) {
       const ids = [];
