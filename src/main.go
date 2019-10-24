@@ -57,6 +57,7 @@ func getRouter() *httprouter.Router {
 	// stripe webhook handler
 	router.POST("/api/checkout/webhook", checkout.StripeWebhookHandler)
 
+	router.GET("/api/plus/session", plus.GetSessionInformationHandler)
 	router.GET("/api/plus/courses/:courseID/avg", plus.GetAverageGradeForCourseHandler)
 
 	return router

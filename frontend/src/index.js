@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
 import ConnectedApp from './App';
 import { createStore } from 'redux';
+import { CookiesProvider } from 'react-cookie';
 import reducers from './reducers';
 import middlewares from './middleware/index';
 
@@ -11,9 +12,11 @@ import middlewares from './middleware/index';
 const store = createStore(reducers, middlewares);
 
 ReactDOM.render(
-  <Provider store={store}>
-    <ConnectedApp />
-  </Provider>,
+  <CookiesProvider>
+    <Provider store={store}>
+      <ConnectedApp />
+    </Provider>
+  </CookiesProvider>,
   document.getElementById('root')
 );
 

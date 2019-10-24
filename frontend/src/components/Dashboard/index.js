@@ -4,7 +4,15 @@ import { Switch, Route, Redirect, Link } from 'react-router-dom';
 import * as ReactGA from 'react-ga';
 import v4 from 'uuid/v4';
 
-import { Layout, Breadcrumb, Popover, Typography, Spin } from 'antd';
+import {
+  Layout,
+  Breadcrumb,
+  Popover,
+  Typography,
+  Spin,
+  Modal,
+  Icon
+} from 'antd';
 
 import DashboardNav from './DashboardNav';
 import ConnectedUserProfile from './UserProfile';
@@ -14,8 +22,9 @@ import ConnectedUpgrades from './Upgrades';
 import ConnectedLogout from './Logout';
 import UpdateHandler from './UpdateHandler';
 import env from '../../util/env';
-import { getUser } from '../../actions/canvas';
+import { getUser, logout } from '../../actions/canvas';
 import ConnectedErrorModal from './ErrorModal';
+import { getSessionInformation } from '../../actions/plus';
 
 const { Content, Footer } = Layout;
 
@@ -38,6 +47,7 @@ function Dashboard(props) {
   const { token } = props;
   const [hasSentUserToGa, setHasSentUserToGa] = useState(false);
   const [getUserId, setGetUserId] = useState();
+  const [getSessionId, setGetSessionId] = useState();
 
   // if no token exists, redirect
   if (!localStorage.token) {
@@ -52,7 +62,15 @@ function Dashboard(props) {
       (props.location.search.includes('~') ? '' : props.location.search)
   );
 
-  const { location, user, subdomain, loading, error, dispatch } = props;
+  const {
+    location,
+    user,
+    subdomain,
+    session,
+    loading,
+    error,
+    dispatch
+  } = props;
   const pathSnippets = location.pathname.split('/').filter(i => i);
   const breadcrumbNameMap = getBreadcrumbNameMap(props.courses || []);
   const breadcrumbItems = pathSnippets.map((_, index) => {
@@ -75,8 +93,29 @@ function Dashboard(props) {
     setGetUserId(id);
   }
 
-  if (error[getUserId]) {
+  if (user && !session && !getSessionId) {
+    const id = v4();
+    dispatch(getSessionInformation(id));
+    setGetSessionId(id);
+  }
+
+  if (error[getUserId] || error[getSessionId]) {
     return <ConnectedErrorModal error={error[getUserId]} />;
+  }
+
+  if (user && session && user.primary_email !== session.email) {
+    Modal.confirm({
+      icon: <Icon type="exclamation-circle" style={{ color: '#D8000C' }} />,
+      title: 'Session mismatch',
+      content:
+        "There's a deep issue with your sessions or you're trying to use someone else's subscription. " +
+        'Either way, contact support to try again.',
+      okText: 'Logout',
+      cancelText: 'Logout',
+      onCancel: () => dispatch(logout(token, subdomain)),
+      onOk: () => dispatch(logout(token, subdomain))
+    });
+    return null;
   }
 
   return (
@@ -92,7 +131,7 @@ function Dashboard(props) {
             minHeight: 280
           }}
         >
-          {!loading.includes(getUserId) ? (
+          {!loading.includes(getUserId) || !loading.includes(getSessionId) ? (
             <Switch>
               <Route
                 exact
@@ -160,6 +199,7 @@ const ConnectedDashboard = connect(state => ({
   subdomain: state.canvas.subdomain,
   courses: state.canvas.courses,
   user: state.canvas.user,
+  session: state.plus.session,
   loading: state.loading,
   error: state.error
 }))(Dashboard);

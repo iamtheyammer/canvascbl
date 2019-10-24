@@ -35,7 +35,7 @@ func Session(w http.ResponseWriter, req *http.Request) *sessions.VerifiedSession
 	}
 
 	if len(sessionString) < 1 {
-		util.SendUnauthorized(w, "no session string (pass it in via the session_string cookie or the X-SessionString header)")
+		util.SendUnauthorized(w, "no session string (pass it in via the session_string cookie or the X-Session-String header)")
 		return nil
 	}
 

@@ -1,0 +1,40 @@
+package plus
+
+import (
+	"encoding/json"
+	"github.com/iamtheyammer/canvascbl/backend/src/middlewares"
+	"github.com/iamtheyammer/canvascbl/backend/src/util"
+	"github.com/julienschmidt/httprouter"
+	"github.com/pkg/errors"
+	"net/http"
+)
+
+type sessionInformation struct {
+	UserID               uint64 `json:"userId"`
+	CanvasUserID         uint64 `json:"canvasUserId"`
+	Email                string `json:"email"`
+	HasValidSubscription bool   `json:"hasValidSubscription"`
+	SubscriptionStatus   string `json:"subscriptionStatus"`
+}
+
+func GetSessionInformationHandler(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+	sess := middlewares.Session(w, req)
+	if sess == nil {
+		return
+	}
+
+	sessj, err := json.Marshal(sessionInformation{
+		UserID:               sess.UserID,
+		CanvasUserID:         sess.CanvasUserID,
+		Email:                sess.Email,
+		HasValidSubscription: sess.HasValidSubscription,
+		SubscriptionStatus:   sess.SubscriptionStatus,
+	})
+	if err != nil {
+		util.HandleError(errors.Wrap(err, "error marshaling get session information struct"))
+		return
+	}
+
+	util.SendJSONResponse(w, sessj)
+	return
+}

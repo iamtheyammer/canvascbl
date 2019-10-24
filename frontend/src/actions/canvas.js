@@ -48,13 +48,14 @@ function loggedOut(forwardUrl, error) {
 export function logout(token, subdomain) {
   return async dispatch => {
     try {
-      const forwardUrl = await makeCanvasRequest(
-        'oauth2/token',
-        token,
-        subdomain,
-        {},
-        'delete'
-      ).then(res => res.data.forward_url);
+      // const forwardUrl = await makeCanvasRequest(
+      //   'oauth2/token',
+      //   token,
+      //   subdomain,
+      //   {},
+      //   'delete'
+      // ).then(res => res.data.forward_url);
+      const forwardUrl = '';
       dispatch(loggedOut(forwardUrl || ''));
     } catch (e) {
       // errors don't really matter
