@@ -27,6 +27,11 @@ func CreateCheckoutSessionHandler(w http.ResponseWriter, req *http.Request, _ ht
 		return
 	}
 
+	if browserSession.HasValidSubscription {
+		util.SendBadRequest(w, "you already have a valid subscription")
+		return
+	}
+
 	productID := req.URL.Query().Get("productId")
 	if len(productID) < 1 {
 		util.SendBadRequest(w, "missing productId in query")

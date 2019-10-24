@@ -22,10 +22,17 @@ function Upgrades(props) {
       dispatch(getProducts(id));
       setGetProductsId(id);
     }
-
     // eslint-disable-next-line
   }, []);
 
+  useEffect(() => {
+    if (sessionError) {
+      Modal.error({
+        title: 'Error starting checkout',
+        content: `There was an error opening checkout: ${sessionError.res.data}`
+      });
+    }
+  }, [sessionError]);
   if (!checkout.products || loading.includes(getProductsId)) {
     return (
       <div align="center">
@@ -45,13 +52,6 @@ function Upgrades(props) {
         <Typography.Text>Please try again later.</Typography.Text>
       </div>
     );
-  }
-
-  if (sessionError) {
-    Modal.error({
-      title: 'Error starting checkout',
-      content: `There was an error opening checkout: ${sessionError}`
-    });
   }
 
   function handleUpgradeClick(productId) {
