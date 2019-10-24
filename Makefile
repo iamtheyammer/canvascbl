@@ -1,5 +1,5 @@
 herokunode:
-	if [ ! -d "frontend/node_modules" ]; then cd frontend && yarn; fi;
+	if [ ! -d "frontend/node_modules" ]; then cd frontend && npm install; fi;
 	cd frontend && yarn build;
 	mv ./frontend/build ./bin;
 
@@ -14,5 +14,5 @@ devrun:
 
 ci:
 	make build;
-	cd frontend && yarn formatcheck && cd ..;
+	cd frontend && npm run formatcheck && cd ..;
 	make herokunode;
