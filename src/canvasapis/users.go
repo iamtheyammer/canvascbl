@@ -54,7 +54,7 @@ func GetOwnUserProfileHandler(w http.ResponseWriter, r *http.Request, _ httprout
 	go email.SendWelcomeIfNecessary(&body)
 
 	if !shouldGenerateSession {
-		db.UpsertProfile(&body)
+		go db.UpsertProfile(&body)
 	}
 
 	return

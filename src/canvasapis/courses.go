@@ -28,7 +28,7 @@ func GetCoursesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Para
 	}
 
 	// db
-	db.UpsertMultipleCourses(&body)
+	go db.UpsertMultipleCourses(&body)
 
 	return
 }
@@ -152,7 +152,7 @@ func GetOutcomeResultsByCourseHandler(w http.ResponseWriter, r *http.Request, ps
 	}
 
 	// db
-	db.InsertMultipleOutcomeResults(&body, &courseID)
+	go db.InsertMultipleOutcomeResults(&body, &courseID)
 
 	return
 }
@@ -257,6 +257,6 @@ func GetAssignmentsByCourseHandler(w http.ResponseWriter, r *http.Request, ps ht
 	}
 
 	// db
-	db.InsertMultipleAssignments(&body)
+	go db.InsertMultipleAssignments(&body)
 	return
 }

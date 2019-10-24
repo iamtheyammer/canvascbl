@@ -43,6 +43,6 @@ func GetOutcomeByIDHandler(w http.ResponseWriter, r *http.Request, ps httprouter
 	}
 
 	// db
-	db.InsertOutcome(&body)
+	go db.InsertOutcome(&body)
 	return
 }
