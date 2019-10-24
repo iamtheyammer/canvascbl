@@ -1,8 +1,9 @@
 import React from 'react';
 import { Link, withRouter } from 'react-router-dom';
+import { connect } from 'react-redux';
 import './index.css';
 import logo from '../../../assets/banner-light.svg';
-// import logoPlus from '../../../assets/banner-light-plus.svg';
+import logoPlus from '../../../assets/banner-light-plus.svg';
 
 import { Layout, Menu } from 'antd';
 import PopoutLink from '../../PopoutLink';
@@ -10,11 +11,14 @@ import PopoutLink from '../../PopoutLink';
 const { Header } = Layout;
 
 function DashboardNav(props) {
+  const { session } = props;
+  const userHasActiveSubscription = session && session.hasValidSubscription;
+
   return (
     <Header>
       <img
-        src={logo}
-        className="logo"
+        src={userHasActiveSubscription ? logoPlus : logo}
+        className={userHasActiveSubscription ? 'logo-plus' : 'logo'}
         alt="canvas-grade-calculator light banner"
       />
       <Menu
@@ -71,4 +75,8 @@ function DashboardNav(props) {
   );
 }
 
-export default withRouter(DashboardNav);
+const ConnectedDashboardNav = connect(state => ({
+  session: state.plus.session
+}))(DashboardNav);
+
+export default withRouter(ConnectedDashboardNav);
