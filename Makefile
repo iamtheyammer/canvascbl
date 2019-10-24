@@ -1,6 +1,6 @@
 herokunode:
 	if [ ! -d "frontend/node_modules" ]; then cd frontend && npm install; fi;
-	cd frontend && yarn build;
+	cd frontend && npm run build;
 	mv ./frontend/build ./bin;
 
 build:
