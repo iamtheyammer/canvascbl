@@ -1,6 +1,6 @@
 herokunode:
-	if [ ! -d "frontend/node_modules" ]; then cd frontend && npm i; fi;
-	cd frontend && npm run build;
+	if [ ! -d "frontend/node_modules" ]; then cd frontend && yarn; fi;
+	cd frontend && yarn build;
 	mv ./frontend/build ./bin;
 
 build:
@@ -14,5 +14,5 @@ devrun:
 
 ci:
 	make build;
-	cd frontend && npm run formatcheck && cd ..;
+	cd frontend && yarn formatcheck && cd ..;
 	make herokunode;
