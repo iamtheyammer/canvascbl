@@ -2,9 +2,9 @@ package checkout
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/iamtheyammer/canvascbl/backend/src/db"
 	productssvc "github.com/iamtheyammer/canvascbl/backend/src/db/services/products"
+	"github.com/iamtheyammer/canvascbl/backend/src/db/services/subscriptions"
 	"github.com/iamtheyammer/canvascbl/backend/src/middlewares"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
@@ -45,7 +45,6 @@ func CreateCheckoutSessionHandler(w http.ResponseWriter, req *http.Request, _ ht
 	}
 
 	cust, err := db.GetStripeCustomer(browserSession.UserID)
-	fmt.Println(cust)
 
 	product, err := db.CheckoutListProduct(&productssvc.ListRequest{ID: uint64(pID)})
 	if err != nil {
@@ -56,7 +55,11 @@ func CreateCheckoutSessionHandler(w http.ResponseWriter, req *http.Request, _ ht
 		return
 	}
 
-	trialEnd := time.Now().Add(time.Hour * 168).Unix()
+	subs, err := db.GetSubscriptions(&subscriptions.GetRequest{UserID: browserSession.UserID})
+	if err != nil {
+		util.HandleError(errors.Wrap(err, "error creating checkout session: error getting user subscriptions"))
+		util.SendInternalServerError(w)
+	}
 
 	params := &stripe.CheckoutSessionParams{
 		PaymentMethodTypes: stripe.StringSlice([]string{
@@ -68,7 +71,6 @@ func CreateCheckoutSessionHandler(w http.ResponseWriter, req *http.Request, _ ht
 					Plan: stripe.String(product.StripeID),
 				},
 			},
-			TrialEnd: &trialEnd,
 		},
 		SuccessURL: stripe.String("http://localhost:3000/#/dashboard/checkout/thanks"),
 		CancelURL:  stripe.String("http://localhost:3000/#/dashboard/checkout"),
@@ -78,6 +80,11 @@ func CreateCheckoutSessionHandler(w http.ResponseWriter, req *http.Request, _ ht
 		params.Customer = stripe.String(cust.StripeID)
 	} else {
 		params.CustomerEmail = stripe.String(browserSession.Email)
+	}
+
+	if len(*subs) == 0 {
+		// the extra minute is for Stripe-- it seems to use <= so 168 hours is 6 days
+		params.SubscriptionData.TrialEnd = stripe.Int64(time.Now().Add(time.Hour * 168).Add(time.Minute).Unix())
 	}
 
 	sess, err := session.New(params)
