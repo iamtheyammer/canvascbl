@@ -4,6 +4,7 @@ import (
 	"github.com/iamtheyammer/canvascbl/backend/src/db"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/sessions"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
+	"github.com/pkg/errors"
 	"net/http"
 )
 
@@ -46,6 +47,7 @@ func Session(w http.ResponseWriter, req *http.Request) *sessions.VerifiedSession
 
 	sessionInfo, err := db.VerifySession(sessionString)
 	if err != nil {
+		util.HandleError(errors.Wrap(err, "error verifying session"))
 		util.SendUnauthorized(w, "unable to verify your session")
 		return nil
 	}

@@ -11,7 +11,7 @@ func Generate(db services.DB, userID uint64) (*string, error) {
 	query, args, err := util.Sq.
 		Insert("sessions").
 		SetMap(map[string]interface{}{
-			"user_id": userID,
+			"canvas_user_id": userID,
 		}).
 		Suffix("RETURNING session_string").
 		ToSql()

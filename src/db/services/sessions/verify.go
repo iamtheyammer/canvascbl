@@ -9,6 +9,7 @@ import (
 )
 
 type VerifiedSession struct {
+	// users.id
 	UserID               uint64
 	CanvasUserID         uint64
 	Email                string
@@ -32,8 +33,8 @@ func Verify(db services.DB, sessionString string) (*VerifiedSession, error) {
 			"subscriptions.status AS subscription_status",
 		).
 		From("subscriptions").
-		Join("users ON subscriptions.user_id = users.id").
-		Join("sessions ON users.canvas_user_id = sessions.user_id").
+		RightJoin("users ON subscriptions.user_id = users.id").
+		Join("sessions ON users.canvas_user_id = sessions.canvas_user_id").
 		Where(sq.Eq{"sessions.session_string": sessionString}).
 		OrderBy("has_valid_subscription DESC").
 		Limit(1).
