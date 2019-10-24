@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Card, Typography, Icon } from 'antd';
+import { Card, Icon, Typography } from 'antd';
 import calculateMeanAverage from '../../../../util/calculateMeanAverage';
 import roundNumberToDigits from '../../../../util/roundNumberToDigits';
 import v4 from 'uuid/v4';
 import { gradeMapByGrade } from '../../../../util/canvas/calculateGradeFromOutcomes';
+import { CenteredStatisticWithText } from './CenteredStatisticWithText';
 
 const tabList = [
   {
@@ -23,17 +24,6 @@ const tabList = [
     tab: 'More Info'
   }
 ];
-
-function CenteredStatisticWithText(props) {
-  return (
-    <div>
-      <div align="center">
-        <Typography.Title level={1}>{props.stat}</Typography.Title>
-      </div>
-      <Typography.Text>{props.text}</Typography.Text>
-    </div>
-  );
-}
 
 function OutcomeInfo(props) {
   const [activeTabKey, setActiveTabKey] = useState(tabList[0].key);

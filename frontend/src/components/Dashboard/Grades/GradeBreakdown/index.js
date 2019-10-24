@@ -10,7 +10,6 @@ import {
   notification,
   Row,
   Col,
-  Card,
   Button,
   Table,
   Icon,
@@ -33,6 +32,8 @@ import { ReactComponent as PopOutIcon } from '../../../../assets/pop_out.svg';
 
 import OutcomeInfo from './OutcomeInfo';
 import PopoutLink from '../../../PopoutLink';
+import GradeCard from './GradeCard';
+import { getAverageGradeForCourse } from '../../../../actions/plus';
 
 const outcomeTableColumns = [
   {
@@ -131,6 +132,7 @@ function GradeBreakdown(props) {
   const [getRollupsId, setGetRollupsId] = useState('');
   const [getResultsId, setGetResultsId] = useState('');
   const [getAssignmentsId, setGetAssignmentsId] = useState('');
+  const [getPlusAverageId, setGetPlusAverageId] = useState('');
 
   const [loadingText, setLoadingText] = useState('');
 
@@ -144,7 +146,9 @@ function GradeBreakdown(props) {
     courses,
     outcomeRollups,
     outcomeResults,
-    assignments
+    assignments,
+    session,
+    gradeAverages
   } = props;
 
   const err =
@@ -178,7 +182,21 @@ function GradeBreakdown(props) {
         return;
       }
 
+      // we can display the page without the average loading
       if (
+        !getPlusAverageId &&
+        session &&
+        session.hasValidSubscription &&
+        (!gradeAverages || !gradeAverages[courseId])
+      ) {
+        const id = v4();
+        dispatch(getAverageGradeForCourse(id, courseId));
+        setGetPlusAverageId(id);
+      }
+
+      if (
+        user &&
+        user.id &&
         (!outcomeRollups || !allOutcomes || !allOutcomes[courseId]) &&
         !getRollupsId
       ) {
@@ -196,7 +214,12 @@ function GradeBreakdown(props) {
         setGetRollupsId(id);
       }
 
-      if ((!outcomeResults || !outcomeResults[courseId]) && !getResultsId) {
+      if (
+        user &&
+        user.id &&
+        (!outcomeResults || !outcomeResults[courseId]) &&
+        !getResultsId
+      ) {
         const id = v4();
         dispatch(
           getOutcomeResultsForCourse(id, user.id, courseId, token, subdomain)
@@ -205,7 +228,12 @@ function GradeBreakdown(props) {
         setGetResultsId(id);
       }
 
-      if ((!assignments || !assignments[courseId]) && !getAssignmentsId) {
+      if (
+        user &&
+        user.id &&
+        (!assignments || !assignments[courseId]) &&
+        !getAssignmentsId
+      ) {
         const id = v4();
         dispatch(getAssignmentsForCourse(id, courseId, token, subdomain));
         setLoadingText('your assignments');
@@ -231,6 +259,7 @@ function GradeBreakdown(props) {
 
   if (
     !user ||
+    !session ||
     !courses ||
     !allOutcomes ||
     !allOutcomes[courseId] ||
@@ -260,6 +289,7 @@ function GradeBreakdown(props) {
     return <Redirect to="/dashboard/grades" />;
   }
 
+  const averageGrade = gradeAverages ? gradeAverages[courseId] : gradeAverages;
   const grade = calculateGradeFromOutcomes({
     [courseId]: props.outcomeRollups[courseId]
   })[courseId];
@@ -279,7 +309,7 @@ function GradeBreakdown(props) {
     );
   }
 
-  const { min, max } = gradeMapByGrade[grade.grade];
+  const { min } = gradeMapByGrade[grade.grade];
 
   function getLowestOutcome() {
     const rollupScore = rollupScores.filter(
@@ -339,15 +369,11 @@ function GradeBreakdown(props) {
       </Typography.Title>
       <Row gutter={12}>
         <Col span={8}>
-          <Card title={`Current Grade`}>
-            <div align="center">
-              <Typography.Title level={1}>{grade.grade}</Typography.Title>
-            </div>
-            <Typography.Text>
-              Your current grade, {grade.grade}, requires 75% of outcomes to be
-              above {max} and no outcomes to be below {min}.
-            </Typography.Text>
-          </Card>
+          <GradeCard
+            currentGrade={grade.grade}
+            averageGrade={averageGrade}
+            userHasValidSubscription={session.hasValidSubscription}
+          />
         </Col>
         <Col span={16}>
           <OutcomeInfo
@@ -397,7 +423,9 @@ const ConnectedGradeBreakdown = connect(state => ({
   outcomeRollups: state.canvas.outcomeRollups,
   outcomeResults: state.canvas.outcomeResults,
   assignments: state.canvas.assignments,
-  user: state.canvas.user
+  user: state.canvas.user,
+  session: state.plus.session,
+  gradeAverages: state.plus.averages
 }))(GradeBreakdown);
 
 export default ConnectedGradeBreakdown;
