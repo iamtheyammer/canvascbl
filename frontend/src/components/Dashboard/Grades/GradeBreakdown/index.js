@@ -20,7 +20,6 @@ import {
 import {
   getOutcomeResultsForCourse,
   getUserCourses,
-  getUser,
   getAssignmentsForCourse,
   getOutcomeRollupsAndOutcomesForCourse
 } from '../../../../actions/canvas';
@@ -128,7 +127,6 @@ const assignmentTableOutcomes = [
 ];
 
 function GradeBreakdown(props) {
-  const [getUserId, setGetUserId] = useState('');
   const [getCoursesId, setGetCoursesId] = useState('');
   const [getRollupsId, setGetRollupsId] = useState('');
   const [getResultsId, setGetResultsId] = useState('');
@@ -150,7 +148,6 @@ function GradeBreakdown(props) {
   } = props;
 
   const err =
-    error[getUserId] ||
     error[getCoursesId] ||
     error[getRollupsId] ||
     error[getResultsId] ||
@@ -168,17 +165,8 @@ function GradeBreakdown(props) {
       if (
         loading.includes(getCoursesId) ||
         loading.includes(getRollupsId) ||
-        loading.includes(getUserId) ||
         err
       ) {
-        return;
-      }
-
-      if (!user && !getUserId) {
-        const id = v4();
-        dispatch(getUser(id, token, subdomain));
-        setGetUserId(id);
-        setLoadingText('your profile');
         return;
       }
 

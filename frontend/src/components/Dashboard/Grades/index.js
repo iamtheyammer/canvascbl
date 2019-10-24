@@ -6,7 +6,6 @@ import v4 from 'uuid/v4';
 import { Typography, Table, Icon, Spin } from 'antd';
 
 import {
-  getUser,
   getUserCourses,
   getOutcomeRollupsForCourse
 } from '../../../actions/canvas';
@@ -69,7 +68,6 @@ const tableColumns = [
 ];
 
 function Grades(props) {
-  const [getUserId, setGetUserId] = useState('');
   const [getCoursesId, setGetCoursesId] = useState('');
   const [
     getOutcomeRollupsForCourseIds,
@@ -78,7 +76,7 @@ function Grades(props) {
 
   const [loadingText, setLoadingText] = useState('');
 
-  const allIds = [getUserId, getCoursesId, ...getOutcomeRollupsForCourseIds];
+  const allIds = [getCoursesId, ...getOutcomeRollupsForCourseIds];
 
   const {
     dispatch,
@@ -99,15 +97,6 @@ function Grades(props) {
     if (allIds.some(id => loading.includes(id)) || err) {
       return;
     }
-
-    if (!user && !getUserId) {
-      const id = v4();
-      dispatch(getUser(id, token, subdomain));
-      setGetUserId(id);
-      setLoadingText('your profile');
-      return;
-    }
-
     if (!courses && !getCoursesId) {
       const id = v4();
       dispatch(getUserCourses(id, token, subdomain));

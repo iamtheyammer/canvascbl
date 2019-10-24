@@ -4,15 +4,13 @@ import v4 from 'uuid/v4';
 import env from '../../../util/env';
 import { Button, Typography, Modal, Spin } from 'antd';
 import { getCheckoutSession, getProducts } from '../../../actions/checkout';
-import { getUser } from '../../../actions/canvas';
 
 const stripe = window.Stripe(env.stripeApiKeyPub);
 
 function Upgrades(props) {
-  const { dispatch, error, loading, checkout, user, token, subdomain } = props;
+  const { dispatch, error, loading, checkout, user } = props;
 
   const [getProductsId, setGetProductsId] = useState();
-  const [getUserId, setGetUserId] = useState();
 
   const [getCheckoutSessionId, setGetCheckoutSessionId] = useState();
   const isLoadingSession = loading.includes(getCheckoutSessionId);
@@ -25,15 +23,10 @@ function Upgrades(props) {
       setGetProductsId(id);
     }
 
-    if (!user) {
-      const userId = v4();
-      dispatch(getUser(userId, token, subdomain));
-      setGetUserId(userId);
-    }
     // eslint-disable-next-line
   }, []);
 
-  if (!user || !checkout.products || loading.includes(getProductsId)) {
+  if (!checkout.products || loading.includes(getProductsId)) {
     return (
       <div align="center">
         <Spin />
@@ -43,7 +36,7 @@ function Upgrades(props) {
     );
   }
 
-  if (error[getProductsId] || error[getUserId]) {
+  if (error[getProductsId]) {
     return (
       <div align="center">
         <Typography.Title level={3}>
@@ -110,9 +103,7 @@ const ConnectedUpgrades = connect(state => ({
   loading: state.loading,
   error: state.error,
   checkout: state.checkout,
-  user: state.canvas.user,
-  token: state.canvas.token,
-  subdomain: state.canvas.subdomain
+  user: state.canvas.user
 }))(Upgrades);
 
 export default ConnectedUpgrades;
