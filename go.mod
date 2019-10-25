@@ -11,3 +11,5 @@ require (
 	github.com/sendgrid/sendgrid-go v3.5.0+incompatible
 	github.com/stripe/stripe-go v66.0.0+incompatible
 )
+
+// +heroku goVersion go1.13.3
