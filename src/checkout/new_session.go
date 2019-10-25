@@ -5,6 +5,7 @@ import (
 	"github.com/iamtheyammer/canvascbl/backend/src/db"
 	productssvc "github.com/iamtheyammer/canvascbl/backend/src/db/services/products"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/subscriptions"
+	"github.com/iamtheyammer/canvascbl/backend/src/env"
 	"github.com/iamtheyammer/canvascbl/backend/src/middlewares"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
@@ -77,8 +78,8 @@ func CreateCheckoutSessionHandler(w http.ResponseWriter, req *http.Request, _ ht
 				},
 			},
 		},
-		SuccessURL: stripe.String("http://localhost:3000/#/dashboard/checkout/thanks"),
-		CancelURL:  stripe.String("http://localhost:3000/#/dashboard/checkout"),
+		SuccessURL: stripe.String(env.StripePurchaseSuccessURL),
+		CancelURL:  stripe.String(env.StripeCancelPurchaseURL),
 	}
 
 	if cust != nil {

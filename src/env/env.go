@@ -22,6 +22,8 @@ var DatabaseDSN = getEnvOrPanic("DATABASE_DSN")
 
 var StripeAPIKey = getEnvOrPanic("STRIPE_API_KEY")
 var StripeWebhookSecret = getEnvOrPanic("STRIPE_WEBHOOK_SECRET")
+var StripeCancelPurchaseURL = getEnvOrPanic("STRIPE_CANCEL_PURCHASE_URL")
+var StripePurchaseSuccessURL = getEnvOrPanic("STRIPE_PURCHASE_SUCCESS_URL")
 
 var SendGridAPIKey = getEnvOrPanic("SENDGRID_API_KEY")
 var SendGridFromName = getEnvOrPanic("SENDGRID_FROM_NAME")
