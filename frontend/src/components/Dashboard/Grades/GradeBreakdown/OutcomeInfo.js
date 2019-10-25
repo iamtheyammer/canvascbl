@@ -5,6 +5,7 @@ import roundNumberToDigits from '../../../../util/roundNumberToDigits';
 import v4 from 'uuid/v4';
 import { gradeMapByGrade } from '../../../../util/canvas/calculateGradeFromOutcomes';
 import { CenteredStatisticWithText } from './CenteredStatisticWithText';
+import { ReactComponent as plusIcon } from '../../../../assets/plus.svg';
 
 const tabList = [
   {
@@ -17,7 +18,12 @@ const tabList = [
   },
   {
     key: 'toGetAnA',
-    tab: 'How To Get An A'
+    tab: (
+      <div>
+        <Icon component={plusIcon} />
+        <Typography.Text>How To Get An A</Typography.Text>
+      </div>
+    )
   },
   {
     key: 'moreInfo',
@@ -28,7 +34,12 @@ const tabList = [
 function OutcomeInfo(props) {
   const [activeTabKey, setActiveTabKey] = useState(tabList[0].key);
 
-  const { lowestOutcome, outcomeRollupScores, grade } = props;
+  const {
+    lowestOutcome,
+    outcomeRollupScores,
+    grade,
+    userHasValidSubscription
+  } = props;
 
   const { min: AMin, max: AMax } = gradeMapByGrade['A'];
   const seventyFivePercentOfOutcomes = Math.round(
@@ -64,6 +75,18 @@ This outcome's last assignment was ${
           />
         );
       case 'toGetAnA':
+        if (!userHasValidSubscription) {
+          return (
+            <div>
+              <Typography.Title level={3}>CanvasCBL+ Required</Typography.Title>
+              <Typography.Text>
+                You need CanvasCBL+ to use this feature. Click on the 'Upgrades'
+                page to check it out and upgrade!
+              </Typography.Text>
+            </div>
+          );
+        }
+
         if (grade.grade === 'A') {
           return (
             <div>
@@ -85,21 +108,23 @@ This outcome's last assignment was ${
               </Typography.Text>
               <ul>
                 <li>
-                  {lowestOutcome.lowestCountedOutcome > AMax && (
-                    <Icon type="check-circle" />
-                  )}{' '}
-                  75% ({seventyFivePercentOfOutcomes}) of outcomes are above{' '}
-                  {AMax} (currently,{' '}
-                  {grade.sortedOutcomes.filter(o => o < AMax).length} outcomes
-                  are not above {AMax})
+                  <Typography.Text
+                    delete={lowestOutcome.lowestCountedOutcome > AMax}
+                  >
+                    {seventyFivePercentOfOutcomes}/{grade.sortedOutcomes.length}{' '}
+                    outcomes are above {AMax} (currently,{' '}
+                    {grade.sortedOutcomes.filter(o => o < AMax).length} outcomes
+                    are not above {AMax})
+                  </Typography.Text>
                 </li>
                 <li>
-                  {lowestOutcome.rollupScore.score >= AMin && (
-                    <Icon type="check-circle" />
-                  )}{' '}
-                  No outcomes are below {AMin} (currently,{' '}
-                  {grade.sortedOutcomes.filter(o => o < AMin).length} outcomes
-                  are below {AMin})
+                  <Typography.Text
+                    delete={lowestOutcome.rollupScore.score >= AMin}
+                  >
+                    No outcomes are below {AMin} (currently,{' '}
+                    {grade.sortedOutcomes.filter(o => o < AMin).length} outcomes
+                    are below {AMin})
+                  </Typography.Text>
                 </li>
               </ul>
             </div>

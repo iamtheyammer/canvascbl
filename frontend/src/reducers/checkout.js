@@ -1,6 +1,8 @@
 import {
+  CHECKOUT_CANCELED_SUBSCRIPTION,
   CHECKOUT_GOT_CHECKOUT_SESSION,
-  CHECKOUT_GOT_PRODUCTS
+  CHECKOUT_GOT_PRODUCTS,
+  CHECKOUT_GOT_SUBSCRIPTIONS
 } from '../actions/checkout';
 
 export default function checkout(state = {}, action) {
@@ -17,6 +19,13 @@ export default function checkout(state = {}, action) {
           session: action.session
         }
       };
+    case CHECKOUT_GOT_SUBSCRIPTIONS:
+      return {
+        ...state,
+        subscriptions: action.subscriptions
+      };
+    case CHECKOUT_CANCELED_SUBSCRIPTION:
+      return state;
     default:
       return state;
   }

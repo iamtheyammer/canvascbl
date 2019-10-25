@@ -7,6 +7,8 @@ export const PLUS_GOT_SESSION_INFORMATION = 'PLUS_GOT_SESSION_INFORMATION';
 export const PLUS_GOT_AVERAGE_GRADE_FOR_COURSE =
   'PLUS_GOT_AVERAGE_GRADE_FOR_COURSE';
 
+export const PLUS_GOT_SUBSCRIPTIONS = 'PLUS_GOT_SUBSCRIPTIONS';
+
 function gotSessionInformation(sessionInformation) {
   return {
     type: PLUS_GOT_SESSION_INFORMATION,

@@ -381,6 +381,7 @@ function GradeBreakdown(props) {
             min={min}
             outcomeRollupScores={rollupScores}
             grade={grade}
+            userHasValidSubscription={session.hasValidSubscription}
           />
         </Col>
       </Row>
