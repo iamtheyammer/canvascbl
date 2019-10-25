@@ -110,11 +110,13 @@ function Grades(props) {
     // and if we haven't fetched rollups already
     // fetch rollups
     if (
-      ((user && !outcomeRollups) ||
-      (() => outcomeRollups ? activeCourses.some(c => !outcomeRollups[c.id]) : false)() &&
-        // activeCourses.some(c => !outcomeRollups[c.id])) &&
-      !getOutcomeRollupsForCourseIds.length
-    )) {
+      (user && !outcomeRollups) ||
+      ((() =>
+        outcomeRollups
+          ? activeCourses.some(c => !outcomeRollups[c.id])
+          : false)() &&
+        !getOutcomeRollupsForCourseIds.length)
+    ) {
       const ids = [];
       activeCourses.forEach(c => {
         const id = v4();
