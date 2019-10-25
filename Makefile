@@ -1,4 +1,4 @@
-build:
+frontendbuild:
 	if [ ! -d "frontend/node_modules" ]; then cd frontend && npm install; fi;
 	cd frontend && npm run build;
 	mv ./frontend/build ./bin;
@@ -15,4 +15,4 @@ devrun:
 ci:
 	make build;
 	cd frontend && npm run formatcheck && cd ..;
-	make herokunode;
+	make frontendbuild;
