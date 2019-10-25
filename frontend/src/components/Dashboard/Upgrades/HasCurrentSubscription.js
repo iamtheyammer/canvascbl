@@ -30,7 +30,7 @@ function HasCurrentSubscription(props) {
       dispatch(getSubscriptions(id));
       setGetSubscriptionsId(id);
     }
-  });
+  }, [checkout.subscriptions, getSubscriptionsId, dispatch]);
 
   if (getSubscriptionsError) {
     return <div>Error getting subscriptions. Please try again later.</div>;
