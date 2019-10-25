@@ -105,11 +105,16 @@ function Grades(props) {
       return;
     }
 
+    // if user AND no outcome rollups
+    // or if we're missing a rollup for a class
+    // and if we haven't fetched rollups already
+    // fetch rollups
     if (
       ((user && !outcomeRollups) ||
-        activeCourses.some(c => !outcomeRollups[c.id])) &&
+      (() => outcomeRollups ? activeCourses.some(c => !outcomeRollups[c.id]) : false)() &&
+        // activeCourses.some(c => !outcomeRollups[c.id])) &&
       !getOutcomeRollupsForCourseIds.length
-    ) {
+    )) {
       const ids = [];
       activeCourses.forEach(c => {
         const id = v4();
