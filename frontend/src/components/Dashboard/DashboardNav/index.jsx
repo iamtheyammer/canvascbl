@@ -50,20 +50,13 @@ function DashboardNav(props) {
         selectable={false}
       >
         <Menu.SubMenu key="moreActions" title="More Actions">
-          <Menu.Item key="openIssue">
+          <Menu.Item key="contactSupport">
             <PopoutLink
               url={
-                'https://github.com/iamtheyammer/canvas-grade-calculator/issues/new/choose'
+                'mailto:sam@canvascbl.com?subject=CanvasCBL%20Question%20or%20Comment'
               }
             >
-              Submit Feedback/Report a Bug
-            </PopoutLink>
-          </Menu.Item>
-          <Menu.Item key="forkOnGitHub">
-            <PopoutLink
-              url={'https://github.com/iamtheyammer/canvas-grade-calculator'}
-            >
-              Fork this project on GitHub
+              Contact Support
             </PopoutLink>
           </Menu.Item>
         </Menu.SubMenu>
