@@ -49,6 +49,10 @@ func InsertGrade(rr *string, courseID *string, userID *string) {
 
 	grade := grades.CalculateGradeFromOutcomeScores(*os)
 
+	if len(grade) < 1 {
+		return
+	}
+
 	err = gradessvc.Insert(util.DB, &gradessvc.InsertRequest{
 		Grade:    grade,
 		CourseID: cID,
