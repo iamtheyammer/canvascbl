@@ -68,59 +68,60 @@ function NoCurrentSubscription(props) {
       <Typography.Title level={3}>Benefits</Typography.Title>
       <Row gutter={20}>
         <Col span={8}>
-          <Card title="Average Grades">
+          <Card
+            title="Average Grades"
+            cover={
+              <img
+                src={averageGradeImg}
+                alt={'average grade for class screenshot'}
+              />
+            }
+          >
             <Typography.Text>
               See the average grade for any class you're enrolled in.
             </Typography.Text>
-            <img
-              src={averageGradeImg}
-              alt={'average grade for class screenshot'}
-              width={300}
-              align="center"
-            />
           </Card>
         </Col>
         <Col span={8}>
-          <Card title="How to get an A">
+          <Card
+            title="How to get an A"
+            cover={
+              <img src={howToGetAnAImg} alt={'how to get an a screenshot'} />
+            }
+          >
             <Typography.Text>
               For every class you haven't mastered yet, get a step-by-step list
               of things to do to get an A.
             </Typography.Text>
-            <img
-              src={howToGetAnAImg}
-              alt={'how to get an a screenshot'}
-              width={300}
-              align="center"
-            />
           </Card>
         </Col>
         <Col span={8}>
-          <Card title="Average Outcome Scores (Coming Soon!)">
+          <Card
+            title="Average Outcome Scores (Coming Soon!)"
+            cover={
+              <img
+                src={averageOutcomeScoreImg}
+                alt={'average outcome scores screenshot'}
+              />
+            }
+          >
             <Typography.Text>
-              See an average score for every outcome in every class.
+              See an average score for every outcome in every class. (coming
+              soon!)
             </Typography.Text>
-            <img
-              src={averageOutcomeScoreImg}
-              alt={'average outcome scores screenshot'}
-              width={300}
-              align="center"
-            />
           </Card>
         </Col>
       </Row>
       <div style={{ padding: '10px' }} />
       <Row gutter={20}>
         <Col span={8}>
-          <Card title="CanvasCBL+ Logo">
+          <Card
+            title="CanvasCBL+ Logo"
+            cover={<img src={logoNavbarImg} alt={'plus navbar screenshot'} />}
+          >
             <Typography.Text>
               Get reminded of your awesomeness every time you log in-- the logo
               at the top left will show a little <Icon component={plusIcon} />.
-              <img
-                src={logoNavbarImg}
-                alt={'plus navbar screenshot'}
-                width={300}
-                align="center"
-              />
             </Typography.Text>
           </Card>
         </Col>
