@@ -36,10 +36,9 @@ func GetOwnUserProfileHandler(w http.ResponseWriter, r *http.Request, _ httprout
 		w.Header().Set("X-Session-String", *ss)
 
 		http.SetCookie(w, &http.Cookie{
-			Name:     "session_string",
-			Value:    *ss,
-			Path:     "/",
-			SameSite: http.SameSiteStrictMode,
+			Name:  "session_string",
+			Value: *ss,
+			Path:  "/",
 			// 2 weeks
 			Expires: time.Now().Add(time.Hour * 312),
 		})
