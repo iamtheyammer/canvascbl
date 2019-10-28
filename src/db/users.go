@@ -72,3 +72,7 @@ func GetUserFromStripeSubscriptionID(stripeSubscriptionID string) *userssvc.User
 
 	return user
 }
+
+func ListUsers(req *userssvc.ListRequest) (*[]userssvc.User, error) {
+	return userssvc.List(util.DB, req)
+}

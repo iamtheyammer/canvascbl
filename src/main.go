@@ -59,6 +59,7 @@ func getRouter() *httprouter.Router {
 
 	router.GET("/api/plus/session", plus.GetSessionInformationHandler)
 	router.GET("/api/plus/courses/:courseID/avg", plus.GetAverageGradeForCourseHandler)
+	router.GET("/api/plus/outcomes/:outcomeID/avg", plus.GetAverageOutcomeScoreHandler)
 
 	return router
 }

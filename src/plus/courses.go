@@ -41,6 +41,8 @@ func GetAverageGradeForCourseHandler(w http.ResponseWriter, req *http.Request, p
 	avg, numFactors, err := db.GetMemoizedAverageGradeForCourse(uint64(cID), session.CanvasUserID)
 	if err != nil {
 		util.HandleError(errors.Wrap(err, "error getting memoized average for course"))
+		util.SendInternalServerError(w)
+		return
 	}
 
 	ret := struct {
