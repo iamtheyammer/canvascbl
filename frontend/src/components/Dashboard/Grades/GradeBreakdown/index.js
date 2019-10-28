@@ -29,11 +29,13 @@ import calculateGradeFromOutcomes, {
 import { desc } from '../../../../util/stringSorter';
 import ConnectedErrorModal from '../../ErrorModal';
 import { ReactComponent as PopOutIcon } from '../../../../assets/pop_out.svg';
+import { ReactComponent as plusIcon } from '../../../../assets/plus.svg';
 
 import OutcomeInfo from './OutcomeInfo';
 import PopoutLink from '../../../PopoutLink';
 import GradeCard from './GradeCard';
 import { getAverageGradeForCourse } from '../../../../actions/plus';
+import ConnectedAverageOutcomeScore from './AverageOutcomeScore';
 
 const outcomeTableColumns = [
   {
@@ -394,10 +396,18 @@ function GradeBreakdown(props) {
         dataSource={outcomeTableData}
         expandedRowRender={record =>
           record.assignmentTableData.length > 0 ? (
-            <Table
-              columns={assignmentTableOutcomes}
-              dataSource={record.assignmentTableData}
-            />
+            <div>
+              <Typography.Title level={4}>
+                <Icon component={plusIcon} style={{ paddingRight: '5px' }} />
+                Average Score
+              </Typography.Title>
+              <ConnectedAverageOutcomeScore outcomeId={record.id} />
+              <Typography.Title level={4}>Assignments</Typography.Title>
+              <Table
+                columns={assignmentTableOutcomes}
+                dataSource={record.assignmentTableData}
+              />
+            </div>
           ) : (
             <Typography.Text>
               Couldn't get assignments for this outcome.

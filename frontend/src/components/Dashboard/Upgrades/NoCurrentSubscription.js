@@ -97,7 +97,7 @@ function NoCurrentSubscription(props) {
         </Col>
         <Col span={8}>
           <Card
-            title="Average Outcome Scores (Coming Soon!)"
+            title="Average Outcome Scores"
             cover={
               <img
                 src={averageOutcomeScoreImg}
@@ -106,8 +106,7 @@ function NoCurrentSubscription(props) {
             }
           >
             <Typography.Text>
-              See an average score for every outcome in every class. (coming
-              soon!)
+              See an average score for every outcome in every class.
             </Typography.Text>
           </Card>
         </Col>

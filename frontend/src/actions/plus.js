@@ -7,7 +7,8 @@ export const PLUS_GOT_SESSION_INFORMATION = 'PLUS_GOT_SESSION_INFORMATION';
 export const PLUS_GOT_AVERAGE_GRADE_FOR_COURSE =
   'PLUS_GOT_AVERAGE_GRADE_FOR_COURSE';
 
-export const PLUS_GOT_SUBSCRIPTIONS = 'PLUS_GOT_SUBSCRIPTIONS';
+export const PLUS_GOT_AVERAGE_SCORE_FOR_OUTCOME =
+  'PLUS_GOT_AVERAGE_SCORE_FOR_OUTCOME';
 
 function gotSessionInformation(sessionInformation) {
   return {
@@ -43,6 +44,29 @@ export function getAverageGradeForCourse(id, courseId) {
     try {
       const avgGradeRequest = await makePlusRequest(`courses/${courseId}/avg`);
       dispatch(gotAverageGradeForCourse(courseId, avgGradeRequest.data));
+    } catch (e) {
+      dispatch(plusError(id, e.res));
+    }
+    endLoading(id);
+  };
+}
+
+function gotAverageScoreForOutcome(outcomeId, avg) {
+  return {
+    type: PLUS_GOT_AVERAGE_SCORE_FOR_OUTCOME,
+    outcomeId,
+    avg
+  };
+}
+
+export function getAverageScoreForOutcome(id, outcomeId) {
+  return async dispatch => {
+    startLoading(id);
+    try {
+      const avgOutcomeResponse = await makePlusRequest(
+        `outcomes/${outcomeId}/avg`
+      );
+      dispatch(gotAverageScoreForOutcome(outcomeId, avgOutcomeResponse.data));
     } catch (e) {
       dispatch(plusError(id, e.res));
     }
