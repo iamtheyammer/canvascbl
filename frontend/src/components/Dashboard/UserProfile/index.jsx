@@ -1,12 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import v4 from 'uuid/v4';
 
 import { Spin, Descriptions } from 'antd';
-
-import { getUser } from '../../../actions/canvas';
-
-import ErrorModal from '../ErrorModal';
 
 class UserProfile extends Component {
   constructor(props) {

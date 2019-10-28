@@ -55,6 +55,7 @@ export function logout(token, subdomain) {
         {},
         'delete'
       ).then(res => res.data.forward_url);
+      dispatch(loggedOut(forwardUrl || ''))
     } catch (e) {
       // errors don't really matter
       dispatch(loggedOut('', e));
