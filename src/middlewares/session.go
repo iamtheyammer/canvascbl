@@ -69,5 +69,10 @@ func Session(w http.ResponseWriter, req *http.Request) *sessions.VerifiedSession
 		return nil
 	}
 
+	if sessionInfo.SessionIsExpired {
+		util.SendUnauthorized(w, "expired session")
+		return nil
+	}
+
 	return sessionInfo
 }

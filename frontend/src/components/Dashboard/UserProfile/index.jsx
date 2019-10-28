@@ -16,21 +16,7 @@ class UserProfile extends Component {
     };
   }
 
-  componentDidMount() {
-    if (!this.props.user) {
-      const getUserId = v4();
-      this.setState({ getUserId });
-      return this.props.dispatch(
-        getUser(getUserId, this.props.token, this.props.subdomain)
-      );
-    }
-  }
-
   render() {
-    if (this.props.error[this.state.getUserId]) {
-      return <ErrorModal res={this.props.error[this.state.getUserId].res} />;
-    }
-
     if (!this.props.user || this.props.loading.includes(this.state.getUserId)) {
       return (
         <div align="center" style={{ marginTop: '20px' }}>

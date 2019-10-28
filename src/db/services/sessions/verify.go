@@ -15,6 +15,7 @@ type VerifiedSession struct {
 	Email                string
 	HasValidSubscription bool
 	SubscriptionStatus   string
+	SessionIsExpired     bool
 }
 
 func Verify(db services.DB, sessionString string) (*VerifiedSession, error) {
@@ -31,6 +32,8 @@ func Verify(db services.DB, sessionString string) (*VerifiedSession, error) {
 				"AND subscriptions.current_period_end > NOW() THEN "+
 				"TRUE ELSE FALSE END) AS has_valid_subscription",
 			"subscriptions.status AS subscription_status",
+			"(CASE WHEN sessions.inserted_at + interval '2 weeks' < NOW() THEN TRUE ELSE FALSE END) "+
+				"AS session_is_expired",
 		).
 		From("subscriptions").
 		RightJoin("users ON subscriptions.user_id = users.id").
@@ -56,6 +59,7 @@ func Verify(db services.DB, sessionString string) (*VerifiedSession, error) {
 		&vs.Email,
 		&vs.HasValidSubscription,
 		&subscriptionStatus,
+		&vs.SessionIsExpired,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {

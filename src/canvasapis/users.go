@@ -41,7 +41,7 @@ func GetOwnUserProfileHandler(w http.ResponseWriter, r *http.Request, _ httprout
 			Path:     "/",
 			SameSite: http.SameSiteStrictMode,
 			// 2 weeks
-			Expires: time.Now().Add(time.Hour * 336),
+			Expires: time.Now().Add(time.Hour * 312),
 		})
 	}
 

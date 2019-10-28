@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { Switch, Route, Redirect, Link } from 'react-router-dom';
 import * as ReactGA from 'react-ga';
 import v4 from 'uuid/v4';
+import { useCookies } from 'react-cookie';
 
 import {
   Layout,
@@ -45,6 +46,8 @@ const getBreadcrumbNameMap = (courses = []) => {
 
 function Dashboard(props) {
   const { token } = props;
+  const [cookies] = useCookies(['session_string']);
+
   const [hasSentUserToGa, setHasSentUserToGa] = useState(false);
   const [getUserId, setGetUserId] = useState();
   const [getSessionId, setGetSessionId] = useState();
@@ -89,7 +92,7 @@ function Dashboard(props) {
 
   if (!user && !getUserId) {
     const id = v4();
-    dispatch(getUser(id, token, subdomain));
+    dispatch(getUser(id, !cookies['session_string'], token, subdomain));
     setGetUserId(id);
   }
 

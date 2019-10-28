@@ -48,15 +48,13 @@ function loggedOut(forwardUrl, error) {
 export function logout(token, subdomain) {
   return async dispatch => {
     try {
-      // const forwardUrl = await makeCanvasRequest(
-      //   'oauth2/token',
-      //   token,
-      //   subdomain,
-      //   {},
-      //   'delete'
-      // ).then(res => res.data.forward_url);
-      const forwardUrl = '';
-      dispatch(loggedOut(forwardUrl || ''));
+      const forwardUrl = await makeCanvasRequest(
+        'oauth2/token',
+        token,
+        subdomain,
+        {},
+        'delete'
+      ).then(res => res.data.forward_url);
     } catch (e) {
       // errors don't really matter
       dispatch(loggedOut('', e));
@@ -131,7 +129,7 @@ function gotUser(user) {
   };
 }
 
-export function getUser(id, token, subdomain) {
+export function getUser(id, shouldGenerateSession = true, token, subdomain) {
   return async dispatch => {
     dispatch(startLoading(id));
     try {
@@ -139,7 +137,7 @@ export function getUser(id, token, subdomain) {
         'users/profile/self',
         token,
         subdomain,
-        { generateSession: true }
+        { generateSession: shouldGenerateSession }
       );
       dispatch(gotUser(userRes.data));
     } catch (e) {
