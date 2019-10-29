@@ -19,11 +19,11 @@ type grade struct {
 // gradeMap is a map of possible grades
 var gradeMap = []grade{
 	{"A", 6, 3.5, 3},
-	{"A-", 5, 3.5, 2.5},
+	{"A-", 5, 3.3, 2.5},
 	{"B+", 4, 3, 2.5},
 	{"B", 3, 3, 2.25},
-	{"B-", 2, 3, 2},
-	{"C", 1, 2.5, 2},
+	{"B-", 2, 2.6, 2},
+	{"C", 1, 2.2, 0},
 	{"I", 0, 0, 0},
 }
 
@@ -69,3 +69,9 @@ func CalculateGradeFromOutcomeScores(os []float64) string {
 
 	return finalGrade.Grade
 }
+
+/*
+CBL Changes:
+
+
+*/
