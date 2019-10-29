@@ -22,5 +22,11 @@
     "type": 0,
     "title": "Updated grade calculation algorithm",
     "content": "Updated from today's CBL announcements"
+  },
+  {
+    "timestamp": 1572393364409,
+    "type": 0,
+    "title": "Updated grade calculation algorithm",
+    "content": "Fixed the ratings for A, B+ and B-- you should see higher grades now!"
   }
 ]
