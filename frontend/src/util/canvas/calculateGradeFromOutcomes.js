@@ -77,11 +77,11 @@ export const gradeMap = [
 ];
 
 export const gradeMapByGrade = {
-  A: { max: 3.5, min: 3 },
-  'A-': { max: 3.3, min: 2.5 },
-  'B+': { max: 3, min: 2.5 },
-  B: { max: 3, min: 2.25 },
-  'B-': { max: 2.6, min: 2 },
-  C: { max: 2.2, min: 2 },
-  I: { max: 0, min: 0 }
+  A: { rank: 6, max: 3.5, min: 3 },
+  'A-': { rank: 5, max: 3.3, min: 2.5 },
+  'B+': { rank: 4, max: 3, min: 2.5 },
+  B: { rank: 3, max: 3, min: 2.25 },
+  'B-': { rank: 2, max: 2.6, min: 2 },
+  C: { rank: 1, max: 2.2, min: 2 },
+  I: { rank: 0, max: 0, min: 0 }
 };
