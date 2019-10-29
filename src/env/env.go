@@ -6,6 +6,16 @@ import (
 	"strings"
 )
 
+type Environment string
+
+const (
+	EnvironmentDevelopment Environment = "development"
+	EnvironmentStaging     Environment = "staging"
+	EnvironmentProduction  Environment = "production"
+)
+
+var Env = Environment(getEnvOrPanic("ENVIRONMENT"))
+
 var HTTPPort = fmt.Sprintf(":%s", getEnv("PORT", "8000"))
 
 var OAuth2ClientID = getEnvOrPanic("CANVAS_OAUTH2_CLIENT_ID")
