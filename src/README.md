@@ -61,6 +61,8 @@ Users need a valid subscription to use all endpoints except for those marked \[N
 
 - `GET` `/api/plus/session` \[NS\] - Returns info about your current session
 - `GET` `/api/plus/courses/:courseID/avg` - Returns the average grade for the course
+- `GET` `/api/plus/outcomes/:outcomeID/avg` - Returns the average score for the outcome
+- `GET` `/api/plus/previous-grades` - Returns the user's previous grades (5 min+ ago)
 
 ### Checkout
 
