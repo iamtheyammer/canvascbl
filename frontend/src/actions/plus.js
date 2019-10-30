@@ -10,6 +10,8 @@ export const PLUS_GOT_AVERAGE_GRADE_FOR_COURSE =
 export const PLUS_GOT_AVERAGE_SCORE_FOR_OUTCOME =
   'PLUS_GOT_AVERAGE_SCORE_FOR_OUTCOME';
 
+export const PLUS_GOT_PREVIOUS_GRADES = 'PLUS_GOT_PREVIOUS_GRADES';
+
 function gotSessionInformation(sessionInformation) {
   return {
     type: PLUS_GOT_SESSION_INFORMATION,
@@ -67,6 +69,26 @@ export function getAverageScoreForOutcome(id, outcomeId) {
         `outcomes/${outcomeId}/avg`
       );
       dispatch(gotAverageScoreForOutcome(outcomeId, avgOutcomeResponse.data));
+    } catch (e) {
+      dispatch(plusError(id, e.res));
+    }
+    endLoading(id);
+  };
+}
+
+function gotPreviousGrades(previousGrades) {
+  return {
+    type: PLUS_GOT_PREVIOUS_GRADES,
+    previousGrades
+  };
+}
+
+export function getPreviousGrades(id) {
+  return async dispatch => {
+    startLoading(id);
+    try {
+      const prevGradesResponse = await makePlusRequest('grades/previous');
+      dispatch(gotPreviousGrades(prevGradesResponse.data));
     } catch (e) {
       dispatch(plusError(id, e.res));
     }

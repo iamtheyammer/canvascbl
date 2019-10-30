@@ -28,5 +28,11 @@
     "type": 0,
     "title": "Updated grade calculation algorithm",
     "content": "Fixed the ratings for A, B+ and B-- you should see higher grades now!"
+  },
+  {
+    "timestamp": 1572404938249,
+    "type": 1,
+    "title": "Added previous grades for CanvasCBL+ Users",
+    "content": "See what your grades were when you last logged in-- along with the changes and when that last login was with CanvasCBL+."
   }
 ]

@@ -11,6 +11,7 @@ import env from '../../../util/env';
 import averageGradeImg from './average-grade.png';
 import averageOutcomeScoreImg from './average-outcome-score.png';
 import howToGetAnAImg from './how-to-get-an-a.png';
+import previousGradeImg from './previous-grade.png';
 import logoNavbarImg from './logo-navbar.png';
 
 const stripe = window.Stripe(env.stripeApiKeyPub);
@@ -113,6 +114,20 @@ function NoCurrentSubscription(props) {
       </Row>
       <div style={{ padding: '10px' }} />
       <Row gutter={20}>
+        <Col span={8}>
+          <Card
+            title="Previous Grades"
+            cover={
+              <img src={previousGradeImg} alt={'previous grades screenshot'} />
+            }
+          >
+            <Typography.Text>
+              See how your grades have changed from your last login to now.
+              Hover over any grade to see when it was from, so you can better
+              understand your progression in your courses.
+            </Typography.Text>
+          </Card>
+        </Col>
         <Col span={8}>
           <Card
             title="CanvasCBL+ Logo"

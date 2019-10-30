@@ -3,20 +3,25 @@ import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import v4 from 'uuid/v4';
 
-import { Typography, Table, Icon, Spin } from 'antd';
+import { Typography, Table, Icon, Spin, Tag, Skeleton, Popover } from 'antd';
 
 import {
   getUserCourses,
   getOutcomeRollupsForCourse
 } from '../../../actions/canvas';
 
-import calculateGradeFromOutcomes from '../../../util/canvas/calculateGradeFromOutcomes';
+import calculateGradeFromOutcomes, {
+  gradeMapByGrade
+} from '../../../util/canvas/calculateGradeFromOutcomes';
 import getActiveCourses from '../../../util/canvas/getActiveCourses';
 import ErrorModal from '../ErrorModal';
 
 import { ReactComponent as PopOutIcon } from '../../../assets/pop_out.svg';
+import { ReactComponent as plusIcon } from '../../../assets/plus.svg';
 import { desc } from '../../../util/stringSorter';
 import PopoutLink from '../../PopoutLink';
+import { getPreviousGrades } from '../../../actions/plus';
+import moment from 'moment';
 
 const tableColumns = [
   {
@@ -31,18 +36,66 @@ const tableColumns = [
         <Link to={`/dashboard/grades/${record.id}`}>{text}</Link>
       )
   },
-  // {
-  //   title: 'Class ID',
-  //   dataIndex: 'id',
-  //   key: 'id',
-  //   sorter: (a, b) => a.id - b.id
-  // },
   {
     title: 'Grade',
     dataIndex: 'grade',
     key: 'grade',
     sorter: (a, b) => desc(a.grade, b.grade),
     defaultSortOrder: 'desc'
+  },
+  {
+    title: (
+      <Popover
+        title="Grades From Last Login"
+        content="Hover over a previous grade to see when it's from."
+      >
+        <Icon component={plusIcon} /> Previous Grade
+      </Popover>
+    ),
+    dataIndex: 'averageGrade',
+    key: 'averageGrade',
+    render: (text, record) => {
+      if (!record.userHasValidSubscription) {
+        return (
+          <Popover
+            title="CanvasCBL+ Required"
+            content="CanvasCBL+ is required to use this feature. Go to the Upgrades page to upgrade!"
+          >
+            <Icon component={plusIcon} /> Required
+          </Popover>
+        );
+      }
+
+      if (record.previousGrade === undefined) return <Tag>Unavailable</Tag>;
+
+      if (record.previousGrade === 'loading') {
+        return <Skeleton paragraph={false} active title={{ width: '50%' }} />;
+      }
+
+      const prevGrade = gradeMapByGrade[record.previousGrade.grade];
+      const currentGrade = gradeMapByGrade[record.grade];
+      if (!prevGrade || !currentGrade) return <Tag>Unavailable</Tag>;
+
+      let color = '';
+
+      // old is better than new
+      if (prevGrade.rank > currentGrade.rank) {
+        color = 'volcano';
+      } else if (prevGrade.rank < currentGrade.rank) {
+        color = 'green';
+      }
+
+      return (
+        <Popover
+          title={`Previous Grade: ${record.previousGrade.grade}`}
+          content={`From: ${moment
+            .unix(record.previousGrade.insertedAt)
+            .calendar()}`}
+        >
+          <Tag color={color}>{record.previousGrade.grade}</Tag>
+        </Popover>
+      );
+    }
   },
   {
     title: 'Actions',
@@ -73,10 +126,15 @@ function Grades(props) {
     getOutcomeRollupsForCourseIds,
     setGetOutcomeRollupsForCourseIds
   ] = useState([]);
+  const [getPrevGradeId, setGetPrevGradeId] = useState('');
 
   const [loadingText, setLoadingText] = useState('');
 
-  const allIds = [getCoursesId, ...getOutcomeRollupsForCourseIds];
+  const allIds = [
+    getCoursesId,
+    getPrevGradeId,
+    ...getOutcomeRollupsForCourseIds
+  ];
 
   const {
     dispatch,
@@ -86,7 +144,8 @@ function Grades(props) {
     error,
     user,
     courses,
-    outcomeRollups
+    outcomeRollups,
+    plus
   } = props;
 
   const err = error[Object.keys(error).filter(eid => allIds.includes(eid))[0]];
@@ -128,6 +187,17 @@ function Grades(props) {
       setGetOutcomeRollupsForCourseIds(ids);
       setLoadingText('your grades');
     }
+
+    if (
+      user &&
+      plus.session &&
+      plus.session.hasValidSubscription &&
+      !getPrevGradeId
+    ) {
+      const id = v4();
+      dispatch(getPreviousGrades(id));
+      setGetPrevGradeId(id);
+    }
     // ignoring because we only want this hook to re-run on a prop change
     // eslint-disable-next-line
   }, [props]);
@@ -138,6 +208,7 @@ function Grades(props) {
 
   if (
     !user ||
+    !plus.session ||
     !courses ||
     !outcomeRollups ||
     allIds.some(id => loading.includes(id))
@@ -159,7 +230,15 @@ function Grades(props) {
     key: c.id,
     name: c.name,
     grade: grades[c.id] ? grades[c.id].grade : 'Error, try reloading',
-    id: c.id
+    id: c.id,
+    userHasValidSubscription: plus.session.hasValidSubscription,
+    previousGrade: loading.includes(getPrevGradeId)
+      ? 'loading'
+      : plus &&
+        plus.previousGrades &&
+        !error[getPrevGradeId] &&
+        plus.previousGrades.filter(pg => pg.courseId === c.id)[0] &&
+        plus.previousGrades.filter(pg => pg.courseId === c.id)[0]
   }));
 
   return (
@@ -182,6 +261,7 @@ function Grades(props) {
 
 const ConnectedGrades = connect(state => ({
   courses: state.canvas.courses,
+  plus: state.plus,
   outcomeRollups: state.canvas.outcomeRollups,
   user: state.canvas.user,
   token: state.canvas.token,

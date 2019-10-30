@@ -27,10 +27,12 @@ func List(db services.DB, req *ListRequest) (*[]Grade, error) {
 	q := util.Sq.
 		Select("DISTINCT ON (grades.course_id) id", "course_id", "grade", "inserted_at").
 		From("grades").
+		OrderBy("grades.course_id, grades.inserted_at DESC").
 		Where(sq.Eq{"user_lti_user_id": req.UserLTIUserID})
 
 	if req.Before != nil {
-		q = q.Where(sq.Lt{"inserted_at": req.Before})
+		// using this weird workaround because it doesn't work any other way
+		q = q.Where("inserted_at < to_timestamp(?)", req.Before.Unix())
 	}
 
 	if req.After != nil {

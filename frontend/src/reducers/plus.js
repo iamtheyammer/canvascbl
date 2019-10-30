@@ -1,7 +1,8 @@
 import {
   PLUS_GOT_AVERAGE_GRADE_FOR_COURSE,
   PLUS_GOT_SESSION_INFORMATION,
-  PLUS_GOT_AVERAGE_SCORE_FOR_OUTCOME
+  PLUS_GOT_AVERAGE_SCORE_FOR_OUTCOME,
+  PLUS_GOT_PREVIOUS_GRADES
 } from '../actions/plus';
 
 export default function plus(state = [], action) {
@@ -26,6 +27,11 @@ export default function plus(state = [], action) {
           ...state.outcomeAverages,
           [action.outcomeId]: action.avg
         }
+      };
+    case PLUS_GOT_PREVIOUS_GRADES:
+      return {
+        ...state,
+        previousGrades: action.previousGrades
       };
     default:
       return state;
