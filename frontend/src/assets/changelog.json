@@ -34,5 +34,11 @@
     "type": 1,
     "title": "Added previous grades for CanvasCBL+ Users",
     "content": "See what your grades were when you last logged in-- along with the changes and when that last login was with CanvasCBL+."
+  },
+  {
+    "timestamp": 1572537859539,
+    "type": 0,
+    "title": "Fixed issues with Safari",
+    "content": "If you're still having issues, go to Settings -> Safari -> Clear History and Website Data, then log back in."
   }
 ]
