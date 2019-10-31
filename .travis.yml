@@ -10,16 +10,27 @@ install: cd frontend && npm install && cd ..
 script: make ci
 
 # sets the CNAME file so github continues serving canvascbl.com
-before_deploy: export REACT_APP_CURRENT_VERSION=`NODE_DISABLE_COLORS=1 node -e 'console.log(Date.now())'` && echo "canvascbl.com" > bin/build/CNAME
+before_deploy: export REACT_APP_CURRENT_VERSION=`NODE_DISABLE_COLORS=1 node -e 'console.log(Date.now())'` && echo $CNAME > bin/build/CNAME
 
 deploy:
-  provider: pages
-  skip_cleanup: true
-  github_token: $GITHUB_TOKEN
-  keep_history: false
-  local_dir: bin/build
-  name: "I Yam Who I Yam - Travis Deploy"
-  email: "iamtheyammer@gmail.com"
-  target_branch: gh-pages
-  on:
-    branch: master
+  - provider: pages
+   	cleanup: false
+    github_token: $GITHUB_TOKEN
+    keep_history: false
+    local_dir: bin/build
+    name: "I Yam Who I Yam (stg)"
+    email: "iamtheyammer@gmail.com"
+    target_branch: master
+    repo: iamtheyammer/canvascbl-stg
+    on:
+       branch: staging
+  - provider: pages
+    cleanup: false
+    github_token: $GITHUB_TOKEN
+    keep_history: false
+    local_dir: bin/build
+    name: "I Yam Who I Yam"
+    email: "iamtheyammer@gmail.com"
+    target_branch: gh-pages
+    on:
+       branch: master
