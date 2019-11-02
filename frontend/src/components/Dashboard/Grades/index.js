@@ -151,6 +151,7 @@ function Grades(props) {
   const err = error[Object.keys(error).filter(eid => allIds.includes(eid))[0]];
 
   const activeCourses = courses ? getActiveCourses(courses) : courses;
+  const activeCourseIds = activeCourses ? activeCourses.map(ac => ac.id) : [];
 
   useEffect(() => {
     if (allIds.some(id => loading.includes(id)) || err) {
@@ -192,6 +193,7 @@ function Grades(props) {
       user &&
       plus.session &&
       plus.session.hasValidSubscription &&
+      !plus.previousGrades &&
       !getPrevGradeId
     ) {
       const id = v4();
