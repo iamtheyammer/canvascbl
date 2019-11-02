@@ -50,11 +50,13 @@ function DashboardNav(props) {
         style={{ lineHeight: '64px', float: 'right' }}
         selectable={false}
       >
-        {env.buildBranch !== 'master' && <Menu.Item key="nonProductionMode">
-          <Typography.Text type="danger">
-            CanvasCBL is running in {env.buildBranch}
-          </Typography.Text>
-        </Menu.Item>}
+        {env.buildBranch !== 'master' && (
+          <Menu.Item key="nonProductionMode">
+            <Typography.Text type="danger">
+              CanvasCBL is running in {env.buildBranch}
+            </Typography.Text>
+          </Menu.Item>
+        )}
         <Menu.SubMenu key="moreActions" title="More Actions">
           <Menu.Item key="contactSupport">
             <PopoutLink
