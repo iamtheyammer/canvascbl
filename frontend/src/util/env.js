@@ -4,6 +4,7 @@ export default {
   googleAnalyticsId: process.env.REACT_APP_GOOGLE_ANALYTICS_ID,
   privacyPolicyUrl: process.env.REACT_APP_PRIVACY_POLICY_URL,
   stripeApiKeyPub: process.env.REACT_APP_STRIPE_API_KEY_PUB,
+  buildBranch: process.env.REACT_APP_BUILD_BRANCH || 'n/a',
   upgradesPurchasableProductId: parseInt(
     process.env.REACT_APP_UPGRADES_PURCHASABLE_PRODUCT_ID
   ),

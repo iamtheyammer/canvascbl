@@ -6,7 +6,7 @@ import logo from '../../../assets/banner-light.svg';
 import logoPlus from '../../../assets/banner-light-plus.svg';
 import env from '../../../util/env';
 
-import { Layout, Menu } from 'antd';
+import { Layout, Menu, Typography } from 'antd';
 import PopoutLink from '../../PopoutLink';
 
 const { Header } = Layout;
@@ -50,6 +50,11 @@ function DashboardNav(props) {
         style={{ lineHeight: '64px', float: 'right' }}
         selectable={false}
       >
+        {env.buildBranch !== 'master' && <Menu.Item key="nonProductionMode">
+          <Typography.Text type="danger">
+            CanvasCBL is running in {env.buildBranch}
+          </Typography.Text>
+        </Menu.Item>}
         <Menu.SubMenu key="moreActions" title="More Actions">
           <Menu.Item key="contactSupport">
             <PopoutLink

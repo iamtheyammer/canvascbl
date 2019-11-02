@@ -19,10 +19,18 @@ func getOAuth2AuthURI() string {
 		Scheme: "https",
 	}
 
+	purpose := "CanvasCBL"
+	switch env.Env {
+	case env.EnvironmentStaging:
+		purpose += "-staging"
+	case env.EnvironmentDevelopment:
+		purpose += "-development"
+	}
+
 	q := redirectURL.Query()
 	q.Set("client_id", env.OAuth2ClientID)
 	q.Set("response_type", "code")
-	q.Set("purpose", "Canvas CBL Grades Calculator")
+	q.Set("purpose", purpose)
 	q.Set("redirect_uri", env.OAuth2RedirectURI)
 	q.Set("scope", util.GetScopesList())
 	redirectURL.RawQuery = q.Encode()

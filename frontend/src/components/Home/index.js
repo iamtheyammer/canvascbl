@@ -23,6 +23,12 @@ function Home(props) {
       <Card className="card" title={<img src={banner} alt="banner" />}>
         <div className="static-text">
           <Typography.Title level={2}>Welcome!</Typography.Title>
+          {env.buildBranch !== 'master' && (
+            <Typography.Text type="danger">
+              CanvasCBL is running in {env.buildBranch}
+              <br />
+            </Typography.Text>
+          )}
           <Typography.Text>
             This tool calculates grades based on outcomes in Canvas. To use it,
             please accept the Terms and Conditions, then log in with Canvas.
