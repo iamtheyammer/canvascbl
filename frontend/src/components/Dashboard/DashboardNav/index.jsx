@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 import './index.css';
 import logo from '../../../assets/banner-light.svg';
 import logoPlus from '../../../assets/banner-light-plus.svg';
+import env from '../../../util/env';
 
 import { Layout, Menu } from 'antd';
 import PopoutLink from '../../PopoutLink';
@@ -57,6 +58,11 @@ function DashboardNav(props) {
               }
             >
               Contact Support
+            </PopoutLink>
+          </Menu.Item>
+          <Menu.Item key="viewPrivacyPolicy">
+            <PopoutLink url={env.privacyPolicyUrl}>
+              View Privacy Policy
             </PopoutLink>
           </Menu.Item>
         </Menu.SubMenu>
