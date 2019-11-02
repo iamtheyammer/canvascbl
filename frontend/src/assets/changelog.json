@@ -40,5 +40,11 @@
     "type": 0,
     "title": "Fixed issues with Safari",
     "content": "If you're still having issues, go to Settings -> Safari -> Clear History and Website Data, then log back in."
+  },
+  {
+    "timestamp": 1572668602492,
+    "type": 1,
+    "title": "Added privacy policy to the Dashboard",
+    "content": "View it anytime by going to More Actions, then clicking on View Privacy Policy."
   }
 ]
