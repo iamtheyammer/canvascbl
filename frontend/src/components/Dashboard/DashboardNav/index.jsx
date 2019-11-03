@@ -1,12 +1,14 @@
-import React from 'react';
+import React, {useState} from 'react';
 import { Link, withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 import './index.css';
 import logo from '../../../assets/banner-light.svg';
 import logoPlus from '../../../assets/banner-light-plus.svg';
 import env from '../../../util/env';
+import { isMobile } from 'react-device-detect';
 
 import { Layout, Menu, Typography } from 'antd';
+import { NavBar as MobileNavBar, Drawer as MobileDrawer, List as MobileList } from 'antd-mobile';
 import PopoutLink from '../../PopoutLink';
 
 const { Header } = Layout;
@@ -14,6 +16,52 @@ const { Header } = Layout;
 function DashboardNav(props) {
   const { session } = props;
   const userHasActiveSubscription = session && session.hasValidSubscription;
+
+  const [shouldShowMobileMenu, setShouldShowMobileMenu] = useState(false);
+
+  if(isMobile) {
+    const toggleMenu = () => setShouldShowMobileMenu(!shouldShowMobileMenu);
+
+    return (
+      <div>
+        <MobileNavBar
+          leftContent="Menu"
+          mode="dark"
+          onLeftClick={toggleMenu}
+        >
+          CanvasCBL{userHasActiveSubscription && '+'}
+        </MobileNavBar>
+        <MobileDrawer
+          className="mobile-drawer"
+          style={{ minHeight: document.documentElement.clientHeight }}
+          enableDragHandle
+          contentStyle={{ paddingTop: 12, paddingLeft: 18 }}
+          sidebar={<MobileList>
+            <MobileList.Item onClick={toggleMenu} key="/dashboard/profile">
+              <Link to="/dashboard/profile">Profile</Link>
+            </MobileList.Item>
+            <MobileList.Item onClick={toggleMenu} key="/dashboard/grades">
+              <Link to="/dashboard/grades">Grades</Link>
+            </MobileList.Item>
+            <MobileList.Item onClick={toggleMenu} key="/dashboard/upgrades">
+              <Link to="/dashboard/upgrades">Upgrades</Link>
+            </MobileList.Item>
+            <MobileList.Item />
+            <MobileList.Item onClick={toggleMenu} key="contactSupport">
+              <PopoutLink url={"mailto:sam@canvascbl.com?subject=CanvasCBL%20Question%20or%20Comment"}>
+                Contact Support
+              </PopoutLink>
+            </MobileList.Item>
+              <MobileList.Item onClick={toggleMenu} key="/dashboard/logout">
+              <Link to="/dashboard/logout">Logout</Link>
+            </MobileList.Item>
+          </MobileList>}
+          open={shouldShowMobileMenu}
+          onOpenChange={toggleMenu}
+        >{props.children}</MobileDrawer>
+      </div>
+    )
+  }
 
   return (
     <Header>

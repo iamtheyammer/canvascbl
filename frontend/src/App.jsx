@@ -5,8 +5,6 @@ import * as ReactGA from 'react-ga';
 
 import { gotStoredCredentials } from './actions/canvas';
 
-import 'antd/dist/antd.css';
-
 import ConnectedHome from './components/Home';
 import ConnectedTokenEntry from './components/TokenEntry';
 import ConnectedOAuth2Response from './components/OAuth2Response';

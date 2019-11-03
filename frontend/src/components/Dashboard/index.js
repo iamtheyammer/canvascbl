@@ -4,6 +4,7 @@ import { Switch, Route, Redirect, Link } from 'react-router-dom';
 import * as ReactGA from 'react-ga';
 import v4 from 'uuid/v4';
 import { useCookies } from 'react-cookie';
+import { isMobile } from 'react-device-detect';
 
 import {
   Layout,
@@ -14,6 +15,8 @@ import {
   Modal,
   Icon
 } from 'antd';
+
+import { NoticeBar as MobileNoticeBar } from 'antd-mobile';
 
 import DashboardNav from './DashboardNav';
 import ConnectedUserProfile from './UserProfile';
@@ -26,6 +29,7 @@ import env from '../../util/env';
 import { getUser, logout } from '../../actions/canvas';
 import ConnectedErrorModal from './ErrorModal';
 import { getSessionInformation } from '../../actions/plus';
+import './index.css';
 
 const { Content, Footer } = Layout;
 
@@ -121,8 +125,61 @@ function Dashboard(props) {
     return null;
   }
 
+  const routes = (
+    <Switch>
+      <Route
+        exact
+        path="/dashboard"
+        render={() => <Redirect to="/dashboard/grades" />}
+      />
+      <Route exact path="/dashboard/profile" component={ConnectedUserProfile} />
+      <Route exact path="/dashboard/grades" component={ConnectedGrades} />
+      <Route
+        exact
+        path="/dashboard/grades/:courseId"
+        component={ConnectedGradeBreakdown}
+      />
+      <Route exact path="/dashboard/upgrades" component={ConnectedUpgrades} />
+      <Route exact path="/dashboard/logout" component={ConnectedLogout} />
+      <Route render={() => <Redirect to="/dashboard" />} />
+    </Switch>
+  );
+
+  if (isMobile) {
+    return (
+      <DashboardNav>
+        <MobileNoticeBar
+          mode="closable"
+          marqueeProps={{
+            loop: true
+          }}
+          icon={null}
+          style={{
+            marginBottom: '8px',
+            marginRight: '8px'
+          }}
+        >
+          Thanks for trying the mobile beta! Some pages may still not display
+          correctly as we're redoing every page for mobile.
+        </MobileNoticeBar>
+        <div
+          style={{
+            background: '#ffffff',
+            padding: '8px 4px 12px 16px',
+            marginRight: '8px',
+            minHeight: 280
+          }}
+        >
+          {!loading.includes(getUserId) || !loading.includes(getSessionId)
+            ? routes
+            : loading}
+        </div>
+      </DashboardNav>
+    );
+  }
+
   return (
-    <Layout className="layout">
+    <Layout className="layout dashboard">
       <DashboardNav />
       <Content style={{ padding: '0 50px' }}>
         <Breadcrumb style={{ marginTop: 12 }}>{breadcrumbItems}</Breadcrumb>
@@ -135,39 +192,7 @@ function Dashboard(props) {
           }}
         >
           {!loading.includes(getUserId) || !loading.includes(getSessionId) ? (
-            <Switch>
-              <Route
-                exact
-                path="/dashboard"
-                render={() => <Redirect to="/dashboard/grades" />}
-              />
-              <Route
-                exact
-                path="/dashboard/profile"
-                component={ConnectedUserProfile}
-              />
-              <Route
-                exact
-                path="/dashboard/grades"
-                component={ConnectedGrades}
-              />
-              <Route
-                exact
-                path="/dashboard/grades/:courseId"
-                component={ConnectedGradeBreakdown}
-              />
-              <Route
-                exact
-                path="/dashboard/upgrades"
-                component={ConnectedUpgrades}
-              />
-              <Route
-                exact
-                path="/dashboard/logout"
-                component={ConnectedLogout}
-              />
-              <Route render={() => <Redirect to="/dashboard" />} />
-            </Switch>
+            routes
           ) : (
             <div align="center">
               <Spin />

@@ -7,6 +7,12 @@ import banner from '../../assets/banner.svg';
 import toc from '../../util/getTermsAndConditions';
 
 import { Card, Typography, Button, Checkbox, Modal } from 'antd';
+import {
+  Checkbox as MobileCheckbox,
+  Modal as MobileModal,
+  Button as MobileButton
+} from 'antd-mobile';
+import { isMobile } from 'react-device-detect';
 import getUrlPrefix from '../../util/getUrlPrefix';
 import PopoutLink from '../PopoutLink';
 import env from '../../util/env';
@@ -16,6 +22,48 @@ function Home(props) {
 
   if (props.token) {
     return <Redirect to="/dashboard" />;
+  }
+
+  if (isMobile) {
+    return (
+      <div
+        style={{
+          textAlign: 'center',
+          margin: '10px 5px 10px 5px',
+          backgroundColor: '#ffffff'
+        }}
+      >
+        <img src={banner} alt={'banner'} />
+        <Typography.Title level={2}>Welcome!</Typography.Title>
+        <Typography.Text>
+          This tool calculates grades based on outcomes in Canvas. To use it,
+          please accept the Terms and Conditions, then log in with Canvas.
+        </Typography.Text>
+        <MobileCheckbox.AgreeItem
+          onChange={e => setEnableSignin(e.target.checked)}
+        >
+          I accept the{' '}
+          <PopoutLink url={env.privacyPolicyUrl}>privacy policy</PopoutLink> and{' '}
+          <a
+            href="#"
+            onClick={() => {
+              MobileModal.alert('Terms and Conditions', toc, [{ text: 'OK' }]);
+            }}
+          >
+            terms and conditions
+          </a>
+        </MobileCheckbox.AgreeItem>
+        <MobileButton
+          type="primary"
+          disabled={!enableSignin}
+          onClick={() =>
+            (window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request`)
+          }
+        >
+          Sign in with Canvas
+        </MobileButton>
+      </div>
+    );
   }
 
   return (

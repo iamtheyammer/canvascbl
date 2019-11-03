@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import v4 from 'uuid/v4';
 
 import { Typography, Table, Icon, Spin, Tag, Skeleton, Popover } from 'antd';
+import { Accordion as MobileAccordion, List as MobileList } from 'antd-mobile';
 
 import {
   getUserCourses,
@@ -22,6 +23,50 @@ import { desc } from '../../../util/stringSorter';
 import PopoutLink from '../../PopoutLink';
 import { getPreviousGrades } from '../../../actions/plus';
 import moment from 'moment';
+import { isMobile } from 'react-device-detect';
+
+function PreviousGrade(props) {
+  const { userHasValidSubscription, grade, previousGrade } = props;
+
+  if (!userHasValidSubscription) {
+    return (
+      <Popover
+        title="CanvasCBL+ Required"
+        content="CanvasCBL+ is required to use this feature. Go to the Upgrades page to upgrade!"
+      >
+        <Icon component={plusIcon} /> Required
+      </Popover>
+    );
+  }
+
+  if (previousGrade === undefined) return <Tag>Unavailable</Tag>;
+
+  if (previousGrade === 'loading') {
+    return <Skeleton paragraph={false} active title={{ width: '50%' }} />;
+  }
+
+  const prevGrade = gradeMapByGrade[previousGrade.grade];
+  const currentGrade = gradeMapByGrade[grade];
+  if (!prevGrade || !currentGrade) return <Tag>Unavailable</Tag>;
+
+  let color = '';
+
+  // old is better than new
+  if (prevGrade.rank > currentGrade.rank) {
+    color = 'volcano';
+  } else if (prevGrade.rank < currentGrade.rank) {
+    color = 'green';
+  }
+
+  return (
+    <Popover
+      title={`Previous Grade: ${previousGrade.grade}`}
+      content={`From: ${moment.unix(previousGrade.insertedAt).calendar()}`}
+    >
+      <Tag color={color}>{previousGrade.grade}</Tag>
+    </Popover>
+  );
+}
 
 const tableColumns = [
   {
@@ -54,48 +99,13 @@ const tableColumns = [
     ),
     dataIndex: 'averageGrade',
     key: 'averageGrade',
-    render: (text, record) => {
-      if (!record.userHasValidSubscription) {
-        return (
-          <Popover
-            title="CanvasCBL+ Required"
-            content="CanvasCBL+ is required to use this feature. Go to the Upgrades page to upgrade!"
-          >
-            <Icon component={plusIcon} /> Required
-          </Popover>
-        );
-      }
-
-      if (record.previousGrade === undefined) return <Tag>Unavailable</Tag>;
-
-      if (record.previousGrade === 'loading') {
-        return <Skeleton paragraph={false} active title={{ width: '50%' }} />;
-      }
-
-      const prevGrade = gradeMapByGrade[record.previousGrade.grade];
-      const currentGrade = gradeMapByGrade[record.grade];
-      if (!prevGrade || !currentGrade) return <Tag>Unavailable</Tag>;
-
-      let color = '';
-
-      // old is better than new
-      if (prevGrade.rank > currentGrade.rank) {
-        color = 'volcano';
-      } else if (prevGrade.rank < currentGrade.rank) {
-        color = 'green';
-      }
-
-      return (
-        <Popover
-          title={`Previous Grade: ${record.previousGrade.grade}`}
-          content={`From: ${moment
-            .unix(record.previousGrade.insertedAt)
-            .calendar()}`}
-        >
-          <Tag color={color}>{record.previousGrade.grade}</Tag>
-        </Popover>
-      );
-    }
+    render: (text, record) => (
+      <PreviousGrade
+        userHasValidSubscription={record.userHasValidSubscription}
+        grade={record.grade}
+        previousGrade={record.previousGrade}
+      />
+    )
   },
   {
     title: 'Actions',
@@ -241,6 +251,52 @@ function Grades(props) {
         plus.previousGrades.filter(pg => pg.courseId === c.id)[0] &&
         plus.previousGrades.filter(pg => pg.courseId === c.id)[0]
   }));
+
+  if (isMobile) {
+    return (
+      <div>
+        <Typography.Title level={2}>Grades</Typography.Title>
+        <MobileAccordion>
+          {data.map(d => (
+            <MobileAccordion.Panel
+              key={d.key}
+              style={{ padding: '5px' }}
+              header={
+                <MobileList.Item extra={d.grade}>{d.name}</MobileList.Item>
+              }
+            >
+              <MobileList>
+                {d.grade !== 'N/A' && !d.grade.toLowerCase().includes('error') && (
+                  <MobileList.Item>
+                    <Link to={`/dashboard/grades/${d.id}`}>See Breakdown</Link>
+                  </MobileList.Item>
+                )}
+                <MobileList.Item>
+                  <PopoutLink
+                    url={`https://${subdomain ||
+                      'canvas'}.instructure.com/courses/${d.id}`}
+                  >
+                    Open on Canvas <Icon component={PopOutIcon} />
+                  </PopoutLink>
+                </MobileList.Item>
+                <MobileList.Item
+                  extra={
+                    <PreviousGrade
+                      userHasValidSubscription={d.userHasValidSubscription}
+                      grade={d.grade}
+                      previousGrade={d.previousGrade}
+                    />
+                  }
+                >
+                  Previous Grade
+                </MobileList.Item>
+              </MobileList>
+            </MobileAccordion.Panel>
+          ))}
+        </MobileAccordion>
+      </div>
+    );
+  }
 
   return (
     <div>

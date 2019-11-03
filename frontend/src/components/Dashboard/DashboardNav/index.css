@@ -15,3 +15,18 @@
     margin: 13px 18px 0 0;
     float: left;
 }
+
+.mobile-drawer {
+    position: relative;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.mobile-drawer .am-drawer-sidebar {
+    background-color: #fff;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.mobile-drawer .am-drawer-sidebar .am-list {
+    width: 300px;
+    padding: 0;
+}

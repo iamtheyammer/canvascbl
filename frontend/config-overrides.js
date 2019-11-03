@@ -1,10 +1,13 @@
-const { override, fixBabelImports } = require('customize-cra');
+const { override, fixBabelImports } = require("customize-cra");
 
-module.exports = (config, env) => {
-  override(fixBabelImports('import', {
-    libraryName: 'antd',
-    libraryDirectory: 'es',
-    style: 'css'
-  }));
-  return config;
-};
+module.exports = override(
+  fixBabelImports("import", {
+    libraryName: "antd",
+    libraryDirectory: "es",
+    style: "css"
+  }),
+  fixBabelImports("import-mobile", {
+    libraryName: "antd-mobile",
+    style: "css"
+  })
+);
