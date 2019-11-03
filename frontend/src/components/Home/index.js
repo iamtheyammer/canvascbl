@@ -44,6 +44,7 @@ function Home(props) {
         >
           I accept the{' '}
           <PopoutLink url={env.privacyPolicyUrl}>privacy policy</PopoutLink> and{' '}
+          {/* eslint-disable-next-line */}
           <a
             href="#"
             onClick={() => {
