@@ -8,12 +8,9 @@ import (
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
-	"regexp"
 	"strings"
 	"time"
 )
-
-var cookieNoSameSiteRegex = regexp.MustCompile("(^.*iPhone; CPU iPhone OS 1[0-2].*$|^.*iPad; CPU OS 1[0-2].*$|^.*iPod touch; CPU iPhone OS 1[0-2].*$|^.*Macintosh; Intel Mac OS X.*Version\\/1[0-2].*Safari.*$)")
 
 func GetOwnUserProfileHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	ok, rd := util.GetRequestDetailsFromRequest(r)
@@ -40,33 +37,21 @@ func GetOwnUserProfileHandler(w http.ResponseWriter, r *http.Request, _ httprout
 		w.Header().Set("X-Session-String", *ss)
 
 		secure := true
+		sameSite := http.SameSiteStrictMode
 
 		if env.Env == env.EnvironmentDevelopment {
 			secure = false
+			sameSite = http.SameSiteNoneMode
 		}
 
 		c := http.Cookie{
-			Name:  "session_string",
-			Value: *ss,
-			Path:  "/",
-			// chrome will only deliver cross-site cookies if this is secure in production-- but it won't work in
-			// local environments, so we set this depending on the environment (false in dev, otherwise true)
-			// see: https://www.chromestatus.com/feature/5088147346030592, https://web.dev/samesite-cookies-explained/
-			Secure: secure,
-			// chrome will only deliver cross-site cookies if this is set to none
-			// 2 weeks
-			Expires: time.Now().Add(time.Hour * 312),
+			Name:     "session_string",
+			Value:    *ss,
+			Path:     "/",
+			SameSite: sameSite,
+			Secure:   secure,
+			Expires:  time.Now().Add(time.Hour * 312),
 		}
-
-		// this ugly workaround is for a Safari 12 bug that causes SameSite=None cookies to be treated as
-		// SameSite=Strict cookies. Chrome, however, will only deliver cookies cross-origin if SameSite=None,
-		// so this makes it so that incompatible Safari installations don't get the cookie but everyone else
-		// does.
-		// see: https://bugs.webkit.org/show_bug.cgi?id=198181
-		if !cookieNoSameSiteRegex.MatchString(r.Header.Get("User-Agent")) {
-			c.SameSite = http.SameSiteNoneMode
-		}
-
 		http.SetCookie(w, &c)
 	}
 
