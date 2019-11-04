@@ -165,9 +165,9 @@ function Dashboard(props) {
         <div
           style={{
             background: '#ffffff',
-            padding: '8px 4px 12px 16px',
+            padding: '8px 8px 12px 8px',
             marginRight: '8px',
-            minHeight: 280
+            height: 'auto'
           }}
         >
           {!loading.includes(getUserId) || !loading.includes(getSessionId)

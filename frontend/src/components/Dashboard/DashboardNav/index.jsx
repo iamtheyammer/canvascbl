@@ -34,8 +34,7 @@ function DashboardNav(props) {
         <MobileDrawer
           className="mobile-drawer"
           style={{ minHeight: document.documentElement.clientHeight }}
-          enableDragHandle
-          contentStyle={{ paddingTop: 12, paddingLeft: 18 }}
+          contentStyle={{ paddingTop: 12, paddingLeft: 8, paddingRight: 4 }}
           sidebar={
             <MobileList>
               <MobileList.Item onClick={toggleMenu} key="/dashboard/profile">

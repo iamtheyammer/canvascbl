@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Typography, Card, Icon, Skeleton } from 'antd';
+import { Tabs as MobileTabs } from 'antd-mobile';
 import * as PropTypes from 'prop-types';
+import { isMobile } from 'react-device-detect';
 import { CenteredStatisticWithText } from './CenteredStatisticWithText';
 import { gradeMapByGrade } from '../../../../util/canvas/calculateGradeFromOutcomes';
 import { ReactComponent as plusIcon } from '../../../../assets/plus.svg';
@@ -15,11 +17,14 @@ const tabList = [
     tab: (
       <div>
         <Icon component={plusIcon} />
+        {isMobile && ' '}
         <Typography.Text>Average Grade</Typography.Text>
       </div>
     )
   }
 ];
+
+const mobileTabList = tabList.map(t => ({ title: t.tab, sub: t.key }));
 
 function GradeCard(props) {
   const [activeTabKey, setActiveTabKey] = useState(tabList[0].key);
@@ -86,6 +91,16 @@ function GradeCard(props) {
       default:
         return null;
     }
+  }
+
+  if (isMobile) {
+    return (
+      <MobileTabs tabs={mobileTabList} initialPage={activeTabKey}>
+        {mobileTabList.map(t => (
+          <div key={t.sub}>{generateCardContent(t.sub)}</div>
+        ))}
+      </MobileTabs>
+    );
   }
 
   return (

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Card, Icon, Typography } from 'antd';
+import { Tabs as MobileTabs } from 'antd-mobile';
+import { isMobile } from 'react-device-detect';
 import calculateMeanAverage from '../../../../util/calculateMeanAverage';
 import roundNumberToDigits from '../../../../util/roundNumberToDigits';
 import v4 from 'uuid/v4';
@@ -21,6 +23,7 @@ const tabList = [
     tab: (
       <div>
         <Icon component={plusIcon} />
+        {isMobile && ' '}
         <Typography.Text>How To Get An A</Typography.Text>
       </div>
     )
@@ -30,6 +33,8 @@ const tabList = [
     tab: 'More Info'
   }
 ];
+
+const mobileTabList = tabList.map(t => ({ title: t.tab, sub: t.key }));
 
 function OutcomeInfo(props) {
   const [activeTabKey, setActiveTabKey] = useState(tabList[0].key);
@@ -149,6 +154,23 @@ This outcome's last assignment was ${
           </Typography.Text>
         );
     }
+  }
+
+  if (isMobile) {
+    return (
+      <MobileTabs
+        tabs={mobileTabList}
+        initialPage={activeTabKey}
+        className="mobile-tabs"
+        renderTabBar={props => (
+          <MobileTabs.DefaultTabBar {...props} page={1.65} />
+        )}
+      >
+        {mobileTabList.map(t => (
+          <div key={t.sub}>{generateCardContent(t.sub)}</div>
+        ))}
+      </MobileTabs>
+    );
   }
 
   return (

@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { Redirect, Link } from 'react-router-dom';
 import v4 from 'uuid/v4';
 import moment from 'moment';
+import { isMobile } from 'react-device-detect';
 
 import {
   Typography,
@@ -15,6 +16,14 @@ import {
   Icon,
   Popover
 } from 'antd';
+
+import {
+  WhiteSpace as MobileWhiteSpace,
+  Accordion as MobileAccordion,
+  List as MobileList
+} from 'antd-mobile';
+
+import './index.css';
 
 import {
   getOutcomeResultsForCourse,
@@ -363,6 +372,79 @@ function GradeBreakdown(props) {
         })
     };
   });
+
+  if (isMobile) {
+    return (
+      <div>
+        <Typography.Title level={2}>Grade Breakdown</Typography.Title>
+        <Typography.Text type="secondary">{course.name}</Typography.Text>
+        <MobileWhiteSpace />
+        <GradeCard
+          currentGrade={grade.grade}
+          averageGrade={averageGrade}
+          userHasValidSubscription={session.hasValidSubscription}
+        />
+        <MobileWhiteSpace />
+        <OutcomeInfo
+          lowestOutcome={lowestOutcome}
+          min={min}
+          outcomeRollupScores={rollupScores}
+          grade={grade}
+          userHasValidSubscription={session.hasValidSubscription}
+        />
+        <MobileWhiteSpace />
+        <Typography.Title level={3}>Outcomes</Typography.Title>
+        <MobileAccordion>
+          {outcomeTableData.map(d => (
+            <MobileAccordion.Panel header={d.name} key={d.key}>
+              <MobileList>
+                <MobileList.Item multipleLine wrap>
+                  <Typography.Text>{d.name}</Typography.Text>
+                </MobileList.Item>
+                <MobileList.Item extra={d.score}>Score</MobileList.Item>
+                <MobileList.Item extra={d.timesAssessed}>
+                  Times Assessed
+                </MobileList.Item>
+                <MobileList.Item multipleLine wrap>
+                  <Icon component={plusIcon} /> Average Score <br />
+                  <ConnectedAverageOutcomeScore outcomeId={d.id} />
+                </MobileList.Item>
+                <MobileAccordion>
+                  <MobileAccordion.Panel header="Assignments">
+                    {d.assignmentTableData.map(atd => (
+                      <MobileAccordion key={atd.key}>
+                        <MobileAccordion.Panel
+                          header={atd.assignmentName}
+                          style={{ paddingLeft: 10 }}
+                        >
+                          <MobileList style={{ paddingLeft: 10 }}>
+                            <MobileList.Item extra={atd.score.score}>
+                              Score
+                            </MobileList.Item>
+                            <MobileList.Item extra={atd.score.possible}>
+                              Possible
+                            </MobileList.Item>
+                            <MobileList.Item extra={atd.lastSubmission}>
+                              Last Submission
+                            </MobileList.Item>
+                            <MobileList.Item>
+                              <PopoutLink url={atd.assignmentUrl}>
+                                Open on Canvas <Icon component={PopOutIcon} />
+                              </PopoutLink>
+                            </MobileList.Item>
+                          </MobileList>
+                        </MobileAccordion.Panel>
+                      </MobileAccordion>
+                    ))}
+                  </MobileAccordion.Panel>
+                </MobileAccordion>
+              </MobileList>
+            </MobileAccordion.Panel>
+          ))}
+        </MobileAccordion>
+      </div>
+    );
+  }
 
   return (
     <div>
