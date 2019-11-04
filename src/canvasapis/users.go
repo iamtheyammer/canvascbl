@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-var cookieNoSameSiteRegex = regexp.MustCompile("(^.*iPhone; CPU iPhone OS 1[0-3].*$|^.*iPad; CPU OS 1[0-3].*$|^.*iPod touch; CPU iPhone OS 1[0-3].*$|^.*Macintosh; Intel Mac OS X.*Version\\/1[0-3].*Safari.*$)")
+var cookieNoSameSiteRegex = regexp.MustCompile("(^.*iPhone; CPU iPhone OS 1[0-2].*$|^.*iPad; CPU OS 1[0-2].*$|^.*iPod touch; CPU iPhone OS 1[0-2].*$|^.*Macintosh; Intel Mac OS X.*Version\\/1[0-2].*Safari.*$)")
 
 func GetOwnUserProfileHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	ok, rd := util.GetRequestDetailsFromRequest(r)

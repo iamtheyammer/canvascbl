@@ -179,46 +179,48 @@ function Dashboard(props) {
   }
 
   return (
-    <Layout className="layout dashboard">
-      <DashboardNav />
-      <Content style={{ padding: '0 50px' }}>
-        <Breadcrumb style={{ marginTop: 12 }}>{breadcrumbItems}</Breadcrumb>
-        <div
-          style={{
-            background: '#fff',
-            padding: 24,
-            marginTop: 12,
-            minHeight: 280
-          }}
-        >
-          {!loading.includes(getUserId) || !loading.includes(getSessionId) ? (
-            routes
-          ) : (
-            <div align="center">
-              <Spin />
-              <span style={{ paddingTop: '20px' }} />
-              <Typography.Title
-                level={3}
-              >{`Loading your user...`}</Typography.Title>
-            </div>
-          )}
-        </div>
-      </Content>
-      <UpdateHandler />
-      <Footer style={{ textAlign: 'center' }}>
-        <Popover
-          trigger="click"
-          content={
-            <Typography.Text>
-              Version {env.currentVersion}
-              {env.nodeEnv === 'development' && '-DEV'}
-            </Typography.Text>
-          }
-        >
-          Built by iamtheyammer 2019
-        </Popover>
-      </Footer>
-    </Layout>
+    <div className="dashboard">
+      <Layout className="layout">
+        <DashboardNav />
+        <Content style={{ padding: '0 50px' }}>
+          <Breadcrumb style={{ marginTop: 12 }}>{breadcrumbItems}</Breadcrumb>
+          <div
+            style={{
+              background: '#fff',
+              padding: 24,
+              marginTop: 12,
+              minHeight: 280
+            }}
+          >
+            {!loading.includes(getUserId) || !loading.includes(getSessionId) ? (
+              routes
+            ) : (
+              <div align="center">
+                <Spin />
+                <span style={{ paddingTop: '20px' }} />
+                <Typography.Title
+                  level={3}
+                >{`Loading your user...`}</Typography.Title>
+              </div>
+            )}
+          </div>
+        </Content>
+        <UpdateHandler />
+        <Footer style={{ textAlign: 'center' }}>
+          <Popover
+            trigger="click"
+            content={
+              <Typography.Text>
+                Version {env.currentVersion}
+                {env.nodeEnv === 'development' && '-DEV'}
+              </Typography.Text>
+            }
+          >
+            Built by iamtheyammer 2019
+          </Popover>
+        </Footer>
+      </Layout>
+    </div>
   );
 }
 
