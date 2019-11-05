@@ -11,7 +11,8 @@ import { Layout, Menu, Typography } from 'antd';
 import {
   NavBar as MobileNavBar,
   Drawer as MobileDrawer,
-  List as MobileList
+  List as MobileList,
+  Icon as MobileIcon
 } from 'antd-mobile';
 import PopoutLink from '../../PopoutLink';
 
@@ -28,7 +29,11 @@ function DashboardNav(props) {
 
     return (
       <div>
-        <MobileNavBar leftContent="Menu" mode="dark" onLeftClick={toggleMenu}>
+        <MobileNavBar
+          leftContent={<MobileIcon type="ellipsis" />}
+          mode="dark"
+          onLeftClick={toggleMenu}
+        >
           CanvasCBL{userHasActiveSubscription && '+'}
         </MobileNavBar>
         <MobileDrawer

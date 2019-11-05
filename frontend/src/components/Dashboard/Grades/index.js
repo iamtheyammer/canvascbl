@@ -24,6 +24,7 @@ import PopoutLink from '../../PopoutLink';
 import { getPreviousGrades } from '../../../actions/plus';
 import moment from 'moment';
 import { isMobile } from 'react-device-detect';
+import truncate from 'truncate';
 
 function PreviousGrade(props) {
   const { userHasValidSubscription, grade, previousGrade } = props;
@@ -260,12 +261,17 @@ function Grades(props) {
           {data.map(d => (
             <MobileAccordion.Panel
               key={d.key}
-              style={{ padding: '5px' }}
+              style={{ padding: '5px 5px 5px 0px' }}
               header={
-                <MobileList.Item extra={d.grade}>{d.name}</MobileList.Item>
+                <div style={{ paddingRight: '6px' }}>
+                  <div style={{ float: 'left', overflow: 'hidden' }}>
+                    {truncate(d.name, 25)}
+                  </div>
+                  <div style={{ float: 'right' }}>{d.grade}</div>
+                </div>
               }
             >
-              <MobileList>
+              <MobileList style={{ paddingLeft: '6px' }}>
                 {d.grade !== 'N/A' && !d.grade.toLowerCase().includes('error') && (
                   <MobileList.Item>
                     <Link to={`/dashboard/grades/${d.id}`}>See Breakdown</Link>
