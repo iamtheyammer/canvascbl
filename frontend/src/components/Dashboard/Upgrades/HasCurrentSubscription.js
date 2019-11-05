@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import v4 from 'uuid/v4';
+import { isMobile } from 'react-device-detect';
 
 import { Typography, Descriptions, Spin, Popconfirm, Button } from 'antd';
+import { Button as MobileButton } from 'antd-mobile';
 import {
   cancelSubscription,
   getSubscriptions
@@ -100,9 +102,15 @@ function HasCurrentSubscription(props) {
           placement="top"
           onConfirm={handleCancel}
         >
-          <Button loading={cancelSubscriptionIsLoading} type="danger">
-            Cancel your CanvasCBL+ Subscription
-          </Button>
+          {isMobile ? (
+            <MobileButton loading={cancelSubscriptionIsLoading} type="warning">
+              Cancel Your Subscription
+            </MobileButton>
+          ) : (
+            <Button loading={cancelSubscriptionIsLoading} type="danger">
+              Cancel your CanvasCBL+ Subscription
+            </Button>
+          )}
         </Popconfirm>
       ) : (
         <Typography.Text>Successfully canceled.</Typography.Text>
