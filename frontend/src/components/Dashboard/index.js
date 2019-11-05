@@ -16,8 +16,6 @@ import {
   Icon
 } from 'antd';
 
-import { NoticeBar as MobileNoticeBar } from 'antd-mobile';
-
 import DashboardNav from './DashboardNav';
 import ConnectedUserProfile from './UserProfile';
 import ConnectedGrades from './Grades';
@@ -148,20 +146,6 @@ function Dashboard(props) {
   if (isMobile) {
     return (
       <DashboardNav>
-        <MobileNoticeBar
-          mode="closable"
-          marqueeProps={{
-            loop: true
-          }}
-          icon={null}
-          style={{
-            marginBottom: '8px',
-            marginRight: '8px'
-          }}
-        >
-          Thanks for trying the mobile beta! Some pages may still not display
-          correctly as we're redoing every page for mobile.
-        </MobileNoticeBar>
         <div
           style={{
             background: '#ffffff',
