@@ -2,7 +2,9 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { parse } from 'qs';
 import { Redirect } from 'react-router-dom';
+import { isMobile } from 'react-device-detect';
 import { notification } from 'antd';
+import { Toast as MobileToast } from 'antd-mobile';
 
 import { gotUserOAuth } from '../../actions/canvas';
 import env from '../../util/env';
@@ -40,12 +42,18 @@ function OAuth2Response(props) {
   // set the version to current since it's a new user
   localStorage.prevVersion = env.currentVersion;
 
-  notification.success({
-    message: 'Success!',
-    description: `Welcome, ${
-      canvasResponse.user.name.split(' ')[0]
-    }! You've successfully logged in with Canvas.`
-  });
+  const notificationMessage = `Welcome, ${
+    canvasResponse.user.name.split(' ')[0]
+  }! You've successfully logged in with Canvas.`;
+
+  if (isMobile) {
+    MobileToast.success(notificationMessage);
+  } else {
+    notification.success({
+      message: 'Success!',
+      description: notificationMessage
+    });
+  }
 
   return <Redirect to="/dashboard" />;
 }
