@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { HashRouter as Router, Route, Switch, Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import * as ReactGA from 'react-ga';
+import { isMobile } from 'react-device-detect';
 
 import { gotStoredCredentials } from './actions/canvas';
 
@@ -32,6 +33,11 @@ function App(props) {
   ReactGA.initialize(env.googleAnalyticsId);
 
   ReactGA.pageview('/');
+
+  if (!isMobile) {
+    document.body.classList.add('background');
+  }
+
   return (
     <Router>
       <Switch>
