@@ -46,5 +46,15 @@
     "type": 1,
     "title": "Added privacy policy to the Dashboard",
     "content": "View it anytime by going to More Actions, then clicking on View Privacy Policy."
+  },
+  {
+    "timestamp": 1572916416069,
+    "type": 1,
+    "title": "Added Extension",
+    "content": "Add CanvasCBL to your Canvas sidebar with the new CanvasCBL chrome extension! Download it from the More Actions menu or by ",
+    "link": {
+      "url": "https://chrome.google.com/webstore/detail/canvascbl-add-in-for-canv/odmbdioejfbelhcknliaihbjckggmmak",
+      "text": "clicking here."
+    }
   }
 ]
