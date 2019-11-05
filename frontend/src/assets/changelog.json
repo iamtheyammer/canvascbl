@@ -56,5 +56,11 @@
       "url": "https://chrome.google.com/webstore/detail/canvascbl-add-in-for-canv/odmbdioejfbelhcknliaihbjckggmmak",
       "text": "clicking here."
     }
+  },
+  {
+    "timestamp": 1572930572774,
+    "type": 1,
+    "title": "Added mobile site",
+    "content": "CanvasCBL has been rebuilt from the ground-up for mobile. Go to CanvasCBL.com on your phone to check it out!"
   }
 ]
