@@ -59,7 +59,9 @@ function DashboardNav(props) {
         )}
         <Menu.SubMenu key="moreActions" title="More Actions">
           <Menu.Item key="installExtension">
-            <PopoutLink url="https://chrome.google.com/webstore/detail/canvascbl-add-in-for-canv/odmbdioejfbelhcknliaihbjckggmmak">Install the Extension</PopoutLink>
+            <PopoutLink url="https://chrome.google.com/webstore/detail/canvascbl-add-in-for-canv/odmbdioejfbelhcknliaihbjckggmmak">
+              Install the Extension
+            </PopoutLink>
           </Menu.Item>
           <Menu.Item key="contactSupport">
             <PopoutLink
