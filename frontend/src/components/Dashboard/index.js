@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { connect } from 'react-redux';
 import { Switch, Route, Redirect, Link } from 'react-router-dom';
 import * as ReactGA from 'react-ga';
@@ -54,6 +54,13 @@ function Dashboard(props) {
   const [getUserId, setGetUserId] = useState();
   const [getSessionId, setGetSessionId] = useState();
 
+  useEffect(() => {
+    ReactGA.pageview(
+      props.location.pathname +
+        (props.location.search.includes('~') ? '' : props.location.search)
+    );
+  }, [props.location]);
+
   // if no token exists, redirect
   if (!localStorage.token) {
     return <Redirect to="/" />;
@@ -61,11 +68,6 @@ function Dashboard(props) {
     // otherwise, wait for token
     return null;
   }
-
-  ReactGA.pageview(
-    props.location.pathname +
-      (props.location.search.includes('~') ? '' : props.location.search)
-  );
 
   const {
     location,
