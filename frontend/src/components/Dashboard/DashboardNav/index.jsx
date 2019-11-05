@@ -29,7 +29,11 @@ function DashboardNav(props) {
 
     return (
       <div>
-        <MobileNavBar leftContent={<MobileIcon type="ellipsis" />} mode="dark" onLeftClick={toggleMenu}>
+        <MobileNavBar
+          leftContent={<MobileIcon type="ellipsis" />}
+          mode="dark"
+          onLeftClick={toggleMenu}
+        >
           CanvasCBL{userHasActiveSubscription && '+'}
         </MobileNavBar>
         <MobileDrawer
