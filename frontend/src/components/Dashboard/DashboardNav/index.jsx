@@ -34,7 +34,9 @@ function DashboardNav(props) {
           mode="dark"
           onLeftClick={toggleMenu}
         >
-          CanvasCBL{userHasActiveSubscription && '+'}
+          <Link to="/dashboard" style={{ color: 'white' }}>
+            CanvasCBL{userHasActiveSubscription && '+'}
+          </Link>
         </MobileNavBar>
         <MobileDrawer
           className="mobile-drawer"
