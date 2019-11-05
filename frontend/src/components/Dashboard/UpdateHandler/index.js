@@ -3,6 +3,7 @@ import { Typography, List, Modal, Avatar } from 'antd';
 
 import changelog from '../../../assets/changelog';
 import env from '../../../util/env';
+import PopoutLink from '../../PopoutLink';
 
 function UpdateHandler() {
   useEffect(() => {
@@ -81,7 +82,16 @@ function UpdateHandler() {
                 <List.Item.Meta
                   avatar={getIconByChangelogType(item.type)}
                   title={item.title}
-                  description={item.content}
+                  description={
+                    <div>
+                      {item.content}
+                      {item.link && (
+                        <PopoutLink url={item.link.url}>
+                          {item.link.text}
+                        </PopoutLink>
+                      )}
+                    </div>
+                  }
                 />
               </List.Item>
             )}
