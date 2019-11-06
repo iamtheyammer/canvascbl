@@ -63,6 +63,16 @@ function DashboardNav(props) {
                   Contact Support
                 </PopoutLink>
               </MobileList.Item>
+              <MobileList.Item onClick={toggleMenu} key="viewPrivacyPolicy">
+                <PopoutLink url={env.privacyPolicyUrl}>
+                  View Privacy Policy
+                </PopoutLink>
+              </MobileList.Item>
+              <MobileList.Item onClick={toggleMenu} key="viewSystemStatus">
+                <PopoutLink url="https://status.canvascbl.com">
+                  View System Status
+                </PopoutLink>
+              </MobileList.Item>
               <MobileList.Item onClick={toggleMenu} key="/dashboard/logout">
                 <Link to="/dashboard/logout">Logout</Link>
               </MobileList.Item>
@@ -132,6 +142,11 @@ function DashboardNav(props) {
               }
             >
               Contact Support
+            </PopoutLink>
+          </Menu.Item>
+          <Menu.Item key="viewSystemStatus">
+            <PopoutLink url="https://status.canvascbl.com">
+              View System Status
             </PopoutLink>
           </Menu.Item>
           <Menu.Item key="viewPrivacyPolicy">
