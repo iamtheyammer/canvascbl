@@ -25,6 +25,11 @@ func GetOwnUserProfileHandler(w http.ResponseWriter, r *http.Request, _ httprout
 		return
 	}
 
+	if resp.StatusCode != http.StatusOK {
+		util.HandleCanvasResponse(w, resp, body)
+		return
+	}
+
 	shouldGenerateSession := strings.ToLower(r.URL.Query().Get("generateSession")) == "true"
 	if shouldGenerateSession {
 		ss, err := db.UpsertProfileAndGenerateSession(&body)
