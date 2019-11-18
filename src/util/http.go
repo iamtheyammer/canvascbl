@@ -31,7 +31,7 @@ func HandleCanvasResponse(w http.ResponseWriter, resp *http.Response, body strin
 func SendCanvasError(w http.ResponseWriter, resp *http.Response, efc string) {
 	w.Header().Set("X-Canvas-Status-Code", fmt.Sprintf("%d", resp.StatusCode))
 
-	if reqURL := resp.Request.URL.String(); !strings.Contains(reqURL, env.OAuth2ClientSecret) {
+	if reqURL := resp.Request.URL.String(); !strings.Contains(reqURL, env.CanvasOAuth2ClientSecret) {
 		w.Header().Set("X-Canvas-URL", reqURL)
 	} else {
 		w.Header().Set("X-Canvas-URL", "omitted")
@@ -49,7 +49,7 @@ func SendCanvasError(w http.ResponseWriter, resp *http.Response, efc string) {
 func SendCanvasSuccess(w http.ResponseWriter, resp *http.Response, body string) {
 	w.Header().Set("X-Canvas-Status-Code", fmt.Sprintf("%d", resp.StatusCode))
 
-	if reqURL := resp.Request.URL.String(); !strings.Contains(reqURL, env.OAuth2ClientSecret) {
+	if reqURL := resp.Request.URL.String(); !strings.Contains(reqURL, env.CanvasOAuth2ClientSecret) {
 		w.Header().Set("X-Canvas-URL", reqURL)
 	} else {
 		w.Header().Set("X-Canvas-URL", "omitted")
@@ -65,12 +65,14 @@ func SendCanvasSuccess(w http.ResponseWriter, resp *http.Response, body string) 
 }
 
 func HandleCanvasOAuth2Response(w http.ResponseWriter, resp *http.Response, body string) {
-	redirectTo, err := url.Parse(env.OAuth2SuccessURI)
+	redirectTo, err := url.Parse(env.CanvasOAuth2SuccessURI)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	q := redirectTo.Query()
+	q.Set("type", "canvas")
+
 	if sc := resp.StatusCode; sc < 200 || sc > 399 {
 		q.Set("error", "proxy_canvas_error")
 		q.Set("error_source", "canvas_proxy")
@@ -85,10 +87,10 @@ func HandleCanvasOAuth2Response(w http.ResponseWriter, resp *http.Response, body
 		}
 	} else {
 		q.Set("canvas_response", body)
-		q.Set("subdomain", env.OAuth2Subdomain)
+		q.Set("subdomain", env.CanvasOAuth2Subdomain)
 	}
 
-	redirectToURLString := fmt.Sprintf("%s?%s", env.OAuth2SuccessURI, q.Encode())
+	redirectToURLString := fmt.Sprintf("%s?%s", env.CanvasOAuth2SuccessURI, q.Encode())
 
 	SendRedirect(
 		w,

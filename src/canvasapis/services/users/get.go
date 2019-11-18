@@ -2,7 +2,7 @@ package users
 
 import (
 	"fmt"
-	"github.com/iamtheyammer/canvascbl/backend/src/canvasapis/services"
+	"github.com/iamtheyammer/canvascbl/backend/src/req"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"net/http"
 )
@@ -13,5 +13,5 @@ func GetSelfProfile(rd *util.RequestDetails) (*http.Response, string, error) {
 		"https://%s.instructure.com/api/v1/users/self/profile",
 		rd.Subdomain,
 	)
-	return services.MakeAuthenticatedGetRequest(url, rd.Token)
+	return req.MakeAuthenticatedGetRequest(url, rd.Token)
 }

@@ -5,6 +5,7 @@ import (
 	"github.com/iamtheyammer/canvascbl/backend/src/canvasapis"
 	"github.com/iamtheyammer/canvascbl/backend/src/checkout"
 	"github.com/iamtheyammer/canvascbl/backend/src/env"
+	"github.com/iamtheyammer/canvascbl/backend/src/googleapis"
 	"github.com/iamtheyammer/canvascbl/backend/src/plus"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
@@ -50,6 +51,9 @@ func getRouter() *httprouter.Router {
 	router.GET("/api/canvas/oauth2/refresh_token", canvasapis.OAuth2RefreshTokenHandler)
 	router.DELETE("/api/canvas/oauth2/token", canvasapis.DeleteOAuth2TokenHandler)
 
+	router.POST("/api/canvas/tokens", canvasapis.InsertCanvasTokenHandler)
+	router.GET("/api/canvas/tokens", canvasapis.GetCanvasTokens)
+
 	router.GET("/api/checkout/session", checkout.CreateCheckoutSessionHandler)
 	router.GET("/api/checkout/products", checkout.ListProductsHandler)
 	router.GET("/api/checkout/subscriptions", checkout.ListSubscriptionsHandler)
@@ -61,6 +65,9 @@ func getRouter() *httprouter.Router {
 	router.GET("/api/plus/courses/:courseID/avg", plus.GetAverageGradeForCourseHandler)
 	router.GET("/api/plus/outcomes/:outcomeID/avg", plus.GetAverageOutcomeScoreHandler)
 	router.GET("/api/plus/grades/previous", plus.GetPreviousGradesHandler)
+
+	router.GET("/api/google/oauth2/request", googleapis.OAuth2RequestHandler)
+	router.GET("/api/google/oauth2/response", googleapis.OAuth2ResponseHandler)
 
 	return router
 }

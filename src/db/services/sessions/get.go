@@ -1,6 +1,7 @@
 package sessions
 
 import (
+	"database/sql"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
@@ -13,6 +14,7 @@ type Session struct {
 	UserID        uint64
 	SessionString string
 	InsertedAt    time.Time
+	GoogleUsersID uint64
 }
 
 type GetRequest struct {
@@ -27,7 +29,7 @@ func List(db services.DB, req *GetRequest) (*Session, error) {
 	}
 
 	q := util.Sq.
-		Select("id", "user_id", "session_string", "inserted_at").
+		Select("id", "user_id", "session_string", "inserted_at", "google_users_id").
 		From("sessions")
 
 	if req.ID > 0 {
@@ -45,10 +47,22 @@ func List(db services.DB, req *GetRequest) (*Session, error) {
 
 	row := db.QueryRow(query, args...)
 
-	var sess Session
-	err = row.Scan(&sess.ID, &sess.UserID, &sess.SessionString, &sess.InsertedAt)
+	var (
+		sess          Session
+		userID        sql.NullInt64
+		googleUsersID sql.NullInt64
+	)
+	err = row.Scan(&sess.ID, &userID, &sess.SessionString, &sess.InsertedAt, &googleUsersID)
 	if err != nil {
 		return nil, errors.Wrap(err, "error scanning session row")
+	}
+
+	if userID.Valid {
+		sess.UserID = uint64(userID.Int64)
+	}
+
+	if googleUsersID.Valid {
+		sess.GoogleUsersID = uint64(googleUsersID.Int64)
 	}
 
 	return &sess, nil

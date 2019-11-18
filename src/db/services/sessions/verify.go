@@ -50,12 +50,13 @@ func Verify(db services.DB, sessionString string) (*VerifiedSession, error) {
 
 	var (
 		vs                 VerifiedSession
+		canvasUserID       sql.NullInt64
 		subscriptionStatus sql.NullString
 	)
 
 	err = row.Scan(
 		&vs.UserID,
-		&vs.CanvasUserID,
+		&canvasUserID,
 		&vs.Email,
 		&vs.HasValidSubscription,
 		&subscriptionStatus,
@@ -66,6 +67,10 @@ func Verify(db services.DB, sessionString string) (*VerifiedSession, error) {
 			return nil, nil
 		}
 		return nil, errors.Wrap(err, "error scanning verify session row sql")
+	}
+
+	if canvasUserID.Valid {
+		vs.CanvasUserID = uint64(canvasUserID.Int64)
 	}
 
 	if subscriptionStatus.Valid {

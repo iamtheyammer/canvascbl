@@ -4,12 +4,10 @@ import (
 	"github.com/iamtheyammer/canvascbl/backend/src/canvasapis/services/users"
 	"github.com/iamtheyammer/canvascbl/backend/src/db"
 	"github.com/iamtheyammer/canvascbl/backend/src/email"
-	"github.com/iamtheyammer/canvascbl/backend/src/env"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"strings"
-	"time"
 )
 
 func GetOwnUserProfileHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -33,26 +31,7 @@ func GetOwnUserProfileHandler(w http.ResponseWriter, r *http.Request, _ httprout
 			return
 		}
 
-		// for API use, possibly (can't hurt!)
-		w.Header().Set("X-Session-String", *ss)
-
-		secure := true
-		sameSite := http.SameSiteStrictMode
-
-		if env.Env == env.EnvironmentDevelopment {
-			secure = false
-			sameSite = http.SameSiteNoneMode
-		}
-
-		c := http.Cookie{
-			Name:     "session_string",
-			Value:    *ss,
-			Path:     "/",
-			SameSite: sameSite,
-			Secure:   secure,
-			Expires:  time.Now().Add(time.Hour * 312),
-		}
-		http.SetCookie(w, &c)
+		util.AddSessionToResponse(w, *ss)
 	}
 
 	util.HandleCanvasResponse(w, resp, body)
