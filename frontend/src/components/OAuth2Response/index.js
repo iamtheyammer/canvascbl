@@ -5,7 +5,7 @@ import { Redirect } from 'react-router-dom';
 import { isMobile } from 'react-device-detect';
 import { notification } from 'antd';
 import { Toast as MobileToast } from 'antd-mobile';
-import { withCookies } from 'react-cookie';
+import { useCookies } from 'react-cookie';
 
 import { gotUserOAuth } from '../../actions/canvas';
 import env from '../../util/env';
@@ -14,6 +14,9 @@ function OAuth2Response(props) {
   const query = parse(
     props.location.search.slice(1, props.location.search.length)
   );
+
+  // eslint-disable-next-line
+  const [cookies, setCookie, removeCookie] = useCookies(['session_string']);
 
   function processCanvasResponse(token, name, refreshToken) {
     props.dispatch(gotUserOAuth(token, refreshToken, query.subdomain));
@@ -77,7 +80,7 @@ function OAuth2Response(props) {
         return <Redirect to={'/'} />;
       }
 
-      this.props.cookies.set('session_string', query.session_string, {
+      setCookie('session_string', query.session_string, {
         path: '/',
         secure: true,
         sameSite: false,
@@ -112,4 +115,4 @@ function OAuth2Response(props) {
 
 const ConnectedOAuth2Response = connect(state => ({}))(OAuth2Response);
 
-export default withCookies(ConnectedOAuth2Response);
+export default ConnectedOAuth2Response;
