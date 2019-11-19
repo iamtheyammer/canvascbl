@@ -3,10 +3,10 @@ import { connect } from 'react-redux';
 import { Redirect } from 'react-router-dom';
 import v4 from 'uuid/v4';
 import { withCookies } from 'react-cookie';
-import { Input, notification, Typography, Button, Card } from 'antd';
+import { Input, Typography, Button, Card } from 'antd';
 
 import env from '../../util/env';
-import { gotUserTokenEntry, sendCanvasToken } from '../../actions/canvas';
+import { sendCanvasToken } from '../../actions/canvas';
 import PopoutLink from '../PopoutLink';
 
 class TokenEntry extends Component {
