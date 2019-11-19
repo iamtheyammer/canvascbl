@@ -77,7 +77,7 @@ function OAuth2Response(props) {
         return <Redirect to={'/'} />;
       }
 
-      this.props.cookies.set(name, query.session_string, {
+      this.props.cookies.set('session_string', query.session_string, {
         path: '/',
         secure: true,
         sameSite: false,
