@@ -9,12 +9,17 @@ import {
   CANVAS_GOT_OUTCOME_RESULTS_FOR_COURSE,
   CANVAS_GOT_OUTCOME_ROLLUPS_AND_OUTCOMES_FOR_COURSE,
   CANVAS_GOT_ASSIGNMENTS_FOR_COURSE,
-  CANVAS_GOT_STORED_CREDENTIALS
+  CANVAS_GOT_STORED_CREDENTIALS,
+  CANVAS_GOT_TOKEN,
+  CANVAS_SENT_TOKEN,
+  CANVAS_DELETED_TOKEN
 } from '../actions/canvas';
 
 export default function canvas(state = {}, action) {
   switch (action.type) {
     case CANVAS_LOGOUT:
+      return {};
+    case CANVAS_DELETED_TOKEN:
       return {};
     case CANVAS_GOT_STORED_CREDENTIALS:
       return {
@@ -44,6 +49,17 @@ export default function canvas(state = {}, action) {
       return {
         ...state,
         token: action.newToken
+      };
+    case CANVAS_SENT_TOKEN:
+      return {
+        ...state,
+        successfullySentToken: true
+      };
+    case CANVAS_GOT_TOKEN:
+      return {
+        ...state,
+        token: action.token,
+        subdomain: action.subdomain
       };
     case CANVAS_GOT_USER_PROFILE:
       return {

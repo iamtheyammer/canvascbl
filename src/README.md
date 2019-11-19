@@ -53,7 +53,17 @@ No query string parameters from Canvas or otherwise, except otherwise noted, are
 
 Sets the `user_ids[]` param to the value of the `userId` param. It should be equal to the ID of the user the token is for. This is required because students only have permission to list their own outcome results, and this endpoint defaults to listing results for all students. Ex: `userId=12345`
 
-### CanvasCBL Plus
+### Tokens
+
+The API supports holding on to tokens. All tokens endpoints require a session.
+
+- `GET` `/api/canvas/tokens` - List your non-expired Tokens
+- `POST` `/api/canvas/tokens` - Add a token
+  - Body (JSON):
+    - `token` - the token to use; the API will check it before adding it-- if these checks fail it will return 400 bad request.
+    - [OPTIONAL] `expiresAt` - unix epoch in seconds; when the token will expire. if the token will never expire set it to null or 0 or just leave it out.
+
+### CanvasCBL+
 
 Contains a set of APIs users need CanvasCBL+ to use. In the future, it will include things like average grades, average outcome scores and more.
 
@@ -82,7 +92,44 @@ Provide it in the X-Session-String header or as a cookie (`session_string`).
 
 The backend supports proxying OAuth2 requests and responses to the frontend.
 
-### OAuth2 Endpoints
+### Google
+
+#### OAuth2 Endpoints
+
+- `GET` `/api/google/oauth2/request` - Redirects to the Google OAuth2 grant page, injecting the Client, scopes and more. A user should be redirected here.
+- `GET` `/api/google/oauth2/response` - OAuth2Callback for google. You shouldn't use this endpoint. This endpoint does a lot. See Successful Query String Params to learn more.
+
+#### Successful Query String Params
+
+The Google OAuth2 Response handler does a lot. It:
+
+- Gets an OAuth2 token for the user
+- Uses said token to pull the user's profile
+- Upserts the profile into `google_users`
+- Generates a session for the user, saves as cookie and is available via `X-Session-String`
+- Determines whether the user has a stored Canvas token
+- Redirects to the OAuth2 Callback environment variable
+
+
+- `type` - `google`
+- `has_token` - `true`|`false` - Whether the user has a stored token. If false, you'll probably want to show a dialog prompting the user to add a token.
+
+Note that, unlike the canvas flow, the token is never sent to the browser. It's held by the server and used when a request is made with a valid session.
+
+#### Error Redirect URI Query String Params
+
+Special query params are present when an error occurs during the OAuth2 response flow.
+
+- `error` - `proxy_google_error` - if the `error` param is present, there was an error in the flow. this will never show up during a successful flow
+- `error_source` - `proxy` | `google` - where the error originated
+  - if `error_source` is `google`
+    - [OPTIONAL] `body` - the URL encoded JSON body from the Google request that failed; pretty much for debugging
+  - if `error_source` is `proxy`
+    - `error_text` - a message you can show to the user about what happened, ex: `domain not allowed`
+
+### Canvas
+
+#### OAuth2 Endpoints
 
 See the two below sections about Redirect URI Query String Params for handling the response data.
 
@@ -95,14 +142,15 @@ See the two below sections about Redirect URI Query String Params for handling t
     - `refresh_token`: your refresh token
 
 
-### Normal (successful) Redirect URI Query String Params
+#### Normal (successful) Redirect URI Query String Params
 
 In the event of a successful grant from Canvas, two query string parameters will be in the URL to the Redirect URI.
 
+- `type` - `canvas`
 - `canvas_response` - contains the JSON payload from the Canvas token grant (examples [here](https://canvas.instructure.com/doc/api/file.oauth_endpoints.html))
 - `subdomain` - the subdomain from the OAuth2 token grant
 
-### Error Redirect URI Query String Params
+#### Error Redirect URI Query String Params
 
 In the event of an OAuth2 error, the user will be redirected to the Redirect URI, however some special query params will be present.
 

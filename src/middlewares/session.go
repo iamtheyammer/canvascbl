@@ -14,7 +14,8 @@ import (
 // If that object is nil, the middleware has sent a response and your route handler should return.
 
 // Session ensures that a session string is present and that the user associated with the
-// session string has a valid subscription.
+// session string has a valid subscription. If it returns nil, that means it has sent
+// a response and your handler should return.
 func Session(w http.ResponseWriter, req *http.Request) *sessions.VerifiedSession {
 	var sessionString string
 

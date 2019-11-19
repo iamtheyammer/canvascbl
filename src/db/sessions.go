@@ -38,7 +38,7 @@ func UpsertProfileAndGenerateSession(pj *string) (*string, error) {
 		return nil, errors.New("error saving profile")
 	}
 
-	ss, err := sessions.Generate(trx, uint64(cpr.ID))
+	ss, err := sessions.Generate(trx, &sessions.GenerateRequest{CanvasUserID: uint64(cpr.ID)})
 	if err != nil {
 		rollbackErr := trx.Rollback()
 		if rollbackErr != nil {
@@ -58,6 +58,24 @@ func UpsertProfileAndGenerateSession(pj *string) (*string, error) {
 	return ss, nil
 }
 
+func GenerateSession(req *sessions.GenerateRequest) (*string, error) {
+	ss, err := sessions.Generate(util.DB, req)
+	if err != nil {
+		return nil, errors.Wrap(err, "error generating session")
+	}
+
+	return ss, nil
+}
+
 func VerifySession(sessionString string) (*sessions.VerifiedSession, error) {
 	return sessions.Verify(util.DB, sessionString)
+}
+
+func UpdateSession(req *sessions.UpdateRequest) error {
+	err := sessions.Update(util.DB, req)
+	if err != nil {
+		return errors.Wrap(err, "error updating session")
+	}
+
+	return nil
 }

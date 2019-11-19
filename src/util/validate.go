@@ -9,6 +9,7 @@ import (
 var lowercaseStringRegex = regexp.MustCompile("[a-z]{1,64}")
 var numberRegex = regexp.MustCompile("[0-9.,]{1,32}")
 var uuidRegex = regexp.MustCompile("([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}){1}")
+var canvasTokenRegex = regexp.MustCompile("[0-9]{1,12}~[A-Za-z0-9]{64}")
 
 // ValidateSubdomain takes a subdomain and ensures it's allowed per the environment variable.
 func ValidateSubdomain(req string) bool {
@@ -47,4 +48,32 @@ func ValidateIncludes(req string) bool {
 
 func ValidateUUIDString(req string) bool {
 	return uuidRegex.FindString(req) == req
+}
+
+// ValidateGoogleHD validates the hd param against env.GoogleOAuth2AllowedHDs.
+func ValidateGoogleHD(req string) bool {
+	whitelist := env.GoogleOAuth2AllowedHDs
+
+	// if an hd exists and all are allowed, ok
+	if len(req) > 0 && whitelist[0] == "*" {
+		return true
+	}
+
+	for _, v := range whitelist {
+		// if no hd exists and that's ok, ok
+		if len(req) < 1 && v == "_" {
+			return true
+		}
+
+		if v == req {
+			return true
+		}
+	}
+
+	// all else false
+	return false
+}
+
+func ValidateCanvasToken(req string) bool {
+	return canvasTokenRegex.FindString(req) == req
 }

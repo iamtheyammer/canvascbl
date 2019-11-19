@@ -14,7 +14,7 @@ var OAuth2AuthURI = getOAuth2AuthURI()
 
 func getOAuth2AuthURI() string {
 	redirectURL := url.URL{
-		Host:   fmt.Sprintf("%s.instructure.com", env.OAuth2Subdomain),
+		Host:   fmt.Sprintf("%s.instructure.com", env.CanvasOAuth2Subdomain),
 		Path:   "/login/oauth2/auth",
 		Scheme: "https",
 	}
@@ -28,10 +28,10 @@ func getOAuth2AuthURI() string {
 	}
 
 	q := redirectURL.Query()
-	q.Set("client_id", env.OAuth2ClientID)
+	q.Set("client_id", env.CanvasOAuth2ClientID)
 	q.Set("response_type", "code")
 	q.Set("purpose", purpose)
-	q.Set("redirect_uri", env.OAuth2RedirectURI)
+	q.Set("redirect_uri", env.CanvasOAuth2RedirectURI)
 	q.Set("scope", util.GetScopesList())
 	redirectURL.RawQuery = q.Encode()
 
@@ -56,7 +56,7 @@ func OAuth2ResponseHandler(w http.ResponseWriter, r *http.Request, _ httprouter.
 			w,
 			fmt.Sprintf(
 				"%s?%s",
-				env.OAuth2SuccessURI,
+				env.CanvasOAuth2SuccessURI,
 				r.URL.Query().Encode(),
 			),
 		)

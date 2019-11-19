@@ -2,7 +2,7 @@ package courses
 
 import (
 	"fmt"
-	"github.com/iamtheyammer/canvascbl/backend/src/canvasapis/services"
+	"github.com/iamtheyammer/canvascbl/backend/src/req"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"net/http"
 )
@@ -13,7 +13,7 @@ func Get(rd *util.RequestDetails) (*http.Response, string, error) {
 		"https://%s.instructure.com/api/v1/courses",
 		rd.Subdomain,
 	)
-	return services.MakeAuthenticatedGetRequest(url, rd.Token)
+	return req.MakeAuthenticatedGetRequest(url, rd.Token)
 }
 
 // GetOutcomesByCourse gets all outcomes for a specific course
@@ -23,7 +23,7 @@ func GetOutcomesByCourse(rd *util.RequestDetails, courseID string) (*http.Respon
 		rd.Subdomain,
 		courseID,
 	)
-	return services.MakeAuthenticatedGetRequest(url, rd.Token)
+	return req.MakeAuthenticatedGetRequest(url, rd.Token)
 }
 
 // GetOutcomesByCourseAndOutcomeGroup gets all outcomes in a course's outcome group
@@ -38,7 +38,7 @@ func GetOutcomesByCourseAndOutcomeGroup(
 		courseID,
 		outcomeGroupID,
 	)
-	return services.MakeAuthenticatedGetRequest(url, rd.Token)
+	return req.MakeAuthenticatedGetRequest(url, rd.Token)
 }
 
 // GetOutcomeResultsByCourse gets outcome results for the specified course
@@ -59,7 +59,7 @@ func GetOutcomeResultsByCourse(
 		url = fmt.Sprintf("%s&include[]=%s", url, include)
 	}
 
-	return services.MakeAuthenticatedGetRequest(url, rd.Token)
+	return req.MakeAuthenticatedGetRequest(url, rd.Token)
 }
 
 // GetOutcomeRollupsByCourse gets outcome rollups for a specific course
@@ -80,7 +80,7 @@ func GetOutcomeRollupsByCourse(
 		url = fmt.Sprintf("%s&include[]=%s", url, include)
 	}
 
-	return services.MakeAuthenticatedGetRequest(url, rd.Token)
+	return req.MakeAuthenticatedGetRequest(url, rd.Token)
 }
 
 // GetAssignmentsByCourse gets all assignments for a specified course
@@ -99,5 +99,5 @@ func GetAssignmentsByCourse(
 		url = fmt.Sprintf("%s&include[]=%s", url, include)
 	}
 
-	return services.MakeAuthenticatedGetRequest(url, rd.Token)
+	return req.MakeAuthenticatedGetRequest(url, rd.Token)
 }

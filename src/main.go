@@ -5,6 +5,7 @@ import (
 	"github.com/iamtheyammer/canvascbl/backend/src/canvasapis"
 	"github.com/iamtheyammer/canvascbl/backend/src/checkout"
 	"github.com/iamtheyammer/canvascbl/backend/src/env"
+	"github.com/iamtheyammer/canvascbl/backend/src/googleapis"
 	"github.com/iamtheyammer/canvascbl/backend/src/plus"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
@@ -50,6 +51,10 @@ func getRouter() *httprouter.Router {
 	router.GET("/api/canvas/oauth2/refresh_token", canvasapis.OAuth2RefreshTokenHandler)
 	router.DELETE("/api/canvas/oauth2/token", canvasapis.DeleteOAuth2TokenHandler)
 
+	router.POST("/api/canvas/tokens", canvasapis.InsertCanvasTokenHandler)
+	router.GET("/api/canvas/tokens", canvasapis.GetCanvasTokensHandler)
+	router.DELETE("/api/canvas/tokens", canvasapis.DeleteCanvasTokenHandler)
+
 	router.GET("/api/checkout/session", checkout.CreateCheckoutSessionHandler)
 	router.GET("/api/checkout/products", checkout.ListProductsHandler)
 	router.GET("/api/checkout/subscriptions", checkout.ListSubscriptionsHandler)
@@ -62,14 +67,20 @@ func getRouter() *httprouter.Router {
 	router.GET("/api/plus/outcomes/:outcomeID/avg", plus.GetAverageOutcomeScoreHandler)
 	router.GET("/api/plus/grades/previous", plus.GetPreviousGradesHandler)
 
+	router.GET("/api/google/oauth2/request", googleapis.OAuth2RequestHandler)
+	router.GET("/api/google/oauth2/response", googleapis.OAuth2ResponseHandler)
+
 	return router
 }
 
 func (_ MiddlewareRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// apply CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", env.ProxyAllowedCORSOrigins)
-	w.Header().Set("Access-Control-Allow-Methods", "GET, DELETE")
-	w.Header().Set("Access-Control-Allow-Headers", "X-Canvas-Token, X-Canvas-Subdomain, X-Session-String")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, "+
+		"X-Canvas-Token, "+
+		"X-Canvas-Subdomain, "+
+		"X-Session-String")
 	w.Header().Set("Access-Control-Expose-Headers", "X-Canvas-Url, X-Canvas-Status-Code")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 

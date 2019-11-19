@@ -9,9 +9,11 @@ import (
 )
 
 type VerifiedSession struct {
+	SessionString string
 	// users.id
 	UserID               uint64
 	CanvasUserID         uint64
+	GoogleUsersID        string
 	Email                string
 	HasValidSubscription bool
 	SubscriptionStatus   string
@@ -27,6 +29,7 @@ func Verify(db services.DB, sessionString string) (*VerifiedSession, error) {
 		Select(
 			"users.id AS user_id",
 			"users.canvas_user_id AS canvas_user_id",
+			"google_users.id AS google_users_id",
 			"users.email AS email",
 			"(CASE WHEN subscriptions.status IN ('active', 'trialing') "+
 				"AND subscriptions.current_period_end > NOW() THEN "+
@@ -37,7 +40,8 @@ func Verify(db services.DB, sessionString string) (*VerifiedSession, error) {
 		).
 		From("subscriptions").
 		RightJoin("users ON subscriptions.user_id = users.id").
-		Join("sessions ON users.canvas_user_id = sessions.canvas_user_id").
+		RightJoin("google_users ON LOWER(users.email) = LOWER(google_users.email)").
+		Join("sessions ON (users.canvas_user_id = sessions.canvas_user_id OR google_users.id = sessions.google_users_id)").
 		Where(sq.Eq{"sessions.session_string": sessionString}).
 		OrderBy("has_valid_subscription DESC").
 		Limit(1).
@@ -49,14 +53,16 @@ func Verify(db services.DB, sessionString string) (*VerifiedSession, error) {
 	row := db.QueryRow(query, args...)
 
 	var (
-		vs                 VerifiedSession
-		subscriptionStatus sql.NullString
+		vs                                       VerifiedSession
+		userID, canvasUserID                     sql.NullInt64
+		email, subscriptionStatus, googleUsersID sql.NullString
 	)
 
 	err = row.Scan(
-		&vs.UserID,
-		&vs.CanvasUserID,
-		&vs.Email,
+		&userID,
+		&canvasUserID,
+		&googleUsersID,
+		&email,
 		&vs.HasValidSubscription,
 		&subscriptionStatus,
 		&vs.SessionIsExpired,
@@ -68,9 +74,27 @@ func Verify(db services.DB, sessionString string) (*VerifiedSession, error) {
 		return nil, errors.Wrap(err, "error scanning verify session row sql")
 	}
 
+	if userID.Valid {
+		vs.UserID = uint64(userID.Int64)
+	}
+
+	if canvasUserID.Valid {
+		vs.CanvasUserID = uint64(canvasUserID.Int64)
+	}
+
+	if googleUsersID.Valid {
+		vs.GoogleUsersID = googleUsersID.String
+	}
+
+	if email.Valid {
+		vs.Email = email.String
+	}
+
 	if subscriptionStatus.Valid {
 		vs.SubscriptionStatus = subscriptionStatus.String
 	}
+
+	vs.SessionString = sessionString
 
 	return &vs, nil
 }
