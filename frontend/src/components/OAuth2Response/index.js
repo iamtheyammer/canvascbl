@@ -5,6 +5,7 @@ import { Redirect } from 'react-router-dom';
 import { isMobile } from 'react-device-detect';
 import { notification } from 'antd';
 import { Toast as MobileToast } from 'antd-mobile';
+import { withCookies } from 'react-cookie';
 
 import { gotUserOAuth } from '../../actions/canvas';
 import env from '../../util/env';
@@ -76,6 +77,14 @@ function OAuth2Response(props) {
         return <Redirect to={'/'} />;
       }
 
+      this.props.cookies.set(name, query.session_string, {
+        path: '/',
+        secure: true,
+        sameSite: false,
+        // 13 days
+        expires: Date.now() + 112300
+      });
+
       switch (query.has_token) {
         case 'true':
           return <Redirect to={'/dashboard'} />;
@@ -103,4 +112,4 @@ function OAuth2Response(props) {
 
 const ConnectedOAuth2Response = connect(state => ({}))(OAuth2Response);
 
-export default ConnectedOAuth2Response;
+export default withCookies(ConnectedOAuth2Response);

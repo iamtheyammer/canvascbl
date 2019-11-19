@@ -12,16 +12,18 @@ func AddSessionToResponse(w http.ResponseWriter, ss string) {
 	w.Header().Set("X-Session-String", ss)
 
 	secure := true
+	sameSite := http.SameSiteStrictMode
 
 	if env.Env == env.EnvironmentDevelopment {
 		secure = false
+		sameSite = http.SameSiteNoneMode
 	}
 
 	c := http.Cookie{
 		Name:     "session_string",
 		Value:    ss,
 		Path:     "/",
-		SameSite: http.SameSiteNoneMode,
+		SameSite: sameSite,
 		Secure:   secure,
 		Expires:  time.Now().Add(time.Hour * 312),
 	}

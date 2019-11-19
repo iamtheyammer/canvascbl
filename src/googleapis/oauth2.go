@@ -214,6 +214,8 @@ func OAuth2ResponseHandler(w http.ResponseWriter, r *http.Request, _ httprouter.
 
 	util.AddSessionToResponse(w, *ss)
 
+	q.Set("session_string", *ss)
+
 	// can be overwritten
 	q.Set("has_token", "false")
 
