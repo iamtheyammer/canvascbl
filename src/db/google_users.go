@@ -22,3 +22,12 @@ func ListGoogleProfiles(req *google_users.ListRequest) (*[]google_users.GoogleUs
 
 	return gus, nil
 }
+
+func UpdateGoogleProfile(req *google_users.UpdateRequest) error {
+	err := google_users.Update(util.DB, req)
+	if err != nil {
+		return errors.Wrap(err, "error updating google profiles")
+	}
+
+	return nil
+}

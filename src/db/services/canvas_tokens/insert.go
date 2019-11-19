@@ -26,6 +26,7 @@ func Insert(db services.DB, req *InsertRequest) error {
 			"token":           req.Token,
 			"expires_at":      req.ExpiresAt,
 		}).
+		Suffix("ON CONFLICT DO NOTHING").
 		ToSql()
 	if err != nil {
 		return errors.Wrap(err, "error building insert canvas token sql")

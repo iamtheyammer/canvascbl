@@ -2,6 +2,7 @@ package googleapis
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/iamtheyammer/canvascbl/backend/src/db"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/canvas_tokens"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/google_users"
@@ -71,20 +72,12 @@ func OAuth2RequestHandler(w http.ResponseWriter, _ *http.Request, _ httprouter.P
 }
 
 func OAuth2ResponseHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	redirectTo, err := url.Parse(env.CanvasOAuth2SuccessURI)
-	if err != nil {
-		util.SendInternalServerError(w)
-		return
-	}
-
-	q := redirectTo.Query()
+	q := url.Values{}
 	q.Set("type", "google")
 
 	// sr sends response
 	sr := func() {
-		redirectTo.RawQuery = q.Encode()
-
-		util.SendRedirect(w, redirectTo.String())
+		util.SendRedirect(w, fmt.Sprintf("%s?%s", env.CanvasOAuth2SuccessURI, q.Encode()))
 		return
 	}
 
@@ -165,7 +158,7 @@ func OAuth2ResponseHandler(w http.ResponseWriter, r *http.Request, _ httprouter.
 
 	if !util.ValidateGoogleHD(up.HostedDomain) {
 		q.Set("error", "proxy_google_error")
-		q.Set("error_source", "canvas_proxy")
+		q.Set("error_source", "proxy")
 		q.Set("error_text", "domain not allowed")
 
 		sr()

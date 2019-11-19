@@ -6,7 +6,8 @@ export default (
   token,
   subdomain = 'canvas',
   query = {},
-  method = 'get'
+  method = 'get',
+  body
 ) =>
   axios({
     method,
@@ -16,5 +17,6 @@ export default (
       'X-Canvas-Subdomain': subdomain
     },
     params: query,
-    withCredentials: true
+    withCredentials: true,
+    data: body
   });

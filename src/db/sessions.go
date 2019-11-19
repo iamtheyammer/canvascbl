@@ -70,3 +70,12 @@ func GenerateSession(req *sessions.GenerateRequest) (*string, error) {
 func VerifySession(sessionString string) (*sessions.VerifiedSession, error) {
 	return sessions.Verify(util.DB, sessionString)
 }
+
+func UpdateSession(req *sessions.UpdateRequest) error {
+	err := sessions.Update(util.DB, req)
+	if err != nil {
+		return errors.Wrap(err, "error updating session")
+	}
+
+	return nil
+}

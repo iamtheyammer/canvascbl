@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Redirect } from 'react-router-dom';
 import { connect } from 'react-redux';
+import { useCookies } from 'react-cookie';
 import './index.css';
 import banner from '../../assets/banner.svg';
 
@@ -20,7 +21,9 @@ import env from '../../util/env';
 function Home(props) {
   const [enableSignin, setEnableSignin] = useState(false);
 
-  if (props.token) {
+  const [cookies] = useCookies(['session_string']);
+
+  if (props.token || cookies.session_string) {
     return <Redirect to="/dashboard" />;
   }
 
@@ -37,7 +40,7 @@ function Home(props) {
         <Typography.Title level={2}>Welcome!</Typography.Title>
         <Typography.Text>
           This tool calculates grades based on outcomes in Canvas. To use it,
-          please accept the Terms and Conditions, then log in with Canvas.
+          please accept the Terms and Conditions, then log in with Google.
         </Typography.Text>
         <MobileCheckbox.AgreeItem
           onChange={e => setEnableSignin(e.target.checked)}
@@ -58,10 +61,10 @@ function Home(props) {
           type="primary"
           disabled={!enableSignin}
           onClick={() =>
-            (window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request`)
+            (window.location.href = `${getUrlPrefix}/api/google/oauth2/request`)
           }
         >
-          Sign in with Canvas
+          Sign in with Google
         </MobileButton>
       </div>
     );
@@ -80,7 +83,7 @@ function Home(props) {
           )}
           <Typography.Text>
             This tool calculates grades based on outcomes in Canvas. To use it,
-            please accept the Terms and Conditions, then log in with Canvas.
+            please accept the Terms and Conditions, then log in with Google.
           </Typography.Text>
         </div>
         <div>
@@ -111,10 +114,10 @@ function Home(props) {
             className="center button"
             disabled={!enableSignin}
             onClick={() =>
-              (window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request`)
+              (window.location.href = `${getUrlPrefix}/api/google/oauth2/request`)
             }
           >
-            Sign in with Canvas
+            Sign in with Google
           </Button>
         </div>
       </Card>

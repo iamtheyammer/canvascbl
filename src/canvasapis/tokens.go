@@ -7,6 +7,7 @@ import (
 	usersdecoder "github.com/iamtheyammer/canvascbl/backend/src/db/canvas/users"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/canvas_tokens"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/google_users"
+	"github.com/iamtheyammer/canvascbl/backend/src/db/services/sessions"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/users"
 	"github.com/iamtheyammer/canvascbl/backend/src/env"
 	"github.com/iamtheyammer/canvascbl/backend/src/middlewares"
@@ -14,6 +15,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/pkg/errors"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -21,6 +23,7 @@ type canvasToken struct {
 	ID         uint64    `json:"id"`
 	UserID     uint64    `json:"userId"`
 	Token      string    `json:"token"`
+	Subdomain  string    `json:"subdomain"`
 	InsertedAt time.Time `json:"insertedAt"`
 }
 
@@ -59,7 +62,7 @@ func InsertCanvasTokenHandler(w http.ResponseWriter, r *http.Request, _ httprout
 
 	res, profileJSON, err := userssvc.GetSelfProfile(&util.RequestDetails{
 		Token:     body.Token,
-		Subdomain: env.DefaultSubdomain,
+		Subdomain: env.CanvasOAuth2Subdomain,
 	})
 	if err != nil {
 		util.HandleError(errors.Wrap(err, "error validating token by fetching user profile"))
@@ -81,14 +84,10 @@ func InsertCanvasTokenHandler(w http.ResponseWriter, r *http.Request, _ httprout
 
 	db.UpsertProfile(&profileJSON)
 
-	if sess.Email != p.PrimaryEmail {
-		util.SendBadRequest(w, "canvas user does not match user from session")
-		return
-	}
-
 	gUsersP, err := db.ListGoogleProfiles(&google_users.ListRequest{
-		Email: sess.Email,
+		Email: strings.ToLower(p.PrimaryEmail),
 	})
+
 	if err != nil {
 		util.HandleError(errors.Wrap(err, "error listing google users"))
 		util.SendInternalServerError(w)
@@ -96,7 +95,7 @@ func InsertCanvasTokenHandler(w http.ResponseWriter, r *http.Request, _ httprout
 	}
 
 	usP, err := db.ListUsers(&users.ListRequest{
-		ID: sess.UserID,
+		Email: p.PrimaryEmail,
 	})
 	if err != nil {
 		util.HandleError(errors.Wrap(err, "error listing users"))
@@ -108,28 +107,30 @@ func InsertCanvasTokenHandler(w http.ResponseWriter, r *http.Request, _ httprout
 	us := *usP
 	if len(gUsers) != 1 {
 		util.SendBadRequest(w, "seems like you haven't signed up (?)")
+		return
+	}
+
+	if len(us) != 1 {
+		util.HandleError(errors.New("more or less than 1 profile was returned in insert canvas token handler"))
+		util.SendInternalServerError(w)
+		return
 	}
 
 	gUser := gUsers[0]
 
 	ir := canvas_tokens.InsertRequest{
 		GoogleUsersID: gUser.ID,
+		CanvasUserID:  &us[0].CanvasUserID,
+		UserID:        &us[0].ID,
 		Token:         body.Token,
 	}
 
-	if len(us) != 1 {
-		util.HandleError(errors.New("more or less than 1 profile was returned in insert canvas token handler "))
-		util.SendInternalServerError(w)
+	if strings.ToLower(us[0].Email) != strings.ToLower(p.PrimaryEmail) ||
+		strings.ToLower(us[0].Email) != strings.ToLower(gUser.Email) {
+		util.SendBadRequest(w, "preexisting user email does not match "+
+			"google email or canvas email")
 		return
 	}
-
-	if sess.Email != us[0].Email || sess.Email != p.PrimaryEmail || sess.Email != gUser.Email {
-		util.SendBadRequest(w, "preexisting user email does not match session "+
-			"email, google email or canvas email")
-		return
-	}
-
-	ir.UserID = &us[0].ID
 
 	if body.ExpiresAt > 0 {
 		t := time.Unix(int64(body.ExpiresAt), 0)
@@ -143,11 +144,31 @@ func InsertCanvasTokenHandler(w http.ResponseWriter, r *http.Request, _ httprout
 		return
 	}
 
+	err = db.UpdateGoogleProfile(&google_users.UpdateRequest{
+		UsersID: us[0].ID,
+		WhereID: gUser.ID,
+	})
+	if err != nil {
+		util.HandleError(errors.Wrap(err, "error updating google profile"))
+		util.SendInternalServerError(w)
+		return
+	}
+
+	err = db.UpdateSession(&sessions.UpdateRequest{
+		CanvasUserID:       uint64(p.ID),
+		WhereSessionString: sess.SessionString,
+	})
+	if err != nil {
+		util.HandleError(errors.Wrap(err, "error updating session"))
+		util.SendInternalServerError(w)
+		return
+	}
+
 	util.SendNoContent(w)
 	return
 }
 
-func GetCanvasTokens(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func GetCanvasTokensHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	sess := middlewares.Session(w, r)
 	if sess == nil {
 		return
@@ -171,8 +192,14 @@ func GetCanvasTokens(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 			ID:         t.ID,
 			UserID:     t.UserID,
 			Token:      t.Token,
+			Subdomain:  env.CanvasOAuth2Subdomain,
 			InsertedAt: t.InsertedAt,
 		})
+	}
+
+	if len(toks) < 1 {
+		util.SendJSONResponse(w, []byte("[]"))
+		return
 	}
 
 	jToks, err := json.Marshal(toks)
@@ -183,5 +210,33 @@ func GetCanvasTokens(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 	}
 
 	util.SendJSONResponse(w, jToks)
+	return
+}
+
+func DeleteCanvasTokenHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	ok, rd := util.GetRequestDetailsFromRequest(r)
+	if !ok {
+		util.SendUnauthorized(w, util.RequestDetailsFailedValidationMessage)
+		return
+	}
+
+	sess := middlewares.Session(w, r)
+	if sess == nil {
+		return
+	}
+
+	if sess.UserID < 1 {
+		util.SendUnauthorized(w, "appears that you haven't logged in yet")
+		return
+	}
+
+	err := db.DeleteCanvasToken(&canvas_tokens.DeleteRequest{Token: rd.Token})
+	if err != nil {
+		util.HandleError(errors.Wrap(err, "error deleting canvas token"))
+		util.SendInternalServerError(w)
+		return
+	}
+
+	util.SendNoContent(w)
 	return
 }

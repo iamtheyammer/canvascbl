@@ -24,7 +24,7 @@ import ConnectedUpgrades from './Upgrades';
 import ConnectedLogout from './Logout';
 import UpdateHandler from './UpdateHandler';
 import env from '../../util/env';
-import { getUser, logout } from '../../actions/canvas';
+import { getCanvasToken, getUser, logout } from '../../actions/canvas';
 import ConnectedErrorModal from './ErrorModal';
 import { getSessionInformation } from '../../actions/plus';
 import './index.css';
@@ -51,6 +51,7 @@ function Dashboard(props) {
   const [cookies] = useCookies(['session_string']);
 
   const [hasSentUserToGa, setHasSentUserToGa] = useState(false);
+  const [getTokenId, setGetTokenId] = useState();
   const [getUserId, setGetUserId] = useState();
   const [getSessionId, setGetSessionId] = useState();
 
@@ -62,9 +63,9 @@ function Dashboard(props) {
   }, [props.location]);
 
   // if no token exists, redirect
-  if (!localStorage.token) {
+  if (!localStorage.token && !cookies.session_string) {
     return <Redirect to="/" />;
-  } else if (!token) {
+  } else if (localStorage.token && !token) {
     // otherwise, wait for token
     return null;
   }
@@ -94,16 +95,30 @@ function Dashboard(props) {
     setHasSentUserToGa(true);
   }
 
-  if (!user && !getUserId) {
+  if (error[getTokenId]) {
+    return <Redirect to={'/tokenEntry'} />;
+  }
+
+  if (!getTokenId && (!token || !subdomain)) {
+    const id = v4();
+    dispatch(getCanvasToken(id));
+    setGetTokenId(id);
+  }
+
+  if (token && !user && !getUserId) {
     const id = v4();
     dispatch(getUser(id, !cookies['session_string'], token, subdomain));
     setGetUserId(id);
   }
 
-  if (user && !session && !getSessionId) {
+  if (token && user && !session && !getSessionId) {
     const id = v4();
     dispatch(getSessionInformation(id));
     setGetSessionId(id);
+  }
+
+  if (error[getTokenId]) {
+    return <Redirect to="/" />;
   }
 
   if (error[getUserId] || error[getSessionId]) {
@@ -141,7 +156,7 @@ function Dashboard(props) {
       />
       <Route exact path="/dashboard/upgrades" component={ConnectedUpgrades} />
       <Route exact path="/dashboard/logout" component={ConnectedLogout} />
-      <Route render={() => <Redirect to="/dashboard" />} />
+      <Route render={() => <Redirect to="/" />} />
     </Switch>
   );
 
@@ -156,7 +171,11 @@ function Dashboard(props) {
             height: 'auto'
           }}
         >
-          {!loading.includes(getUserId) || !loading.includes(getSessionId)
+          {!loading.includes(getTokenId) &&
+          subdomain &&
+          token &&
+          !loading.includes(getUserId) &&
+          !loading.includes(getSessionId)
             ? routes
             : loading}
         </div>
@@ -178,7 +197,9 @@ function Dashboard(props) {
               minHeight: 280
             }}
           >
-            {!loading.includes(getUserId) || !loading.includes(getSessionId) ? (
+            {token &&
+            (!loading.includes(getUserId) ||
+              !loading.includes(getSessionId)) ? (
               routes
             ) : (
               <div align="center">

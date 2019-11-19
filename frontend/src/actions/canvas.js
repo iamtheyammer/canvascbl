@@ -6,10 +6,16 @@ import { startLoading, endLoading } from './loading';
 
 export const CANVAS_LOGOUT = 'CANVAS_LOGOUT';
 
+export const CANVAS_DELETED_TOKEN = 'CANVAS_DELETED_TOKEN';
+
 export const CANVAS_GOT_STORED_CREDENTIALS = 'CANVAS_GOT_STORED_CREDENTIALS';
 
 export const CANVAS_GOT_TOKEN_ENTRY = 'CANVAS_GOT_TOKEN_ENTRY';
 export const CANVAS_GOT_USER_OAUTH = 'CANVAS_GOT_USER_OAUTH';
+
+export const CANVAS_SENT_TOKEN = 'CANVAS_SENT_TOKEN';
+
+export const CANVAS_GOT_TOKEN = 'CANVAS_GOT_TOKEN';
 
 export const CANVAS_GOT_NEW_TOKEN_FROM_REFRESH_TOKEN =
   'CANVAS_GOT_NEW_TOKEN_FROM_REFRESH_TOKEN';
@@ -48,18 +54,37 @@ function loggedOut(forwardUrl, error) {
 export function logout(token, subdomain) {
   return async dispatch => {
     try {
-      const forwardUrl = await makeCanvasRequest(
-        'oauth2/token',
-        token,
-        subdomain,
-        {},
-        'delete'
-      ).then(res => res.data.forward_url);
-      dispatch(loggedOut(forwardUrl || ''));
+      // const forwardUrl = await makeCanvasRequest(
+      //   'oauth2/token',
+      //   token,
+      //   subdomain,
+      //   {},
+      //   'delete'
+      // ).then(res => res.data.forward_url);
+      dispatch(loggedOut(''));
     } catch (e) {
       // errors don't really matter
       dispatch(loggedOut('', e));
     }
+  };
+}
+
+function deletedCanvasToken() {
+  return {
+    type: CANVAS_DELETED_TOKEN
+  };
+}
+
+export function deleteCanvasToken(id, token) {
+  return async dispatch => {
+    dispatch(startLoading(id));
+    try {
+      await makeCanvasRequest('tokens', token, '', {}, 'delete');
+      dispatch(deletedCanvasToken());
+    } catch (e) {
+      dispatch(canvasProxyError(id, e.res));
+    }
+    dispatch(endLoading(id));
   };
 }
 
@@ -91,6 +116,54 @@ export function gotUserOAuth(token, refreshToken, subdomain) {
     token,
     refreshToken,
     subdomain
+  };
+}
+
+function sentCanvasToken() {
+  return {
+    type: CANVAS_SENT_TOKEN
+  };
+}
+
+export function sendCanvasToken(id, token, expiresAt = null) {
+  return async dispatch => {
+    dispatch(startLoading(id));
+    try {
+      await makeCanvasRequest('tokens', '', '', {}, 'post', {
+        token,
+        expiresAt
+      });
+      dispatch(sentCanvasToken());
+    } catch (e) {
+      dispatch(canvasProxyError(id, e));
+    }
+    dispatch(endLoading(id));
+  };
+}
+
+function gotCanvasToken(token, subdomain) {
+  return {
+    type: CANVAS_GOT_TOKEN,
+    token,
+    subdomain
+  };
+}
+
+export function getCanvasToken(id) {
+  return async dispatch => {
+    dispatch(startLoading(id));
+    try {
+      const tokenRes = await makeCanvasRequest('tokens');
+      const token = tokenRes.data[0];
+      if (token) {
+        dispatch(gotCanvasToken(token.token, token.subdomain));
+      } else {
+        dispatch(canvasProxyError(id, tokenRes));
+      }
+    } catch (e) {
+      dispatch(canvasProxyError(id, e.res));
+    }
+    dispatch(endLoading(id));
   };
 }
 

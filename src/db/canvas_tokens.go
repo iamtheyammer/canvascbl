@@ -23,3 +23,12 @@ func ListCanvasTokens(req *canvas_tokens.ListRequest) (*[]canvas_tokens.CanvasTo
 
 	return cts, nil
 }
+
+func DeleteCanvasToken(req *canvas_tokens.DeleteRequest) error {
+	err := canvas_tokens.Delete(util.DB, req)
+	if err != nil {
+		return errors.Wrap(err, "error deleting canvas token")
+	}
+
+	return nil
+}

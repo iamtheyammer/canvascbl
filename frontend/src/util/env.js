@@ -8,5 +8,6 @@ export default {
   upgradesPurchasableProductId: parseInt(
     process.env.REACT_APP_UPGRADES_PURCHASABLE_PRODUCT_ID
   ),
+  defaultSubdomain: process.env.REACT_APP_DEFAULT_SUBDOMAIN,
   nodeEnv: process.env.NODE_ENV
 };

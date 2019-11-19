@@ -4,7 +4,10 @@ import { shape, object } from 'prop-types';
 import { Redirect } from 'react-router-dom';
 import { Modal, Icon } from 'antd';
 import v4 from 'uuid/v4';
-import { getNewTokenFromRefreshToken } from '../../../actions/canvas';
+import {
+  deleteCanvasToken,
+  getNewTokenFromRefreshToken
+} from '../../../actions/canvas';
 
 class ErrorModal extends Component {
   constructor(props) {
@@ -35,7 +38,7 @@ class ErrorModal extends Component {
   };
 
   componentDidMount() {
-    const { res, error, refreshToken, subdomain, dispatch } = this.props;
+    const { res, error, token, refreshToken, subdomain, dispatch } = this.props;
     const result = res || error.res;
     if (!result) {
       this.handleUnknown();
@@ -46,16 +49,22 @@ class ErrorModal extends Component {
 
     if (canvasStatusCode === 401) {
       if (refreshToken) {
-        Modal.info({
-          title: 'Re-Authorizing...',
-          content: 'Please wait while we re-authorize with Canvas.',
-          closable: false,
-          okButtonProps: { loading: true },
-          okText: 'One sec...',
-          icon: <Icon type="lock" />
-        });
-        dispatch(getNewTokenFromRefreshToken(v4(), subdomain, refreshToken));
+        if (result.data.errors[0].message !== 'Invalid access token.') {
+          Modal.info({
+            title: 'Re-Authorizing...',
+            content: 'Please wait while we re-authorize with Canvas.',
+            closable: false,
+            okButtonProps: { loading: true },
+            okText: 'One sec...',
+            icon: <Icon type="lock" />
+          });
+          dispatch(getNewTokenFromRefreshToken(v4(), subdomain, refreshToken));
+        } else {
+          Modal.close();
+          this.setState({ redirect: true });
+        }
       } else {
+        dispatch(deleteCanvasToken(v4(), token));
         Modal.info({
           title: 'Invalid Canvas Token',
           content:
@@ -66,8 +75,6 @@ class ErrorModal extends Component {
           onOk: this.handleCancel
         });
       }
-    } else {
-      this.handleUnknown();
     }
   }
 

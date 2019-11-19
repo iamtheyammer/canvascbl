@@ -38,7 +38,9 @@ func SendCanvasError(w http.ResponseWriter, resp *http.Response, efc string) {
 	}
 
 	w.Header().Set("Content-Type", resp.Header.Get("Content-Type"))
-	w.WriteHeader(http.StatusBadGateway)
+	// can't use 502 with cloudflare
+	//w.WriteHeader(http.StatusBadGateway)
+	w.WriteHeader(522)
 	_, err := fmt.Fprint(w, efc)
 	if err != nil {
 		log.Fatal(err)

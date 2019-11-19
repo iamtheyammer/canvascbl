@@ -121,10 +121,10 @@ Note that, unlike the canvas flow, the token is never sent to the browser. It's 
 Special query params are present when an error occurs during the OAuth2 response flow.
 
 - `error` - `proxy_google_error` - if the `error` param is present, there was an error in the flow. this will never show up during a successful flow
-- `error_source` - `canvas_proxy` | `google` - where the error originated
+- `error_source` - `proxy` | `google` - where the error originated
   - if `error_source` is `google`
     - [OPTIONAL] `body` - the URL encoded JSON body from the Google request that failed; pretty much for debugging
-  - if `error_source` is `canvas_proxy`
+  - if `error_source` is `proxy`
     - `error_text` - a message you can show to the user about what happened, ex: `domain not allowed`
 
 ### Canvas
