@@ -85,6 +85,11 @@ class TokenEntry extends Component {
           <Typography.Text>
             We just need you to do one more thing to use CanvasCBL. It'll only
             take a minute and you only have to do it once.
+            <br />
+            <br />
+            <PopoutLink url="https://www.youtube.com/watch?v=2VV6XsPMVog">
+              Here's a video tutorial.
+            </PopoutLink>
           </Typography.Text>
           <Typography.Title level={3}>
             Step 1: Generate a token
