@@ -74,6 +74,7 @@ class ErrorModal extends Component {
           okText: 'Logout',
           onOk: this.handleCancel
         });
+        return <Redirect to="/" />;
       }
     }
   }
