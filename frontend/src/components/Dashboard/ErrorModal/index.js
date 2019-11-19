@@ -60,7 +60,7 @@ class ErrorModal extends Component {
           });
           dispatch(getNewTokenFromRefreshToken(v4(), subdomain, refreshToken));
         } else {
-          Modal.close();
+          Modal.destroyAll();
           this.setState({ redirect: true });
         }
       } else {
