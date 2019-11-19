@@ -15,6 +15,7 @@ function OAuth2Response(props) {
     props.location.search.slice(1, props.location.search.length)
   );
 
+  // eslint-disable-next-line
   const [cookies, setCookie, removeCookie] = useCookies(['session_string']);
 
   function processCanvasResponse(token, name, refreshToken) {
