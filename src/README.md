@@ -113,6 +113,7 @@ The Google OAuth2 Response handler does a lot. It:
 
 - `type` - `google`
 - `has_token` - `true`|`false` - Whether the user has a stored token. If false, you'll probably want to show a dialog prompting the user to add a token.
+- `session_string` - The session string to save as a cookie, which MUST expire in less than 2 weeks.
 
 Note that, unlike the canvas flow, the token is never sent to the browser. It's held by the server and used when a request is made with a valid session.
 
