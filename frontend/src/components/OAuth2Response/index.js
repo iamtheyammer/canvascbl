@@ -6,6 +6,7 @@ import { isMobile } from 'react-device-detect';
 import { notification } from 'antd';
 import { Toast as MobileToast } from 'antd-mobile';
 import { useCookies } from 'react-cookie';
+import moment from 'moment';
 
 import { gotUserOAuth } from '../../actions/canvas';
 import env from '../../util/env';
@@ -85,7 +86,9 @@ function OAuth2Response(props) {
         secure: true,
         sameSite: false,
         // 13 days
-        expires: Date.now() + 112300
+        expires: moment()
+          .add(13, 'days')
+          .toDate()
       });
 
       switch (query.has_token) {
