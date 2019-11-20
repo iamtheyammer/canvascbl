@@ -69,6 +69,14 @@ function FutureAssignmentsForOutcome(props) {
     key: fa.id
   }));
 
+  if (data.length === 0) {
+    return (
+      <Typography.Text>
+        There are no future posted assignments for this outcome.
+      </Typography.Text>
+    );
+  }
+
   if (isMobile) {
     return data.sort(sort.dateAsc).map(a => (
       <MobileAccordion key={a.key}>
