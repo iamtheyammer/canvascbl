@@ -19,6 +19,7 @@ import averageGradeImg from './average-grade.png';
 import averageOutcomeScoreImg from './average-outcome-score.png';
 import howToGetAnAImg from './how-to-get-an-a.png';
 import previousGradeImg from './previous-grade.png';
+import futureAssignmentsImg from './future-assignments.png';
 import logoNavbarImg from './logo-navbar.png';
 
 const stripe = window.Stripe(env.stripeApiKeyPub);
@@ -47,6 +48,12 @@ const benefits = [
       'See how your grades have changed from your last login to now. ' +
       'Hover over any grade to see when it was from, so you can better ' +
       'understand your progression in your courses.'
+  },
+  {
+    title: 'Future Assignments',
+    img: futureAssignmentsImg,
+    content:
+      'See all future assignments for an outcome so you know what to do well on in the future.'
   },
   {
     title: 'CanvasCBL+ Logo',
