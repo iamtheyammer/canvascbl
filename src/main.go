@@ -45,6 +45,8 @@ func getRouter() *httprouter.Router {
 	router.GET("/api/canvas/courses/:courseID/outcome_results", canvasapis.GetOutcomeResultsByCourseHandler)
 	// saves grades and specific outcome scores to DB
 	router.GET("/api/canvas/courses/:courseID/outcome_rollups", canvasapis.GetOutcomeRollupsByCourseHandler)
+	// doesn't save to db but a possibility
+	router.GET("/api/canvas/courses/:courseID/outcome_alignments", canvasapis.GetOutcomeAlignmentsByCourseHandler)
 
 	router.GET("/api/canvas/oauth2/request", canvasapis.OAuth2RequestHandler)
 	router.GET("/api/canvas/oauth2/response", canvasapis.OAuth2ResponseHandler)

@@ -19,7 +19,7 @@ import ErrorModal from '../ErrorModal';
 
 import { ReactComponent as PopOutIcon } from '../../../assets/pop_out.svg';
 import { ReactComponent as plusIcon } from '../../../assets/plus.svg';
-import { desc } from '../../../util/stringSorter';
+import { desc } from '../../../util/sort';
 import PopoutLink from '../../PopoutLink';
 import { getPreviousGrades } from '../../../actions/plus';
 import moment from 'moment';

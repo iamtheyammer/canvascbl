@@ -12,4 +12,4 @@ require (
 	github.com/stripe/stripe-go v66.0.0+incompatible
 )
 
-// +heroku goVersion go1.13.3
+// +heroku goVersion go1.13.4

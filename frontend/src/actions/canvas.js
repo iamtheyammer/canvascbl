@@ -36,6 +36,9 @@ export const CANVAS_GOT_OUTCOME_ROLLUPS_AND_OUTCOMES_FOR_COURSE =
 export const CANVAS_GOT_ASSIGNMENTS_FOR_COURSE =
   'CANVAS_GOT_ASSIGNMENTS_FOR_COURSE';
 
+export const CANVAS_GOT_OUTCOME_ALIGNMENTS_FOR_COURSE =
+  'CANVAS_GOT_OUTCOME_ALIGNMENTS_FOR_COURSE';
+
 function loggedOut(forwardUrl, error) {
   localStorage.token = '';
   localStorage.subdomain = '';
@@ -390,6 +393,38 @@ export function getAssignmentsForCourse(id, courseId, token, subdomain) {
       dispatch(gotAssignmentsForCourse(assignments.data, courseId));
     } catch (e) {
       dispatch(canvasProxyError(id, e.response));
+    }
+    dispatch(endLoading(id));
+  };
+}
+
+function gotOutcomeAlignmentsForCourse(courseId, alignments) {
+  return {
+    type: CANVAS_GOT_OUTCOME_ALIGNMENTS_FOR_COURSE,
+    alignments,
+    courseId
+  };
+}
+
+export function getOutcomeAlignmentsForCourse(
+  id,
+  courseId,
+  userId,
+  token,
+  subdomain
+) {
+  return async dispatch => {
+    dispatch(startLoading(id));
+    try {
+      const alignmentsRequest = await makeCanvasRequest(
+        `courses/${courseId}/outcome_alignments`,
+        token,
+        subdomain,
+        { userId }
+      );
+      dispatch(gotOutcomeAlignmentsForCourse(courseId, alignmentsRequest.data));
+    } catch (e) {
+      dispatch(canvasProxyError(id, e.res));
     }
     dispatch(endLoading(id));
   };

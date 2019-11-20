@@ -4,6 +4,7 @@ import { Redirect, Link } from 'react-router-dom';
 import v4 from 'uuid/v4';
 import moment from 'moment';
 import { isMobile } from 'react-device-detect';
+import { flatten } from 'lodash';
 
 import {
   Typography,
@@ -29,22 +30,26 @@ import {
   getOutcomeResultsForCourse,
   getUserCourses,
   getAssignmentsForCourse,
-  getOutcomeRollupsAndOutcomesForCourse
+  getOutcomeRollupsAndOutcomesForCourse,
+  getOutcomeAlignmentsForCourse
 } from '../../../../actions/canvas';
 import calculateGradeFromOutcomes, {
   gradeMapByGrade
 } from '../../../../util/canvas/calculateGradeFromOutcomes';
 
-import { desc } from '../../../../util/stringSorter';
+import { desc } from '../../../../util/sort';
 import ConnectedErrorModal from '../../ErrorModal';
 import { ReactComponent as PopOutIcon } from '../../../../assets/pop_out.svg';
-import { ReactComponent as plusIcon } from '../../../../assets/plus.svg';
+import { ReactComponent as PlusIcon } from '../../../../assets/plus.svg';
 
 import OutcomeInfo from './OutcomeInfo';
 import PopoutLink from '../../../PopoutLink';
 import GradeCard from './GradeCard';
 import { getAverageGradeForCourse } from '../../../../actions/plus';
 import ConnectedAverageOutcomeScore from './AverageOutcomeScore';
+import FutureAssignmentsForOutcome from './FutureAssignmentsForOutcome';
+import plus from '../../../../reducers/plus';
+import MobileTable from '../../MobileTable';
 
 const outcomeTableColumns = [
   {
@@ -143,6 +148,7 @@ function GradeBreakdown(props) {
   const [getRollupsId, setGetRollupsId] = useState('');
   const [getResultsId, setGetResultsId] = useState('');
   const [getAssignmentsId, setGetAssignmentsId] = useState('');
+  const [getOutcomeAlignmentsId, setGetOutcomeAlignmentsId] = useState('');
   const [getPlusAverageId, setGetPlusAverageId] = useState('');
 
   const [loadingText, setLoadingText] = useState('');
@@ -157,6 +163,7 @@ function GradeBreakdown(props) {
     courses,
     outcomeRollups,
     outcomeResults,
+    outcomeAlignments,
     assignments,
     session,
     gradeAverages
@@ -191,6 +198,20 @@ function GradeBreakdown(props) {
         setGetCoursesId(id);
         setLoadingText('your courses');
         return;
+      }
+
+      // we can display the page without loading alignments, plus feature
+      if (
+        !getOutcomeAlignmentsId &&
+        session &&
+        session.hasValidSubscription &&
+        (!outcomeAlignments || !outcomeAlignments[courseId])
+      ) {
+        const id = v4();
+        dispatch(
+          getOutcomeAlignmentsForCourse(id, courseId, user.id, token, subdomain)
+        );
+        setGetOutcomeAlignmentsId(id);
       }
 
       // we can display the page without the average loading
@@ -373,6 +394,25 @@ function GradeBreakdown(props) {
     };
   });
 
+  // only exists if the user has a current session to save the load time
+  const assignmentsByOutcome =
+    session &&
+    session.hasValidSubscription &&
+    outcomeAlignments &&
+    outcomeAlignments[courseId] &&
+    outcomes.reduce((acc = {}, o) => {
+      acc[o.id] = flatten(
+        outcomeAlignments[courseId]
+          .filter(oa => oa.learning_outcome_id === o.id)
+          .map(oa =>
+            assignments[courseId].filter(a => a.id === oa.assignment_id)
+          )
+      );
+
+      return acc;
+    }, {});
+  console.log(session, assignmentsByOutcome);
+
   if (isMobile) {
     return (
       <div>
@@ -406,9 +446,26 @@ function GradeBreakdown(props) {
                   Times Assessed
                 </MobileList.Item>
                 <MobileList.Item multipleLine wrap>
-                  <Icon component={plusIcon} /> Average Score <br />
+                  <Icon component={PlusIcon} /> Average Score <br />
                   <ConnectedAverageOutcomeScore outcomeId={d.id} />
                 </MobileList.Item>
+                <MobileAccordion>
+                  <MobileAccordion.Panel
+                    header={
+                      <div>
+                        <PlusIcon style={{ height: '1em' }} /> Future
+                        Assignments
+                      </div>
+                    }
+                  >
+                    {
+                      <FutureAssignmentsForOutcome
+                        userHasValidSubscription={session.hasValidSubscription}
+                        outcomeAssignments={assignmentsByOutcome[d.id]}
+                      />
+                    }
+                  </MobileAccordion.Panel>
+                </MobileAccordion>
                 <MobileAccordion>
                   <MobileAccordion.Panel header="Assignments">
                     {d.assignmentTableData.map(atd => (
@@ -480,10 +537,18 @@ function GradeBreakdown(props) {
           record.assignmentTableData.length > 0 ? (
             <div>
               <Typography.Title level={4}>
-                <Icon component={plusIcon} style={{ paddingRight: '5px' }} />
+                <Icon component={PlusIcon} style={{ paddingRight: '5px' }} />
                 Average Score
               </Typography.Title>
               <ConnectedAverageOutcomeScore outcomeId={record.id} />
+              <Typography.Title level={4}>
+                <Icon component={PlusIcon} style={{ paddingRight: '5px' }} />
+                Future Assignments
+              </Typography.Title>
+              <FutureAssignmentsForOutcome
+                userHasValidSubscription={session.hasValidSubscription}
+                outcomeAssignments={assignmentsByOutcome[record.id]}
+              />
               <Typography.Title level={4}>Assignments</Typography.Title>
               <Table
                 columns={assignmentTableOutcomes}
@@ -515,6 +580,7 @@ const ConnectedGradeBreakdown = connect(state => ({
   outcomes: state.canvas.outcomes,
   outcomeRollups: state.canvas.outcomeRollups,
   outcomeResults: state.canvas.outcomeResults,
+  outcomeAlignments: state.canvas.outcomeAlignments,
   assignments: state.canvas.assignments,
   user: state.canvas.user,
   session: state.plus.session,

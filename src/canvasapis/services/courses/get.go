@@ -101,3 +101,18 @@ func GetAssignmentsByCourse(
 
 	return req.MakeAuthenticatedGetRequest(url, rd.Token)
 }
+
+func GetOutcomeAlignmentsByCourse(
+	rd *util.RequestDetails,
+	courseID string,
+	userID string,
+) (*http.Response, string, error) {
+	url := fmt.Sprintf(
+		"https://%s.instructure.com/api/v1/courses/%s/outcome_alignments?student_id=%s",
+		rd.Subdomain,
+		courseID,
+		userID,
+	)
+
+	return req.MakeAuthenticatedGetRequest(url, rd.Token)
+}

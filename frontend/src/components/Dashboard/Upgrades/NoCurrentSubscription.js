@@ -13,7 +13,7 @@ import { ReactComponent as plusIcon } from '../../../assets/plus.svg';
 import v4 from 'uuid/v4';
 import { getCheckoutSession } from '../../../actions/checkout';
 import env from '../../../util/env';
-import chunk from 'chunk';
+import { chunk } from 'lodash';
 
 import averageGradeImg from './average-grade.png';
 import averageOutcomeScoreImg from './average-outcome-score.png';

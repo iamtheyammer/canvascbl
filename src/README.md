@@ -48,6 +48,8 @@ No query string parameters from Canvas or otherwise, except otherwise noted, are
 - `GET` `/api/canvas/courses/:courseID/outcome_rollups` - Mirror of [this](https://canvas.instructure.com/doc/api/outcome_results.html#method.outcome_results.rollups) Canvas endpoint.
   - Requires the [`userId` param](#userid-param)
   - Supports the `include[]` query param from Canvas
+- `GET` `/api/canvas/courses/:courseID/outcome_alignments` - Mirror of [this](https://canvas.instructure.com/doc/api/outcomes.html#method.outcomes_api.outcome_alignments) Canvas endpoint.
+  - Requires the [`userId` param](#userid-param)
 
 #### `userId` param
 

@@ -12,7 +12,8 @@ import {
   CANVAS_GOT_STORED_CREDENTIALS,
   CANVAS_GOT_TOKEN,
   CANVAS_SENT_TOKEN,
-  CANVAS_DELETED_TOKEN
+  CANVAS_DELETED_TOKEN,
+  CANVAS_GOT_OUTCOME_ALIGNMENTS_FOR_COURSE
 } from '../actions/canvas';
 
 export default function canvas(state = {}, action) {
@@ -119,6 +120,14 @@ export default function canvas(state = {}, action) {
             ...state.assignments,
             [action.courseId]: action.assignments
           }
+        }
+      };
+    case CANVAS_GOT_OUTCOME_ALIGNMENTS_FOR_COURSE:
+      return {
+        ...state,
+        outcomeAlignments: {
+          ...state.outcomeAlignments,
+          [action.courseId]: action.alignments
         }
       };
     default:

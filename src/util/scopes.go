@@ -12,6 +12,7 @@ var scopes = []string{
 	"url:GET|/api/v1/courses/:course_id/outcome_groups/:id/outcomes",
 	"url:GET|/api/v1/courses/:course_id/outcome_results",
 	"url:GET|/api/v1/courses/:course_id/outcome_rollups",
+	"url:GET|/api/v1/courses/:course_id/outcome_alignments",
 }
 
 var stringScopes = strings.Join(scopes, " ")

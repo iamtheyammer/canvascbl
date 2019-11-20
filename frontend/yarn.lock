@@ -2630,11 +2630,6 @@ chrome-trace-event@^1.0.2:
   dependencies:
     tslib "^1.9.0"
 
-chunk@^0.0.2:
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/chunk/-/chunk-0.0.2.tgz#04aa4f31664ae850de500cf8d57b5f4c29cd522e"
-  integrity sha1-BKpPMWZK6FDeUAz41XtfTCnNUi4=
-
 ci-info@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/ci-info/-/ci-info-2.0.0.tgz#67a9e964be31a51e15e5010d58e6f12834002f46"

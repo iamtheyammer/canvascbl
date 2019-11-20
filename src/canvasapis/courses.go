@@ -260,3 +260,41 @@ func GetAssignmentsByCourseHandler(w http.ResponseWriter, r *http.Request, ps ht
 	go db.InsertMultipleAssignments(&body)
 	return
 }
+
+func GetOutcomeAlignmentsByCourseHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	courseID := ps.ByName("courseID")
+	if len(courseID) < 1 {
+		util.SendBadRequest(w, "missing courseID as url param")
+		return
+	}
+
+	if !util.ValidateIntegerString(courseID) {
+		util.SendBadRequest(w, "invalid courseID")
+		return
+	}
+
+	userID := r.URL.Query().Get("userId")
+	if len(userID) < 1 {
+		util.SendBadRequest(w, "missing userId as param userId")
+		return
+	}
+
+	if !util.ValidateIntegerString(userID) {
+		util.SendBadRequest(w, "invalid userId")
+		return
+	}
+
+	ok, rd := util.GetRequestDetailsFromRequest(r)
+	if !ok {
+		util.SendUnauthorized(w, util.RequestDetailsFailedValidationMessage)
+		return
+	}
+
+	resp, body, err := courses.GetOutcomeAlignmentsByCourse(rd, courseID, userID)
+	if err != nil {
+		util.SendInternalServerError(w)
+		return
+	}
+
+	util.HandleCanvasResponse(w, resp, body)
+}
