@@ -48,8 +48,6 @@ import GradeCard from './GradeCard';
 import { getAverageGradeForCourse } from '../../../../actions/plus';
 import ConnectedAverageOutcomeScore from './AverageOutcomeScore';
 import FutureAssignmentsForOutcome from './FutureAssignmentsForOutcome';
-import plus from '../../../../reducers/plus';
-import MobileTable from '../../MobileTable';
 
 const outcomeTableColumns = [
   {
