@@ -61,7 +61,7 @@ function Home(props) {
           type="primary"
           disabled={!enableSignin}
           onClick={() =>
-            (window.location.href = `${getUrlPrefix}/api/google/canvas/request`)
+            (window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request`)
           }
         >
           Sign in with Canvas
