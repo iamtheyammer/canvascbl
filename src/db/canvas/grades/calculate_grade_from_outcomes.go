@@ -5,10 +5,10 @@ import (
 	"sort"
 )
 
-type grade struct {
-	// the grade, like A or B
+type Grade struct {
+	// the Grade, like A or B
 	Grade string
-	// how "good" the grade is, higher is better
+	// how "good" the Grade is, higher is better
 	Rank uint8
 	// 75% = most; aka max
 	MostAbove float64
@@ -17,7 +17,7 @@ type grade struct {
 }
 
 // gradeMap is a map of possible grades
-var gradeMap = []grade{
+var gradeMap = []Grade{
 	{"A", 6, 3.3, 3},
 	{"A-", 5, 3.3, 2.5},
 	{"B+", 4, 2.6, 2.5},
@@ -27,8 +27,8 @@ var gradeMap = []grade{
 	{"I", 0, 0, 0},
 }
 
-// CalculateGradeFromOutcomeScores calculates a grade from outcome scores (os)
-func CalculateGradeFromOutcomeScores(os []float64) string {
+// CalculateGradeFromOutcomeScores calculates a Grade from outcome scores (os)
+func CalculateGradeFromOutcomeScores(os []float64) Grade {
 	// what is 75% of len(s)
 	outcomesOverMinNeeded := int(math.Floor(float64(75*len(os)) / float64(100)))
 
@@ -48,7 +48,7 @@ func CalculateGradeFromOutcomeScores(os []float64) string {
 
 	// in Golang, maps are not ordered
 	// this means that we need to get all qualifying grades and sort.
-	var finalGrade grade
+	var finalGrade Grade
 
 	for _, v := range gradeMap {
 		// lowest outcome is over minimum (AllAbove)
@@ -61,11 +61,11 @@ func CalculateGradeFromOutcomeScores(os []float64) string {
 			continue
 		}
 
-		// student qualifies for this grade
+		// student qualifies for this Grade
 		if v.Rank > finalGrade.Rank {
 			finalGrade = v
 		}
 	}
 
-	return finalGrade.Grade
+	return finalGrade
 }

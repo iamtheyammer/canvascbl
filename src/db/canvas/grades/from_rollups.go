@@ -13,9 +13,15 @@ type CanvasRollupsResponse struct {
 			User string `json:"user"`
 		} `json:"links"`
 		Scores []struct {
+			Title string  `json:"title"`
 			Score float64 `json:"score"`
 		} `json:"scores"`
 	} `json:"rollups"`
+}
+
+type OutcomeScore struct {
+	Score           float64
+	IsSuccessSkills bool
 }
 
 // GetCanvasRollupsResponseFromJsonString gets a CanvasRollupsResponse from a JSON string
@@ -32,7 +38,7 @@ func GetCanvasRollupsResponseFromJsonString(j *string) (*CanvasRollupsResponse, 
 
 // GetOutcomeScoresFromCanvasRollupsResponse gets an array of outcome scores from a CanvasRollupsResponse,
 // often gotten from GetCanvasRollupsResponseFromJsonString.
-func GetOutcomeScoresFromCanvasRollupsResponse(crr *CanvasRollupsResponse) (*[]float64, error) {
+func GetOutcomeScoresFromCanvasRollupsResponse(crr *CanvasRollupsResponse) (*[]OutcomeScore, error) {
 	rs := crr.Rollups
 
 	// there will be one rollup per user and we only do this by single user at the moment.
@@ -42,10 +48,10 @@ func GetOutcomeScoresFromCanvasRollupsResponse(crr *CanvasRollupsResponse) (*[]f
 
 	r := rs[0]
 
-	var s []float64
+	var s []OutcomeScore
 
 	for _, v := range r.Scores {
-		s = append(s, v.Score)
+		s = append(s, OutcomeScore{Score: v.Score, IsSuccessSkills: isSuccessSkillsOutcome(v.Title)})
 	}
 
 	return &s, nil

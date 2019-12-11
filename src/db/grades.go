@@ -37,27 +37,46 @@ func InsertGrade(rr *string, courseID *string, userID *string) {
 		return
 	}
 
-	os, err := grades.GetOutcomeScoresFromCanvasRollupsResponse(crr)
+	osP, err := grades.GetOutcomeScoresFromCanvasRollupsResponse(crr)
 	if err != nil {
 		handleError(errors.Wrap(err, "error getting outcome scores from CanvasRollupsResponse"))
 		return
 	}
+	os := *osP
 
 	// no graded outcomes for this class
-	if len(*os) == 0 {
+	if len(os) == 0 {
 		return
 	}
 
-	grade := grades.CalculateGradeFromOutcomeScores(*os)
+	var ssScores []float64
+	var noSsScores []float64
+	for _, v := range os {
+		if !v.IsSuccessSkills {
+			noSsScores = append(noSsScores, v.Score)
+		}
 
-	if len(grade) < 1 {
-		return
+		ssScores = append(ssScores, v.Score)
+	}
+
+	ssGrade := grades.CalculateGradeFromOutcomeScores(ssScores)
+	noSsGrade := grades.CalculateGradeFromOutcomeScores(noSsScores)
+
+	grade := ssGrade
+	hasSuccessSkills := -1
+
+	if noSsGrade.Rank > ssGrade.Rank {
+		grade = ssGrade
+		hasSuccessSkills = 0
+	} else if ssGrade.Rank > noSsGrade.Rank {
+		hasSuccessSkills = 1
 	}
 
 	err = gradessvc.Insert(util.DB, &gradessvc.InsertRequest{
-		Grade:    grade,
-		CourseID: cID,
-		UserID:   uID,
+		Grade:            grade.Grade,
+		HasSuccessSkills: hasSuccessSkills,
+		CourseID:         cID,
+		UserID:           uID,
 	})
 
 	if err != nil {

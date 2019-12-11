@@ -8,21 +8,33 @@ import (
 )
 
 type InsertRequest struct {
-	Grade    string
-	CourseID int
-	UserID   int
+	Grade string
+	// int because -1 = same; 0 = no; 1 = yes
+	HasSuccessSkills int
+	CourseID         int
+	UserID           int
 }
 
 func Insert(db services.DB, req *InsertRequest) error {
-	query, args, err := util.Sq.
-		Insert("grades").
-		SetMap(map[string]interface{}{
-			"course_id": req.CourseID,
-			"grade":     req.Grade,
-			// using an Expr because if I don't, it will set it to $1 instead of $3, which is required
-			"user_lti_user_id": sq.Expr("(SELECT lti_user_id FROM users WHERE canvas_user_id=?)", req.UserID),
-		}).
-		ToSql()
+	q := util.Sq.
+		Insert("grades")
+
+	vals := map[string]interface{}{
+		"course_id": req.CourseID,
+		"grade":     req.Grade,
+		// using an Expr because if I don't, it will set it to $1 instead of $3, which is required
+		"user_lti_user_id": sq.Expr("(SELECT lti_user_id FROM users WHERE canvas_user_id=?)", req.UserID),
+	}
+
+	if req.HasSuccessSkills == 0 {
+		vals["has_success_skills"] = false
+	} else if req.HasSuccessSkills == 1 {
+		vals["has_success_skills"] = true
+	}
+
+	q = q.SetMap(vals)
+
+	query, args, err := q.ToSql()
 	if err != nil {
 		return errors.Wrap(err, "error building insert grade sql")
 	}

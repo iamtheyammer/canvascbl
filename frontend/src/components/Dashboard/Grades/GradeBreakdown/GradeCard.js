@@ -41,8 +41,7 @@ function GradeCard(props) {
       case 'userGrade':
         const { min, max } = gradeMapByGrade[currentGrade];
 
-        let successSkillsText =
-          'Your grade with and without success skills is identical.';
+        let successSkillsText = '';
         switch (gradeHasSuccessSkills) {
           case true:
             successSkillsText =
@@ -51,6 +50,10 @@ function GradeCard(props) {
           case false:
             successSkillsText =
               'Success skills were not counted because lowered your grade.';
+            break;
+          default:
+            successSkillsText =
+              'Your grade with and without success skills is identical.';
             break;
         }
 

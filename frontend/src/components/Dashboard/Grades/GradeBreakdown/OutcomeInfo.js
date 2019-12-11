@@ -142,14 +142,17 @@ This outcome's last assignment was ${
           </Card.Grid>
         );
 
-        let successSkillsText =
-          'Your grade with and without success skills is identical.';
+        let successSkillsText = '';
         switch (grade.hasSuccessSkills) {
           case true:
             successSkillsText = `If your grade didn't have success skills, it would be ${grade.ifOppositeSuccessSkills.grade}.`;
             break;
           case false:
             successSkillsText = `If your grade had success skills, it would be ${grade.ifOppositeSuccessSkills.grade}.`;
+            break;
+          default:
+            successSkillsText =
+              'Your grade with and without success skills is identical.';
             break;
         }
 
