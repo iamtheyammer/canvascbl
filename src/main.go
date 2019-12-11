@@ -5,7 +5,6 @@ import (
 	"github.com/iamtheyammer/canvascbl/backend/src/canvasapis"
 	"github.com/iamtheyammer/canvascbl/backend/src/checkout"
 	"github.com/iamtheyammer/canvascbl/backend/src/env"
-	"github.com/iamtheyammer/canvascbl/backend/src/googleapis"
 	"github.com/iamtheyammer/canvascbl/backend/src/plus"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
@@ -69,8 +68,9 @@ func getRouter() *httprouter.Router {
 	router.GET("/api/plus/outcomes/:outcomeID/avg", plus.GetAverageOutcomeScoreHandler)
 	router.GET("/api/plus/grades/previous", plus.GetPreviousGradesHandler)
 
-	router.GET("/api/google/oauth2/request", googleapis.OAuth2RequestHandler)
-	router.GET("/api/google/oauth2/response", googleapis.OAuth2ResponseHandler)
+	// no google needed for now but we could bring it back later.
+	//router.GET("/api/google/oauth2/request", googleapis.OAuth2RequestHandler)
+	//router.GET("/api/google/oauth2/response", googleapis.OAuth2ResponseHandler)
 
 	return router
 }

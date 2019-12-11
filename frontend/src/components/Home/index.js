@@ -40,7 +40,7 @@ function Home(props) {
         <Typography.Title level={2}>Welcome!</Typography.Title>
         <Typography.Text>
           This tool calculates grades based on outcomes in Canvas. To use it,
-          please accept the Terms and Conditions, then log in with Google.
+          please accept the Terms and Conditions, then log in with Canvas.
         </Typography.Text>
         <MobileCheckbox.AgreeItem
           onChange={e => setEnableSignin(e.target.checked)}
@@ -61,10 +61,10 @@ function Home(props) {
           type="primary"
           disabled={!enableSignin}
           onClick={() =>
-            (window.location.href = `${getUrlPrefix}/api/google/oauth2/request`)
+            (window.location.href = `${getUrlPrefix}/api/google/canvas/request`)
           }
         >
-          Sign in with Google
+          Sign in with Canvas
         </MobileButton>
       </div>
     );
@@ -83,7 +83,7 @@ function Home(props) {
           )}
           <Typography.Text>
             This tool calculates grades based on outcomes in Canvas. To use it,
-            please accept the Terms and Conditions, then log in with Google.
+            please accept the Terms and Conditions, then log in with Canvas.
           </Typography.Text>
         </div>
         <div>
@@ -114,10 +114,10 @@ function Home(props) {
             className="center button"
             disabled={!enableSignin}
             onClick={() =>
-              (window.location.href = `${getUrlPrefix}/api/google/oauth2/request`)
+              (window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request`)
             }
           >
-            Sign in with Google
+            Sign in with Canvas
           </Button>
         </div>
       </Card>

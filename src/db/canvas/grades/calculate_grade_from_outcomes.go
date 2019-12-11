@@ -30,7 +30,7 @@ var gradeMap = []grade{
 // CalculateGradeFromOutcomeScores calculates a grade from outcome scores (os)
 func CalculateGradeFromOutcomeScores(os []float64) string {
 	// what is 75% of len(s)
-	outcomesOverMinNeeded := int(math.Ceil(float64(75*len(os)) / float64(100)))
+	outcomesOverMinNeeded := int(math.Floor(float64(75*len(os)) / float64(100)))
 
 	// float64 outcome scores
 	sortedOutcomes := sort.Float64Slice(os)

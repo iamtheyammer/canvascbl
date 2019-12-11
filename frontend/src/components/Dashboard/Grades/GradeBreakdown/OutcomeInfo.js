@@ -47,7 +47,7 @@ function OutcomeInfo(props) {
   } = props;
 
   const { min: AMin, max: AMax } = gradeMapByGrade['A'];
-  const seventyFivePercentOfOutcomes = Math.round(
+  const seventyFivePercentOfOutcomes = Math.floor(
     (75 * outcomeRollupScores.length) / 100
   );
 
@@ -141,10 +141,23 @@ This outcome's last assignment was ${
             {content}
           </Card.Grid>
         );
+
+        let successSkillsText =
+          'Your grade with and without success skills is identical.';
+        switch (grade.hasSuccessSkills) {
+          case true:
+            successSkillsText = `If your grade didn't have success skills, it would be ${grade.ifOppositeSuccessSkills.grade}.`;
+            break;
+          case false:
+            successSkillsText = `If your grade had success skills, it would be ${grade.ifOppositeSuccessSkills.grade}.`;
+            break;
+        }
+
         return [
           cardWithContent(
             `75% (rounded) of ${outcomeRollupScores.length} (number of outcomes with a grade) is ${seventyFivePercentOfOutcomes}.`
           ),
+          cardWithContent(successSkillsText),
           cardWithContent(`More info is coming to this section in the future.`)
         ];
       default:
