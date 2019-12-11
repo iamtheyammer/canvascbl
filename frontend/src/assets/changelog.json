@@ -62,5 +62,11 @@
     "type": 1,
     "title": "Added mobile site",
     "content": "CanvasCBL has been rebuilt from the ground-up for mobile. Go to CanvasCBL.com on your phone to check it out!"
+  },
+  {
+    "timestamp": 1576036077927,
+    "type": 0,
+    "title": "Updated grade calculation algorithm",
+    "content": "Now reflects success skills changes and 75% rounds down."
   }
 ]
