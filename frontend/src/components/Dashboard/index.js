@@ -25,7 +25,7 @@ import ConnectedUpgrades from './Upgrades';
 import ConnectedLogout from './Logout';
 import UpdateHandler from './UpdateHandler';
 import env from '../../util/env';
-import { getCanvasToken, getUser, logout } from '../../actions/canvas';
+import { getUser, logout } from '../../actions/canvas';
 import ConnectedErrorModal from './ErrorModal';
 import { getSessionInformation } from '../../actions/plus';
 import './index.css';
