@@ -13,6 +13,7 @@ type VerifiedSession struct {
 	// users.id
 	UserID               uint64
 	CanvasUserID         uint64
+	UserStatus           int
 	GoogleUsersID        string
 	Email                string
 	HasValidSubscription bool
@@ -29,6 +30,7 @@ func Verify(db services.DB, sessionString string) (*VerifiedSession, error) {
 		Select(
 			"users.id AS user_id",
 			"users.canvas_user_id AS canvas_user_id",
+			"users.status AS user_status",
 			"google_users.id AS google_users_id",
 			"users.email AS email",
 			"(CASE WHEN subscriptions.status IN ('active', 'trialing') "+
@@ -61,6 +63,7 @@ func Verify(db services.DB, sessionString string) (*VerifiedSession, error) {
 	err = row.Scan(
 		&userID,
 		&canvasUserID,
+		&vs.UserStatus,
 		&googleUsersID,
 		&email,
 		&vs.HasValidSubscription,

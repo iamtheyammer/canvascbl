@@ -28,11 +28,12 @@ type User struct {
 	LTIUserID        string
 	CanvasUserID     uint64
 	InsertedAt       time.Time
+	Status           int
 }
 
 func List(db services.DB, req *ListRequest) (*[]User, error) {
 	q := util.Sq.
-		Select("id", "name", "email", "lti_user_id", "canvas_user_id", "inserted_at").
+		Select("id", "name", "email", "lti_user_id", "canvas_user_id", "inserted_at", "status").
 		From("users").
 		Limit(services.DefaultSelectLimit)
 
@@ -83,6 +84,7 @@ func List(db services.DB, req *ListRequest) (*[]User, error) {
 			&u.LTIUserID,
 			&u.CanvasUserID,
 			&u.InsertedAt,
+			&u.Status,
 		)
 		if err != nil {
 			return nil, errors.Wrap(err, "error scanning users")
@@ -110,7 +112,8 @@ func GetByStripeID(db services.DB, stripeID string) (*User, error) {
 			"users.email",
 			"users.lti_user_id",
 			"users.canvas_user_id",
-			"users.inserted_at").
+			"users.inserted_at",
+			"status").
 		From("users").
 		Join("stripe_customers ON users.id = stripe_customers.user_id").
 		Where(sq.Eq{"stripe_customers.stripe_id": stripeID}).
@@ -130,6 +133,7 @@ func GetByStripeID(db services.DB, stripeID string) (*User, error) {
 		&u.LTIUserID,
 		&u.CanvasUserID,
 		&u.InsertedAt,
+		&u.Status,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {

@@ -13,7 +13,8 @@ import {
   Typography,
   Spin,
   Modal,
-  Icon
+  Icon,
+  notification
 } from 'antd';
 
 import DashboardNav from './DashboardNav';
@@ -51,24 +52,8 @@ function Dashboard(props) {
   const [cookies] = useCookies(['session_string']);
 
   const [hasSentUserToGa, setHasSentUserToGa] = useState(false);
-  const [getTokenId, setGetTokenId] = useState();
   const [getUserId, setGetUserId] = useState();
   const [getSessionId, setGetSessionId] = useState();
-
-  useEffect(() => {
-    ReactGA.pageview(
-      props.location.pathname +
-        (props.location.search.includes('~') ? '' : props.location.search)
-    );
-  }, [props.location]);
-
-  // if no token exists, redirect
-  if (!localStorage.token && !cookies.session_string) {
-    return <Redirect to="/" />;
-  } else if (localStorage.token && !token) {
-    // otherwise, wait for token
-    return null;
-  }
 
   const {
     location,
@@ -79,6 +64,32 @@ function Dashboard(props) {
     error,
     dispatch
   } = props;
+
+  useEffect(() => {
+    ReactGA.pageview(
+      props.location.pathname +
+        (props.location.search.includes('~') ? '' : props.location.search)
+    );
+  }, [props.location]);
+
+  useEffect(() => {
+    if (session && session.status === 1) {
+      notification.error({
+        message: 'CanvasCBL is disabled for this user.',
+        description:
+          'CanvasCBL is disabled for this user. Please contact your school for more information.'
+      });
+    }
+  }, [session]);
+
+  // if no token exists, redirect
+  if (!localStorage.token && !cookies.session_string) {
+    return <Redirect to="/" />;
+  } else if (localStorage.token && !token) {
+    // otherwise, wait for token
+    return null;
+  }
+
   const pathSnippets = location.pathname.split('/').filter(i => i);
   const breadcrumbNameMap = getBreadcrumbNameMap(props.courses || []);
   const breadcrumbItems = pathSnippets.map((_, index) => {
@@ -95,16 +106,6 @@ function Dashboard(props) {
     setHasSentUserToGa(true);
   }
 
-  if (error[getTokenId]) {
-    return <Redirect to={'/tokenEntry'} />;
-  }
-
-  if (!getTokenId && (!token || !subdomain)) {
-    const id = v4();
-    dispatch(getCanvasToken(id));
-    setGetTokenId(id);
-  }
-
   if (token && !user && !getUserId) {
     const id = v4();
     dispatch(getUser(id, !cookies['session_string'], token, subdomain));
@@ -117,12 +118,12 @@ function Dashboard(props) {
     setGetSessionId(id);
   }
 
-  if (error[getTokenId]) {
-    return <Redirect to="/" />;
-  }
-
   if (error[getUserId] || error[getSessionId]) {
     return <ConnectedErrorModal error={error[getUserId]} />;
+  }
+
+  if (session && session.status === 1) {
+    return <Redirect to={'/dashboard/logout'} />;
   }
 
   if (user && session && user.primary_email !== session.email) {
@@ -171,8 +172,7 @@ function Dashboard(props) {
             height: 'auto'
           }}
         >
-          {!loading.includes(getTokenId) &&
-          subdomain &&
+          {subdomain &&
           token &&
           !loading.includes(getUserId) &&
           !loading.includes(getSessionId)
