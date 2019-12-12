@@ -49,7 +49,7 @@ class ErrorModal extends Component {
 
     if (canvasStatusCode === 401) {
       if (refreshToken) {
-        if (result.data.errors[0].message !== 'Invalid access token.') {
+        if (result.data.errors[0].message === 'Invalid access token.') {
           Modal.info({
             title: 'Re-Authorizing...',
             content: 'Please wait while we re-authorize with Canvas.',
