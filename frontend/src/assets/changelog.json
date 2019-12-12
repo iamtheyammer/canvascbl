@@ -68,5 +68,11 @@
     "type": 0,
     "title": "Updated grade calculation algorithm",
     "content": "Now reflects success skills changes and 75% rounds down."
+  },
+  {
+    "timestamp": 1576170223075,
+    "type": 0,
+    "title": "Updated grade calculation algorithm",
+    "content": "B and B- no longer has a minimum score."
   }
 ]
