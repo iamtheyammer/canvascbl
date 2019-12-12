@@ -62,7 +62,7 @@ function OAuth2Response(props) {
       const canvasResponse = JSON.parse(query.canvas_response);
       return processCanvasResponse(
         canvasResponse.access_token,
-        canvasResponse.name,
+        canvasResponse.user.name,
         canvasResponse.refresh_token
       );
     case 'google':
