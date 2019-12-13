@@ -1,7 +1,5 @@
 package grades
 
-import "strings"
-
-func isSuccessSkillsOutcome(outcomeName string) bool {
-	return strings.HasPrefix(outcomeName, "SS")
+func isSuccessSkillsOutcome(outcomeID string) bool {
+	return outcomeID == "2269" || outcomeID == "2270"
 }

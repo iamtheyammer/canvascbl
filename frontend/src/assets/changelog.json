@@ -74,5 +74,11 @@
     "type": 0,
     "title": "Updated grade calculation algorithm",
     "content": "B and B- no longer has a minimum score."
+  },
+  {
+    "timestamp": 1576266791741,
+    "type": 0,
+    "title": "Updated grade calculation algorithm",
+    "content": "We now correctly identify and process success skills outcomes."
   }
 ]

@@ -18,17 +18,20 @@ export default outcomeRollups => {
 
     // scores without ones from success skills outcomes
     const noSuccessSkillsScores = rollup[0].scores
-      .filter(s => !isSuccessSkillsOutcome(s.title))
+      .filter(s => !isSuccessSkillsOutcome(s.links.outcome))
       .map(s => s.score);
 
     // grade with success skills included
     const successSkillsGrade = getGradeFromOutcomes(scores);
-    const successSkillsGradeRank = gradeMapByGrade[successSkillsGrade.grade];
+    const successSkillsGradeRank =
+      gradeMapByGrade[successSkillsGrade.grade].rank;
 
     // grade without success skills
     const noSuccessSkillsGrade = getGradeFromOutcomes(noSuccessSkillsScores);
     const noSuccessSkillsGradeRank =
-      gradeMapByGrade[noSuccessSkillsGrade.grade];
+      gradeMapByGrade[noSuccessSkillsGrade.grade].rank;
+
+    debugger;
 
     // if the no success skills grade is better, use that one
     if (noSuccessSkillsGradeRank > successSkillsGradeRank) {

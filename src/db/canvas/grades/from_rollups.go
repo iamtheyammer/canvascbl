@@ -15,6 +15,9 @@ type CanvasRollupsResponse struct {
 		Scores []struct {
 			Title string  `json:"title"`
 			Score float64 `json:"score"`
+			Links struct {
+				Outcome string `json:"outcome"`
+			}
 		} `json:"scores"`
 	} `json:"rollups"`
 }
@@ -51,7 +54,7 @@ func GetOutcomeScoresFromCanvasRollupsResponse(crr *CanvasRollupsResponse) (*[]O
 	var s []OutcomeScore
 
 	for _, v := range r.Scores {
-		s = append(s, OutcomeScore{Score: v.Score, IsSuccessSkills: isSuccessSkillsOutcome(v.Title)})
+		s = append(s, OutcomeScore{Score: v.Score, IsSuccessSkills: isSuccessSkillsOutcome(v.Links.Outcome)})
 	}
 
 	return &s, nil

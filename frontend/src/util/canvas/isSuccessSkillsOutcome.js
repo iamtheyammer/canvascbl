@@ -1,1 +1,1 @@
-export default name => name.startsWith('SS');
+export default id => id === '2269' || id === '2270';
