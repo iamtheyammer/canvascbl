@@ -2,6 +2,7 @@ package sessions
 
 import (
 	"database/sql"
+	"fmt"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
@@ -11,10 +12,10 @@ import (
 type VerifiedSession struct {
 	SessionString string
 	// users.id
-	UserID               uint64
-	CanvasUserID         uint64
-	UserStatus           int
-	GoogleUsersID        string
+	UserID       uint64
+	CanvasUserID uint64
+	UserStatus   int
+	//GoogleUsersID        string
 	Email                string
 	HasValidSubscription bool
 	SubscriptionStatus   string
@@ -31,7 +32,7 @@ func Verify(db services.DB, sessionString string) (*VerifiedSession, error) {
 			"users.id AS user_id",
 			"users.canvas_user_id AS canvas_user_id",
 			"users.status AS user_status",
-			"google_users.id AS google_users_id",
+			//"google_users.id AS google_users_id",
 			"users.email AS email",
 			"(CASE WHEN subscriptions.status IN ('active', 'trialing') "+
 				"AND subscriptions.current_period_end > NOW() THEN "+
@@ -42,8 +43,9 @@ func Verify(db services.DB, sessionString string) (*VerifiedSession, error) {
 		).
 		From("subscriptions").
 		RightJoin("users ON subscriptions.user_id = users.id").
-		RightJoin("google_users ON LOWER(users.email) = LOWER(google_users.email)").
-		Join("sessions ON (users.canvas_user_id = sessions.canvas_user_id OR google_users.id = sessions.google_users_id)").
+		//RightJoin("google_users ON LOWER(users.email) = LOWER(google_users.email)").
+		//Join("sessions ON (users.canvas_user_id = sessions.canvas_user_id OR google_users.id = sessions.google_users_id)").
+		Join("sessions ON users.canvas_user_id = sessions.canvas_user_id").
 		Where(sq.Eq{"sessions.session_string": sessionString}).
 		OrderBy("has_valid_subscription DESC").
 		Limit(1).
@@ -52,19 +54,22 @@ func Verify(db services.DB, sessionString string) (*VerifiedSession, error) {
 		return nil, errors.Wrap(err, "error building verify session sql")
 	}
 
+	fmt.Println(query, args)
+
 	row := db.QueryRow(query, args...)
 
 	var (
-		vs                                       VerifiedSession
-		userID, canvasUserID                     sql.NullInt64
-		email, subscriptionStatus, googleUsersID sql.NullString
+		vs                        VerifiedSession
+		userID, canvasUserID      sql.NullInt64
+		email, subscriptionStatus sql.NullString
+		//googleUsersID             sql.NullString
 	)
 
 	err = row.Scan(
 		&userID,
 		&canvasUserID,
 		&vs.UserStatus,
-		&googleUsersID,
+		//&googleUsersID,
 		&email,
 		&vs.HasValidSubscription,
 		&subscriptionStatus,
@@ -85,9 +90,9 @@ func Verify(db services.DB, sessionString string) (*VerifiedSession, error) {
 		vs.CanvasUserID = uint64(canvasUserID.Int64)
 	}
 
-	if googleUsersID.Valid {
-		vs.GoogleUsersID = googleUsersID.String
-	}
+	//if googleUsersID.Valid {
+	//	vs.GoogleUsersID = googleUsersID.String
+	//}
 
 	if email.Valid {
 		vs.Email = email.String
