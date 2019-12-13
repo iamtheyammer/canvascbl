@@ -31,8 +31,6 @@ export default outcomeRollups => {
     const noSuccessSkillsGradeRank =
       gradeMapByGrade[noSuccessSkillsGrade.grade].rank;
 
-    debugger;
-
     // if the no success skills grade is better, use that one
     if (noSuccessSkillsGradeRank > successSkillsGradeRank) {
       grades[i] = {
