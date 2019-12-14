@@ -80,5 +80,11 @@
     "type": 0,
     "title": "Updated grade calculation algorithm",
     "content": "We now correctly identify and process success skills outcomes."
+  },
+  {
+    "timestamp": 1576357447263,
+    "type": 0,
+    "title": "Updated grade calculation algorithm",
+    "content": "Changed the way we process success skills to do it correctly. Please email us (More Actions -> Support) if you see an issue."
   }
 ]
