@@ -2,7 +2,6 @@ package sessions
 
 import (
 	"database/sql"
-	"fmt"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
@@ -53,8 +52,6 @@ func Verify(db services.DB, sessionString string) (*VerifiedSession, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "error building verify session sql")
 	}
-
-	fmt.Println(query, args)
 
 	row := db.QueryRow(query, args...)
 
