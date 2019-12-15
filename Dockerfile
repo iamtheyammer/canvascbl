@@ -7,5 +7,3 @@ FROM alpine
 COPY --from=build /app/bin/canvasProxy /canvasProxy
 EXPOSE 8000
 ENTRYPOINT ["/canvasProxy"]
-
-FROM nginx
