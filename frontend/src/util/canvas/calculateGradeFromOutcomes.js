@@ -18,7 +18,7 @@ export default outcomeRollups => {
 
     // scores without ones from success skills outcomes
     const noSuccessSkillsScores = rollup[0].scores
-      .filter(s => !isSuccessSkillsOutcome(s.links.outcome))
+      .filter(s => !isSuccessSkillsOutcome(s.title))
       .map(s => s.score);
 
     // grade with success skills included

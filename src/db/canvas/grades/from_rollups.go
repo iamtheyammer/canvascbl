@@ -54,7 +54,7 @@ func GetOutcomeScoresFromCanvasRollupsResponse(crr *CanvasRollupsResponse) (*[]O
 	var s []OutcomeScore
 
 	for _, v := range r.Scores {
-		s = append(s, OutcomeScore{Score: v.Score, IsSuccessSkills: isSuccessSkillsOutcome(v.Links.Outcome)})
+		s = append(s, OutcomeScore{Score: v.Score, IsSuccessSkills: isSuccessSkillsOutcome(v.Title)})
 	}
 
 	return &s, nil
