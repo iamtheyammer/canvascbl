@@ -68,6 +68,11 @@ function DashboardNav(props) {
                   View Privacy Policy
                 </PopoutLink>
               </MobileList.Item>
+              <MobileList.Item onClick={toggleMenu} key="viewTermsOfService">
+                <PopoutLink url={env.termsOfServiceUrl}>
+                  View Terms of Service
+                </PopoutLink>
+              </MobileList.Item>
               <MobileList.Item onClick={toggleMenu} key="viewSystemStatus">
                 <PopoutLink url="https://status.canvascbl.com">
                   View System Status
@@ -152,6 +157,11 @@ function DashboardNav(props) {
           <Menu.Item key="viewPrivacyPolicy">
             <PopoutLink url={env.privacyPolicyUrl}>
               View Privacy Policy
+            </PopoutLink>
+          </Menu.Item>
+          <Menu.Item key="viewTermsOfService">
+            <PopoutLink url={env.termsOfServiceUrl}>
+              View Terms of Service
             </PopoutLink>
           </Menu.Item>
         </Menu.SubMenu>

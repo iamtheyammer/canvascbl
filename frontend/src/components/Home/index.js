@@ -5,12 +5,9 @@ import { useCookies } from 'react-cookie';
 import './index.css';
 import banner from '../../assets/banner.svg';
 
-import toc from '../../util/getTermsAndConditions';
-
-import { Card, Typography, Button, Checkbox, Modal } from 'antd';
+import { Card, Typography, Button, Checkbox } from 'antd';
 import {
   Checkbox as MobileCheckbox,
-  Modal as MobileModal,
   Button as MobileButton
 } from 'antd-mobile';
 import { isMobile } from 'react-device-detect';
@@ -47,15 +44,7 @@ function Home(props) {
         >
           I accept the{' '}
           <PopoutLink url={env.privacyPolicyUrl}>privacy policy</PopoutLink> and{' '}
-          {/* eslint-disable-next-line */}
-          <a
-            href="#"
-            onClick={() => {
-              MobileModal.alert('Terms and Conditions', toc, [{ text: 'OK' }]);
-            }}
-          >
-            terms and conditions
-          </a>
+          <PopoutLink url={env.termsOfServiceUrl}>terms of service</PopoutLink>
         </MobileCheckbox.AgreeItem>
         <MobileButton
           type="primary"
@@ -94,18 +83,9 @@ function Home(props) {
             I accept the{' '}
             <PopoutLink url={env.privacyPolicyUrl}>privacy policy</PopoutLink>{' '}
             and{' '}
-            <Button
-              type="link"
-              style={{ marginLeft: '-15px' }}
-              onClick={() =>
-                Modal.info({
-                  title: 'Terms and Conditions',
-                  content: toc
-                })
-              }
-            >
-              terms and conditions
-            </Button>
+            <PopoutLink url={env.termsOfServiceUrl}>
+              terms of service
+            </PopoutLink>
           </Checkbox>
           <div style={{ marginTop: '15px' }} />
           <Button
