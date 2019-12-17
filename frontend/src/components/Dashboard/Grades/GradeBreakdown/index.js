@@ -14,8 +14,7 @@ import {
   Col,
   Button,
   Table,
-  Icon,
-  Popover
+  Icon
 } from 'antd';
 
 import {
