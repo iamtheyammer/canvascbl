@@ -20,12 +20,12 @@ func GetAverageForCourse(db services.DB, courseID uint64) (*CourseGradeAverage, 
 	query, args, err := util.Sq.
 		Select("COUNT(*) AS num_inputs", "AVG(grade_ints.grade_int) AS avg").
 		Prefix(
-			"WITH grade_ints AS(SELECT DISTINCT ON(user_lti_user_id)(CASE WHEN grade='I' "+
+			"WITH grade_ints AS(SELECT DISTINCT ON(user_canvas_id)(CASE WHEN grade='I' "+
 				"THEN 0 WHEN grade='C' THEN 1 WHEN grade='B-' THEN 2 WHEN grade='B' THEN 3 "+
 				"WHEN grade='B+' THEN 4 WHEN grade='A-' THEN 5 WHEN grade='A' THEN 6 ELSE 0 END)"+
 				"AS grade_int FROM grades WHERE inserted_at>NOW()-interval'24 hours' AND course_id=? "+
-				"GROUP BY grades.grade,grades.user_lti_user_id,grades.inserted_at ORDER BY "+
-				"user_lti_user_id,inserted_at DESC)",
+				"GROUP BY grades.grade,grades.user_canvas_id,grades.inserted_at ORDER BY "+
+				"user_canvas_id,inserted_at DESC)",
 			courseID).
 		From("grade_ints").
 		ToSql()

@@ -19,25 +19,25 @@ type OutcomeRollupScore struct {
 	ID              uint64
 	CourseCanvasID  uint64
 	OutcomeCanvasID uint64
-	UserCanvasLTIID string
+	UserCanvasID    uint64
 	Score           float64
 	TimesAssessed   uint64
 	InsertedAt      time.Time
 }
 
-func GetUserMostRecentScore(db services.DB, userCanvasLTIID string) (*OutcomeRollupScore, error) {
+func GetUserMostRecentScore(db services.DB, userCanvasID uint64) (*OutcomeRollupScore, error) {
 	query, args, err := util.Sq.
 		Select(
 			"id",
 			"course_canvas_id",
 			"outcome_canvas_id",
-			"user_canvas_lti_id",
+			"user_canvas_id",
 			"score",
 			"times_assessed",
 			"inserted_at",
 		).
 		From("outcome_rollups").
-		Where(sq.Eq{"user_canvas_lti_id": userCanvasLTIID}).
+		Where(sq.Eq{"user_canvas_id": userCanvasID}).
 		OrderBy("inserted_at DESC").
 		ToSql()
 	if err != nil {
@@ -51,7 +51,7 @@ func GetUserMostRecentScore(db services.DB, userCanvasLTIID string) (*OutcomeRol
 		&ors.ID,
 		&ors.CourseCanvasID,
 		&ors.OutcomeCanvasID,
-		&ors.UserCanvasLTIID,
+		&ors.UserCanvasID,
 		&ors.Score,
 		&ors.TimesAssessed,
 		&ors.InsertedAt,
@@ -74,19 +74,19 @@ func GetAverage(db services.DB, outcomeID uint64) (*OutcomeAverage, error) {
 			"COUNT(*) AS num_factors",
 		).
 		Prefix(`WITH outcomes_meta AS (
-	SELECT DISTINCT ON (users.lti_user_id)
+	SELECT DISTINCT ON (users.canvas_user_id)
 		outcome_canvas_id AS outcome_id,
 		AVG(score) AS average_score,
 		COUNT(*) AS num_factors
 	FROM
 		outcome_rollups
-		JOIN users ON users.lti_user_id = outcome_rollups.user_canvas_lti_id
+		JOIN users ON users.canvas_user_id = outcome_rollups.user_canvas_id
 	WHERE
 		outcome_canvas_id = ?
 		AND outcome_rollups.inserted_at > NOW() - interval '24 hours'
 	GROUP BY
 		outcome_canvas_id,
-		lti_user_id
+		users.canvas_user_id
 )`, outcomeID).
 		From("outcomes_meta").
 		ToSql()

@@ -4,7 +4,6 @@ import (
 	"github.com/iamtheyammer/canvascbl/backend/src/db/canvas/grades"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/courses"
 	gradessvc "github.com/iamtheyammer/canvascbl/backend/src/db/services/grades"
-	"github.com/iamtheyammer/canvascbl/backend/src/db/services/users"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/pkg/errors"
 	"strconv"
@@ -76,7 +75,7 @@ func InsertGrade(rr *string, courseID *string, userID *string) {
 		Grade:            grade.Grade,
 		HasSuccessSkills: hasSuccessSkills,
 		CourseID:         cID,
-		UserID:           uID,
+		UserCanvasID:     uID,
 	})
 
 	if err != nil {
@@ -143,24 +142,9 @@ func GetMemoizedAverageGradeForCourse(courseID uint64, userID uint64) (*float64,
 }
 
 func GetGradesForUserBeforeDate(userID uint64, before time.Time) (*[]gradessvc.Grade, error) {
-	usersP, err := users.List(util.DB, &users.ListRequest{
-		CanvasUserID: userID,
-	})
-	if err != nil {
-		return nil, errors.Wrap(err, "error getting user")
-	}
-
-	us := *usersP
-
-	if len(us) < 1 {
-		return nil, errors.New("no users returned")
-	}
-
-	u := us[0]
-
 	gs, err := gradessvc.List(util.DB, &gradessvc.ListRequest{
-		UserLTIUserID: &u.LTIUserID,
-		Before:        &before,
+		UserCanvasID: &userID,
+		Before:       &before,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting grades")

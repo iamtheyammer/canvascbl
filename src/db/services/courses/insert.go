@@ -1,7 +1,6 @@
 package courses
 
 import (
-	sq "github.com/Masterminds/squirrel"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/pkg/errors"
@@ -69,11 +68,10 @@ func InsertMultipleAssignments(db services.DB, req *[]AssignmentInsertRequest) e
 func InsertMultipleOutcomeRollups(db services.DB, uID uint64, req *[]OutcomeRollupInsertRequest) error {
 	q := util.Sq.
 		Insert("outcome_rollups").
-		Prefix("WITH users_meta AS (SELECT lti_user_id FROM users WHERE canvas_user_id=?)", uID).
 		Columns(
 			"course_canvas_id",
 			"outcome_canvas_id",
-			"user_canvas_lti_id",
+			"user_canvas_id",
 			"score",
 			"times_assessed",
 		)
@@ -82,7 +80,7 @@ func InsertMultipleOutcomeRollups(db services.DB, uID uint64, req *[]OutcomeRoll
 		q = q.Values(
 			or.CourseID,
 			or.OutcomeID,
-			sq.Expr("(SELECT lti_user_id FROM users_meta)"),
+			uID,
 			or.Score,
 			or.TimesAssessed,
 		)
@@ -109,7 +107,7 @@ func InsertMultipleOutcomeResults(db services.DB, req *[]OutcomeResultInsertRequ
 			"course_canvas_id",
 			"assignment_canvas_id",
 			"outcome_canvas_id",
-			"user_canvas_lti_id",
+			"user_canvas_id",
 			"achieved_mastery",
 			"score",
 			"possible",
@@ -129,7 +127,7 @@ func InsertMultipleOutcomeResults(db services.DB, req *[]OutcomeResultInsertRequ
 			or.CourseID,
 			or.AssignmentID,
 			or.OutcomeID,
-			sq.Expr("(SELECT lti_user_id FROM users WHERE canvas_user_id=?)", or.UserID),
+			or.UserID,
 			or.AchievedMastery,
 			or.Score,
 			or.Possible,

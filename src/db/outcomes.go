@@ -67,6 +67,6 @@ func GetMemoizedOutcomeAverage(outcomeID uint64) (*outcomessvc.OutcomeAverage, e
 	return oa, nil
 }
 
-func GetUserMostRecentOutcomeRollupScore(userLTIUserID string) (*outcomessvc.OutcomeRollupScore, error) {
-	return outcomessvc.GetUserMostRecentScore(util.DB, userLTIUserID)
+func GetUserMostRecentOutcomeRollupScore(userCanvasID uint64) (*outcomessvc.OutcomeRollupScore, error) {
+	return outcomessvc.GetUserMostRecentScore(util.DB, userCanvasID)
 }

@@ -1,7 +1,6 @@
 package grades
 
 import (
-	sq "github.com/Masterminds/squirrel"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/pkg/errors"
@@ -12,7 +11,7 @@ type InsertRequest struct {
 	// int because -1 = same; 0 = no; 1 = yes
 	HasSuccessSkills int
 	CourseID         int
-	UserID           int
+	UserCanvasID     int
 }
 
 func Insert(db services.DB, req *InsertRequest) error {
@@ -23,7 +22,7 @@ func Insert(db services.DB, req *InsertRequest) error {
 		"course_id": req.CourseID,
 		"grade":     req.Grade,
 		// using an Expr because if I don't, it will set it to $1 instead of $3, which is required
-		"user_lti_user_id": sq.Expr("(SELECT lti_user_id FROM users WHERE canvas_user_id=?)", req.UserID),
+		"user_canvas_id": req.UserCanvasID,
 	}
 
 	if req.HasSuccessSkills == 0 {

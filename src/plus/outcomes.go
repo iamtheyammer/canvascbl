@@ -3,7 +3,6 @@ package plus
 import (
 	"encoding/json"
 	"github.com/iamtheyammer/canvascbl/backend/src/db"
-	"github.com/iamtheyammer/canvascbl/backend/src/db/services/users"
 	"github.com/iamtheyammer/canvascbl/backend/src/middlewares"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
@@ -40,28 +39,7 @@ func GetAverageOutcomeScoreHandler(w http.ResponseWriter, req *http.Request, ps 
 		return
 	}
 
-	usersP, err := db.ListUsers(&users.ListRequest{
-		ID:           session.UserID,
-		Email:        session.Email,
-		CanvasUserID: session.CanvasUserID,
-		Limit:        1,
-	})
-	if err != nil {
-		util.HandleError(errors.Wrap(err, "error listing users"))
-		util.SendInternalServerError(w)
-		return
-	}
-
-	users := *usersP
-
-	if len(users) < 1 {
-		util.SendBadRequest(w, "unable to get your user-- have you signed in yet?")
-		return
-	}
-
-	user := users[0]
-
-	score, err := db.GetUserMostRecentOutcomeRollupScore(user.LTIUserID)
+	score, err := db.GetUserMostRecentOutcomeRollupScore(session.CanvasUserID)
 
 	if score == nil {
 		util.SendUnauthorized(w, "you don't have a score for that outcome")

@@ -34,8 +34,7 @@ func GetForUser(db services.DB, userID uint64) (*[]Course, error) {
 		From("courses").
 		Distinct().
 		LeftJoin("grades ON grades.course_id = courses.course_id").
-		LeftJoin("users ON users.lti_user_id = grades.user_lti_user_id").
-		Where(sq.Eq{"users.canvas_user_id": userID}).
+		Where(sq.Eq{"grades.user_canvas_id": userID}).
 		ToSql()
 	if err != nil {
 		return nil, errors.Wrap(err, "error building get courses for user sql")
