@@ -86,6 +86,12 @@ func (_ MiddlewareRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Expose-Headers", "X-Canvas-Url, X-Canvas-Status-Code")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 
+	if env.Env == env.EnvironmentStaging {
+		if ok := util.CloudflareAccessVerifier.HandlerMiddleware(w, r); ok {
+			return
+		}
+	}
+
 	router.ServeHTTP(w, r)
 }
 
