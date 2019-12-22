@@ -34,6 +34,8 @@ No query string parameters from Canvas or otherwise, except otherwise noted, are
 
 - `GET` `/api/canvas/users/profile/self` - Mirror of [this](https://canvas.instructure.com/doc/api/users.html#method.users.api_show) Canvas endpoint, with `:id` replaced with `self`.
     - Supports a custom `generateSession` param which will generate a CanvasCBL session as a cookie (`session_string`) and as a header (`X-Session-String`). Can be used for future CanvasCBL+ calls.
+- `GET` `/api/canvas/users/profile/self/observees` - Mirror of [this](https://canvas.instructure.com/doc/api/user_observees.html#method.user_observees.index) Canvas endpoint with `:user_id` replaced with `self`.
+    - Requires a custom `user_id` query param for backend functions. The final requested url will have the supplied user ID instead of `self`. If you're confused, try it and look at the returned `X-Canvas-URL` header.
 
 ### Courses
 
@@ -55,7 +57,7 @@ No query string parameters from Canvas or otherwise, except otherwise noted, are
 
 Sets the `user_ids[]` param to the value of the `userId` param. It should be equal to the ID of the user the token is for. This is required because students only have permission to list their own outcome results, and this endpoint defaults to listing results for all students. Ex: `userId=12345`
 
-### Tokens
+### ~~Tokens~~ (deprecated)
 
 The API supports holding on to tokens. All tokens endpoints require a session.
 
@@ -94,7 +96,7 @@ Provide it in the X-Session-String header or as a cookie (`session_string`).
 
 The backend supports proxying OAuth2 requests and responses to the frontend.
 
-### Google
+### ~~Google~~ (deprecated)
 
 #### OAuth2 Endpoints
 
