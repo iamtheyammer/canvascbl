@@ -31,6 +31,8 @@ func getRouter() *httprouter.Router {
 	// saves to db
 	router.GET("/api/canvas/users/profile/self", canvasapis.GetOwnUserProfileHandler)
 	// saves to db
+	router.GET("/api/canvas/users/profile/self/observees", canvasapis.GetOwnObserveesHandler)
+	// saves to db
 	router.GET("/api/canvas/courses", canvasapis.GetCoursesHandler)
 	// saves to db
 	router.GET("/api/canvas/courses/:courseID/assignments", canvasapis.GetAssignmentsByCourseHandler)
