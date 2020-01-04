@@ -31,6 +31,8 @@ func getRouter() *httprouter.Router {
 	// saves to db
 	router.GET("/api/canvas/users/profile/self", canvasapis.GetOwnUserProfileHandler)
 	// saves to db
+	router.GET("/api/canvas/users/profile/self/observees", canvasapis.GetOwnObserveesHandler)
+	// saves to db
 	router.GET("/api/canvas/courses", canvasapis.GetCoursesHandler)
 	// saves to db
 	router.GET("/api/canvas/courses/:courseID/assignments", canvasapis.GetAssignmentsByCourseHandler)
@@ -52,9 +54,10 @@ func getRouter() *httprouter.Router {
 	router.GET("/api/canvas/oauth2/refresh_token", canvasapis.OAuth2RefreshTokenHandler)
 	router.DELETE("/api/canvas/oauth2/token", canvasapis.DeleteOAuth2TokenHandler)
 
-	router.POST("/api/canvas/tokens", canvasapis.InsertCanvasTokenHandler)
-	router.GET("/api/canvas/tokens", canvasapis.GetCanvasTokensHandler)
-	router.DELETE("/api/canvas/tokens", canvasapis.DeleteCanvasTokenHandler)
+	// not holding tokens anymore.
+	//router.POST("/api/canvas/tokens", canvasapis.InsertCanvasTokenHandler)
+	//router.GET("/api/canvas/tokens", canvasapis.GetCanvasTokensHandler)
+	//router.DELETE("/api/canvas/tokens", canvasapis.DeleteCanvasTokenHandler)
 
 	router.GET("/api/checkout/session", checkout.CreateCheckoutSessionHandler)
 	router.GET("/api/checkout/products", checkout.ListProductsHandler)

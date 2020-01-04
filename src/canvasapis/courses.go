@@ -19,6 +19,7 @@ func GetCoursesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Para
 	resp, body, err := courses.Get(rd)
 	if err != nil {
 		util.SendInternalServerError(w)
+		return
 	}
 
 	util.HandleCanvasResponse(w, resp, body)
@@ -113,15 +114,17 @@ func GetOutcomeResultsByCourseHandler(w http.ResponseWriter, r *http.Request, ps
 		return
 	}
 
-	userID := r.URL.Query().Get("userId")
-	if len(userID) < 1 {
-		util.SendBadRequest(w, "missing userId as param userId")
+	userIDs := r.URL.Query()["user_ids[]"]
+	if len(userIDs) < 1 {
+		util.SendBadRequest(w, "missing user_ids[] as param user_ids[]")
 		return
 	}
 
-	if !util.ValidateIntegerString(userID) {
-		util.SendBadRequest(w, "invalid userID")
-		return
+	for _, uID := range userIDs {
+		if !util.ValidateIntegerString(uID) {
+			util.SendBadRequest(w, "one of your user_ids[] is invalid")
+			return
+		}
 	}
 
 	ok, rd := util.GetRequestDetailsFromRequest(r)
@@ -139,7 +142,7 @@ func GetOutcomeResultsByCourseHandler(w http.ResponseWriter, r *http.Request, ps
 		}
 	}
 
-	resp, body, err := courses.GetOutcomeResultsByCourse(rd, courseID, userID, includes)
+	resp, body, err := courses.GetOutcomeResultsByCourse(rd, courseID, userIDs, includes)
 	if err != nil {
 		util.SendInternalServerError(w)
 		return
@@ -169,15 +172,17 @@ func GetOutcomeRollupsByCourseHandler(w http.ResponseWriter, r *http.Request, ps
 		return
 	}
 
-	userID := r.URL.Query().Get("userId")
-	if len(userID) < 1 {
-		util.SendBadRequest(w, "missing userId as param userId")
+	userIDs := r.URL.Query()["user_ids[]"]
+	if len(userIDs) < 1 {
+		util.SendBadRequest(w, "missing user_ids[] as param user_ids[]")
 		return
 	}
 
-	if !util.ValidateIntegerString(userID) {
-		util.SendBadRequest(w, "invalid userId")
-		return
+	for _, uID := range userIDs {
+		if !util.ValidateIntegerString(uID) {
+			util.SendBadRequest(w, "one of your user_ids[] is invalid")
+			return
+		}
 	}
 
 	ok, rd := util.GetRequestDetailsFromRequest(r)
@@ -195,7 +200,7 @@ func GetOutcomeRollupsByCourseHandler(w http.ResponseWriter, r *http.Request, ps
 		}
 	}
 
-	resp, body, err := courses.GetOutcomeRollupsByCourse(rd, courseID, userID, includes)
+	resp, body, err := courses.GetOutcomeRollupsByCourse(rd, courseID, userIDs, includes)
 	if err != nil {
 		util.SendInternalServerError(w)
 		return
@@ -210,7 +215,7 @@ func GetOutcomeRollupsByCourseHandler(w http.ResponseWriter, r *http.Request, ps
 	// send to db; using go funcs so they run at the same time
 
 	// grades
-	go db.InsertGrade(&body, &courseID, &userID)
+	go db.InsertGrade(&body, &courseID, &userIDs)
 	// rollups
 	go db.InsertMultipleOutcomeRollups(&body, &courseID)
 

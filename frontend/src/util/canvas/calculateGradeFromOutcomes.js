@@ -6,13 +6,20 @@ export default (outcomeRollups, userId) => {
   const grades = {};
 
   courseIds.forEach(i => {
-    const rollup = outcomeRollups[i];
+    const rollups = outcomeRollups[i];
 
     // array of outcomes for a specified class
-    const scores = rollup[0].scores.map(s => s.score);
+    const rollup = rollups.filter(r => parseInt(r.links.user) === userId)[0];
+
+    if (!rollup) {
+      grades[i] = naGrade;
+      return;
+    }
+
+    const scores = rollup.scores.map(s => s.score);
 
     if (scores.length < 1) {
-      grades[i] = { grade: 'N/A' };
+      grades[i] = naGrade;
       return;
     }
 

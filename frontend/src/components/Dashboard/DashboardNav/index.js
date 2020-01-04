@@ -15,11 +15,12 @@ import {
   Icon as MobileIcon
 } from 'antd-mobile';
 import PopoutLink from '../../PopoutLink';
+import ObserveeHandler from './ObserveeHandler';
 
 const { Header } = Layout;
 
 function DashboardNav(props) {
-  const { session } = props;
+  const { session, observees } = props;
   const userHasActiveSubscription = session && session.hasValidSubscription;
 
   const [shouldShowMobileMenu, setShouldShowMobileMenu] = useState(false);
@@ -54,6 +55,12 @@ function DashboardNav(props) {
                 <Link to="/dashboard/upgrades">Upgrades</Link>
               </MobileList.Item>
               <MobileList.Item />
+              {observees && observees.length && (
+                <div>
+                  <ObserveeHandler mobileToggleMenu={toggleMenu} />
+                  <MobileList.Item />
+                </div>
+              )}
               <MobileList.Item onClick={toggleMenu} key="contactSupport">
                 <PopoutLink
                   url={
@@ -134,6 +141,7 @@ function DashboardNav(props) {
             </Typography.Text>
           </Menu.Item>
         )}
+        {observees && observees.length > 0 && <ObserveeHandler />}
         <Menu.SubMenu key="moreActions" title="More Actions">
           <Menu.Item key="installExtension">
             <PopoutLink url="https://chrome.google.com/webstore/detail/canvascbl-add-in-for-canv/odmbdioejfbelhcknliaihbjckggmmak">
@@ -174,7 +182,8 @@ function DashboardNav(props) {
 }
 
 const ConnectedDashboardNav = connect(state => ({
-  session: state.plus.session
+  session: state.plus.session,
+  observees: state.canvas.observees
 }))(DashboardNav);
 
 export default withRouter(ConnectedDashboardNav);

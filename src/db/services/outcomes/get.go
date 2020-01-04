@@ -25,7 +25,7 @@ type OutcomeRollupScore struct {
 	InsertedAt      time.Time
 }
 
-func GetUserMostRecentScore(db services.DB, userCanvasID uint64) (*OutcomeRollupScore, error) {
+func GetUserMostRecentScore(db services.DB, userCanvasIDs []uint64) (*OutcomeRollupScore, error) {
 	query, args, err := util.Sq.
 		Select(
 			"id",
@@ -37,7 +37,7 @@ func GetUserMostRecentScore(db services.DB, userCanvasID uint64) (*OutcomeRollup
 			"inserted_at",
 		).
 		From("outcome_rollups").
-		Where(sq.Eq{"user_canvas_id": userCanvasID}).
+		Where(sq.Eq{"user_canvas_id": userCanvasIDs}).
 		OrderBy("inserted_at DESC").
 		ToSql()
 	if err != nil {

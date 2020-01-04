@@ -19,6 +19,17 @@ type ListRequest struct {
 	Offset       uint64
 }
 
+type ListObserveesRequest struct {
+	ID                   uint64
+	ObserverCanvasUserID uint64
+	ObserveeCanvasUserID uint64
+	ObserveeName         string
+
+	ActiveOnly bool
+	Limit      uint64
+	Offset     uint64
+}
+
 type User struct {
 	ID   uint64
 	Name string
@@ -29,6 +40,15 @@ type User struct {
 	CanvasUserID     uint64
 	InsertedAt       time.Time
 	Status           int
+}
+
+type Observee struct {
+	ID             uint64
+	ObserverUserID uint64
+	CanvasUserID   uint64
+	Name           string
+	DeletedAt      time.Time
+	InsertedAt     time.Time
 }
 
 func List(db services.DB, req *ListRequest) (*[]User, error) {
@@ -73,7 +93,7 @@ func List(db services.DB, req *ListRequest) (*[]User, error) {
 
 	defer rows.Close()
 
-	var users []User
+	var us []User
 
 	for rows.Next() {
 		var u User
@@ -90,10 +110,10 @@ func List(db services.DB, req *ListRequest) (*[]User, error) {
 			return nil, errors.Wrap(err, "error scanning users")
 		}
 
-		users = append(users, u)
+		us = append(us, u)
 	}
 
-	return &users, nil
+	return &us, nil
 }
 
 func ListFromCanvasResponse(db services.DB, req *users.CanvasProfileResponse) (*[]User, error) {
@@ -143,4 +163,85 @@ func GetByStripeID(db services.DB, stripeID string) (*User, error) {
 	}
 
 	return &u, nil
+}
+
+func ListObservees(db services.DB, req *ListObserveesRequest) (*[]Observee, error) {
+	q := util.Sq.
+		Select(
+			"id",
+			"observer_canvas_user_id",
+			"observee_canvas_user_id",
+			"observee_name",
+			"deleted_at",
+			"inserted_at",
+		).
+		From("observees")
+
+	if req.ID != 0 {
+		q = q.Where(sq.Eq{"id": req.ID})
+	}
+
+	if req.ObserverCanvasUserID != 0 {
+		q = q.Where(sq.Eq{"observer_canvas_user_id": req.ObserverCanvasUserID})
+	}
+
+	if req.ObserveeCanvasUserID != 0 {
+		q = q.Where(sq.Eq{"observee_canvas_user_id": req.ObserverCanvasUserID})
+	}
+
+	if req.ActiveOnly {
+		q = q.Where(sq.Eq{"deleted_at": nil})
+	}
+
+	if req.Limit != 0 {
+		q = q.Limit(req.Limit)
+	}
+
+	if req.Offset != 0 {
+		q = q.Offset(req.Offset)
+	}
+
+	query, args, err := q.ToSql()
+	if err != nil {
+		return nil, errors.Wrap(err, "error building list observees sql")
+	}
+
+	rows, err := db.Query(query, args...)
+	if err != nil {
+		return nil, errors.Wrap(err, "error executing list observees sql")
+	}
+
+	var os []Observee
+
+	for rows.Next() {
+		var (
+			o         Observee
+			name      sql.NullString
+			deletedAt sql.NullTime
+		)
+
+		err := rows.Scan(
+			&o.ID,
+			&o.ObserverUserID,
+			&o.CanvasUserID,
+			&name,
+			&deletedAt,
+			&o.InsertedAt,
+		)
+		if err != nil {
+			return nil, errors.Wrap(err, "error scanning list observees sql")
+		}
+
+		if name.Valid {
+			o.Name = name.String
+		}
+
+		if deletedAt.Valid {
+			o.DeletedAt = deletedAt.Time
+		}
+
+		os = append(os, o)
+	}
+
+	return &os, nil
 }

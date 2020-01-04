@@ -3,6 +3,7 @@ package plus
 import (
 	"encoding/json"
 	"github.com/iamtheyammer/canvascbl/backend/src/db"
+	"github.com/iamtheyammer/canvascbl/backend/src/db/services/users"
 	"github.com/iamtheyammer/canvascbl/backend/src/middlewares"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
@@ -39,7 +40,29 @@ func GetAverageOutcomeScoreHandler(w http.ResponseWriter, req *http.Request, ps 
 		return
 	}
 
-	score, err := db.GetUserMostRecentOutcomeRollupScore(session.CanvasUserID)
+	obsP, err := db.ListObservees(&users.ListObserveesRequest{ObserverCanvasUserID: session.CanvasUserID})
+	if err != nil {
+		util.HandleError(errors.Wrap(err, "error listing observees"))
+		util.SendInternalServerError(w)
+		return
+	}
+	obs := *obsP
+
+	var usersToList []uint64
+	if len(obs) > 0 {
+		for _, o := range obs {
+			usersToList = append(usersToList, o.CanvasUserID)
+		}
+	} else {
+		usersToList = append(usersToList, session.CanvasUserID)
+	}
+
+	score, err := db.GetUserMostRecentOutcomeRollupScore(usersToList)
+	if err != nil {
+		util.HandleError(errors.Wrap(err, "error getting the most recent outcome score for a user"))
+		util.SendInternalServerError(w)
+		return
+	}
 
 	if score == nil {
 		util.SendUnauthorized(w, "you don't have a score for that outcome")

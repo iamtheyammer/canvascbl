@@ -15,3 +15,8 @@ func GetSelfProfile(rd *util.RequestDetails) (*http.Response, string, error) {
 	)
 	return req.MakeAuthenticatedGetRequest(url, rd.Token)
 }
+
+func GetUserObservees(rd *util.RequestDetails, userID string) (*http.Response, string, error) {
+	url := fmt.Sprintf("https://%s.instructure.com/api/v1/users/%s/observees", rd.Subdomain, userID)
+	return req.MakeAuthenticatedGetRequest(url, rd.Token)
+}

@@ -20,7 +20,7 @@ type Course struct {
 }
 
 // GetForUser returns all courses the user has a grade in
-func GetForUser(db services.DB, userID uint64) (*[]Course, error) {
+func GetForUser(db services.DB, userIDs []uint64) (*[]Course, error) {
 	query, args, err := util.Sq.
 		Select(
 			"courses.id",
@@ -34,7 +34,7 @@ func GetForUser(db services.DB, userID uint64) (*[]Course, error) {
 		From("courses").
 		Distinct().
 		LeftJoin("grades ON grades.course_id = courses.course_id").
-		Where(sq.Eq{"grades.user_canvas_id": userID}).
+		Where(sq.Eq{"grades.user_canvas_id": userIDs}).
 		ToSql()
 	if err != nil {
 		return nil, errors.Wrap(err, "error building get courses for user sql")

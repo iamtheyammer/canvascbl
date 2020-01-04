@@ -7,31 +7,23 @@ import (
 )
 
 type InsertRequest struct {
-	Grade string
-	// int because -1 = same; 0 = no; 1 = yes
-	HasSuccessSkills int
-	CourseID         int
-	UserCanvasID     int
+	Grade        string
+	CourseID     int
+	UserCanvasID int
 }
 
-func Insert(db services.DB, req *InsertRequest) error {
+func Insert(db services.DB, req *[]InsertRequest) error {
 	q := util.Sq.
-		Insert("grades")
+		Insert("grades").
+		Columns("course_id", "grade", "user_canvas_id")
 
-	vals := map[string]interface{}{
-		"course_id": req.CourseID,
-		"grade":     req.Grade,
-		// using an Expr because if I don't, it will set it to $1 instead of $3, which is required
-		"user_canvas_id": req.UserCanvasID,
+	for _, r := range *req {
+		q = q.Values(
+			r.CourseID,
+			r.Grade,
+			r.UserCanvasID,
+		)
 	}
-
-	if req.HasSuccessSkills == 0 {
-		vals["has_success_skills"] = false
-	} else if req.HasSuccessSkills == 1 {
-		vals["has_success_skills"] = true
-	}
-
-	q = q.SetMap(vals)
 
 	query, args, err := q.ToSql()
 	if err != nil {
