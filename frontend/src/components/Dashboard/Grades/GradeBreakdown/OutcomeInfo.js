@@ -142,25 +142,10 @@ This outcome's last assignment was ${
           </Card.Grid>
         );
 
-        let successSkillsText = '';
-        switch (grade.hasSuccessSkills) {
-          case true:
-            successSkillsText = `If your grade didn't have success skills, it would be ${grade.ifOppositeSuccessSkills.grade}.`;
-            break;
-          case false:
-            successSkillsText = `If your grade had success skills, it would be ${grade.ifOppositeSuccessSkills.grade}.`;
-            break;
-          default:
-            successSkillsText =
-              'Your grade with and without success skills is identical.';
-            break;
-        }
-
         return [
           cardWithContent(
             `75% (rounded) of ${outcomeRollupScores.length} (number of outcomes with a grade) is ${seventyFivePercentOfOutcomes}.`
           ),
-          cardWithContent(successSkillsText),
           cardWithContent(`More info is coming to this section in the future.`)
         ];
       default:

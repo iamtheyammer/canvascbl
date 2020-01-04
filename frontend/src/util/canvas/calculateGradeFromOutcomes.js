@@ -1,6 +1,6 @@
-import isSuccessSkillsOutcome from './isSuccessSkillsOutcome';
+const naGrade = { grade: 'N/A' };
 
-export default outcomeRollups => {
+export default (outcomeRollups, userId) => {
   const courseIds = Object.keys(outcomeRollups);
 
   const grades = {};
@@ -16,48 +16,7 @@ export default outcomeRollups => {
       return;
     }
 
-    // scores without ones from success skills outcomes
-    const noSuccessSkillsScores = rollup[0].scores
-      .filter(s => !isSuccessSkillsOutcome(s.title))
-      .map(s => s.score);
-
-    // grade with success skills included
-    const successSkillsGrade = getGradeFromOutcomes(scores);
-    const successSkillsGradeRank =
-      gradeMapByGrade[successSkillsGrade.grade].rank;
-
-    // grade without success skills
-    const noSuccessSkillsGrade = getGradeFromOutcomes(noSuccessSkillsScores);
-    const noSuccessSkillsGradeRank =
-      gradeMapByGrade[noSuccessSkillsGrade.grade].rank;
-
-    // if the no success skills grade is better, use that one
-    if (noSuccessSkillsGradeRank > successSkillsGradeRank) {
-      grades[i] = {
-        ...noSuccessSkillsGrade,
-        rank: noSuccessSkillsGradeRank,
-        hasSuccessSkills: false,
-        ifOppositeSuccessSkills: successSkillsGrade
-      };
-      return;
-    }
-
-    // if the success skills one is better, use that one
-    if (successSkillsGradeRank > noSuccessSkillsGradeRank) {
-      grades[i] = {
-        ...successSkillsGrade,
-        rank: successSkillsGradeRank,
-        hasSuccessSkills: true,
-        ifOppositeSuccessSkills: noSuccessSkillsGrade
-      };
-      return;
-    }
-
-    // they must be equal
-    grades[i] = {
-      ...successSkillsGrade,
-      rank: successSkillsGradeRank
-    };
+    grades[i] = getGradeFromOutcomes(scores);
   });
 
   return grades;

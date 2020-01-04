@@ -47,7 +47,7 @@ import GradeCard from './GradeCard';
 import { getAverageGradeForCourse } from '../../../../actions/plus';
 import ConnectedAverageOutcomeScore from './AverageOutcomeScore';
 import FutureAssignmentsForOutcome from './FutureAssignmentsForOutcome';
-import isSuccessSkillsOutcome from '../../../../util/canvas/isSuccessSkillsOutcome';
+import Loading from '../../Loading';
 
 const outcomeTableColumns = [
   {
@@ -55,15 +55,9 @@ const outcomeTableColumns = [
     dataIndex: 'name',
     key: 'name',
     sorter: (a, b) => desc(a.name, b.name),
-    render: (text, item) => (
+    render: text => (
       <div>
-        <Typography.Text
-          delete={
-            item.gradeHasSuccessSkills === false && isSuccessSkillsOutcome(text)
-          }
-        >
-          {text}
-        </Typography.Text>
+        <Typography.Text>{text}</Typography.Text>
         <span style={{ width: '7px', display: 'inline-block' }} />
       </div>
     )
@@ -350,7 +344,6 @@ function GradeBreakdown(props) {
       o => o.id === parseInt(rs.links.outcome)
     )[0];
     return {
-      gradeHasSuccessSkills: grade.hasSuccessSkills,
       name: outcome.display_name || outcome.title,
       score: rs.score,
       lastAssignment: rs.title,
@@ -424,14 +417,7 @@ function GradeBreakdown(props) {
             <MobileAccordion.Panel header={d.name} key={d.key}>
               <MobileList>
                 <MobileList.Item multipleLine wrap>
-                  <Typography.Text
-                    delete={
-                      grade.hasSuccessSkills === false &&
-                      isSuccessSkillsOutcome(d.name)
-                    }
-                  >
-                    {d.name}
-                  </Typography.Text>
+                  <Typography.Text>{d.name}</Typography.Text>
                 </MobileList.Item>
                 <MobileList.Item extra={d.score}>Score</MobileList.Item>
                 <MobileList.Item extra={d.timesAssessed}>
@@ -506,7 +492,6 @@ function GradeBreakdown(props) {
             currentGrade={grade.grade}
             averageGrade={averageGrade}
             userHasValidSubscription={session.hasValidSubscription}
-            gradeHasSuccessSkills={grade.hasSuccessSkills}
           />
         </Col>
         <Col span={16}>
