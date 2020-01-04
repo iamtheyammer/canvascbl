@@ -12,8 +12,6 @@ import {
   Popover,
   Typography,
   Spin,
-  Modal,
-  Icon,
   notification
 } from 'antd';
 
@@ -25,7 +23,7 @@ import ConnectedUpgrades from './Upgrades';
 import ConnectedLogout from './Logout';
 import UpdateHandler from './UpdateHandler';
 import env from '../../util/env';
-import { getUser, logout } from '../../actions/canvas';
+import { getObservees, getUser } from '../../actions/canvas';
 import ConnectedErrorModal from './ErrorModal';
 import { getSessionInformation } from '../../actions/plus';
 import './index.css';
@@ -53,11 +51,13 @@ function Dashboard(props) {
 
   const [hasSentUserToGa, setHasSentUserToGa] = useState(false);
   const [getUserId, setGetUserId] = useState();
+  const [getObserveesId, setGetObserveesId] = useState();
   const [getSessionId, setGetSessionId] = useState();
 
   const {
     location,
     user,
+    observees,
     subdomain,
     session,
     loading,
@@ -118,27 +118,18 @@ function Dashboard(props) {
     setGetSessionId(id);
   }
 
-  if (error[getUserId] || error[getSessionId]) {
+  if (token && user && !observees && !getObserveesId) {
+    const id = v4();
+    dispatch(getObservees(user.id, id, token, subdomain));
+    setGetObserveesId(id);
+  }
+
+  if (error[getUserId] || error[getObserveesId] || error[getSessionId]) {
     return <ConnectedErrorModal error={error[getUserId]} />;
   }
 
   if (session && session.status === 1) {
     return <Redirect to={'/dashboard/logout'} />;
-  }
-
-  if (user && session && user.primary_email !== session.email) {
-    Modal.confirm({
-      icon: <Icon type="exclamation-circle" style={{ color: '#D8000C' }} />,
-      title: 'Session mismatch',
-      content:
-        "There's a deep issue with your sessions or you're trying to use someone else's subscription. " +
-        'Either way, contact support to try again.',
-      okText: 'Logout',
-      cancelText: 'Logout',
-      onCancel: () => dispatch(logout(token, subdomain)),
-      onOk: () => dispatch(logout(token, subdomain))
-    });
-    return null;
   }
 
   const routes = (
@@ -236,6 +227,7 @@ const ConnectedDashboard = connect(state => ({
   subdomain: state.canvas.subdomain,
   courses: state.canvas.courses,
   user: state.canvas.user,
+  observees: state.canvas.observees,
   session: state.plus.session,
   loading: state.loading,
   error: state.error

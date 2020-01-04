@@ -9,10 +9,10 @@ import (
 )
 
 type ListRequest struct {
-	UserCanvasID *uint64
-	Before       *time.Time
-	After        *time.Time
-	CourseIDs    *[]uint64
+	UserCanvasIDs *[]uint64
+	Before        *time.Time
+	After         *time.Time
+	CourseIDs     *[]uint64
 }
 
 type Grade struct {
@@ -25,10 +25,16 @@ type Grade struct {
 
 func List(db services.DB, req *ListRequest) (*[]Grade, error) {
 	q := util.Sq.
-		Select("DISTINCT ON (grades.course_id) id", "course_id", "grade", "inserted_at").
+		Select(
+			"DISTINCT ON (grades.course_id, grades.user_canvas_id) id",
+			"user_canvas_id",
+			"course_id",
+			"grade",
+			"inserted_at",
+		).
 		From("grades").
-		OrderBy("grades.course_id, grades.inserted_at DESC").
-		Where(sq.Eq{"user_canvas_id": req.UserCanvasID})
+		OrderBy("grades.course_id, grades.user_canvas_id, grades.inserted_at DESC").
+		Where(sq.Eq{"user_canvas_id": req.UserCanvasIDs})
 
 	if req.Before != nil {
 		// using this weird workaround because it doesn't work any other way
@@ -62,6 +68,7 @@ func List(db services.DB, req *ListRequest) (*[]Grade, error) {
 
 		err := rows.Scan(
 			&g.ID,
+			&g.UserCanvasID,
 			&g.CourseID,
 			&g.Grade,
 			&g.InsertedAt,

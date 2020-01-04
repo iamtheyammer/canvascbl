@@ -6,16 +6,7 @@ import moment from 'moment';
 import { isMobile } from 'react-device-detect';
 import { flatten } from 'lodash';
 
-import {
-  Typography,
-  Spin,
-  notification,
-  Row,
-  Col,
-  Button,
-  Table,
-  Icon
-} from 'antd';
+import { Typography, notification, Row, Col, Button, Table, Icon } from 'antd';
 
 import {
   WhiteSpace as MobileWhiteSpace,
@@ -30,7 +21,8 @@ import {
   getUserCourses,
   getAssignmentsForCourse,
   getOutcomeRollupsAndOutcomesForCourse,
-  getOutcomeAlignmentsForCourse
+  getOutcomeAlignmentsForCourse,
+  changeActiveUser
 } from '../../../../actions/canvas';
 import calculateGradeFromOutcomes, {
   gradeMapByGrade
@@ -48,6 +40,7 @@ import { getAverageGradeForCourse } from '../../../../actions/plus';
 import ConnectedAverageOutcomeScore from './AverageOutcomeScore';
 import FutureAssignmentsForOutcome from './FutureAssignmentsForOutcome';
 import isSuccessSkillsOutcome from '../../../../util/canvas/isSuccessSkillsOutcome';
+import Loading from '../../Loading';
 
 const outcomeTableColumns = [
   {
@@ -144,7 +137,8 @@ function GradeBreakdown(props) {
     subdomain,
     loading,
     error,
-    user,
+    activeUserId,
+    users,
     courses,
     outcomeRollups,
     outcomeResults,
@@ -161,6 +155,8 @@ function GradeBreakdown(props) {
     error[getAssignmentsId];
 
   const courseId = parseInt(props.match.params.courseId);
+
+  const activeUser = users && activeUserId && users[activeUserId];
 
   const allOutcomes = props.outcomes;
 
@@ -190,11 +186,18 @@ function GradeBreakdown(props) {
         !getOutcomeAlignmentsId &&
         session &&
         session.hasValidSubscription &&
+        activeUserId &&
         (!outcomeAlignments || !outcomeAlignments[courseId])
       ) {
         const id = v4();
         dispatch(
-          getOutcomeAlignmentsForCourse(id, courseId, user.id, token, subdomain)
+          getOutcomeAlignmentsForCourse(
+            id,
+            courseId,
+            activeUserId,
+            token,
+            subdomain
+          )
         );
         setGetOutcomeAlignmentsId(id);
       }
@@ -211,9 +214,19 @@ function GradeBreakdown(props) {
         setGetPlusAverageId(id);
       }
 
+      const course = props.courses.filter(c => c.id === courseId)[0];
+
+      if (!course) {
+        return;
+      }
+
+      const courseGradedUsers = course.enrollments.map(
+        e => e.associated_user_id || e.user_id
+      );
+
       if (
-        user &&
-        user.id &&
+        activeUser &&
+        courses &&
         (!outcomeRollups || !allOutcomes || !allOutcomes[courseId]) &&
         !getRollupsId
       ) {
@@ -221,7 +234,7 @@ function GradeBreakdown(props) {
         dispatch(
           getOutcomeRollupsAndOutcomesForCourse(
             id,
-            user.id,
+            courseGradedUsers,
             courseId,
             token,
             subdomain
@@ -231,23 +244,32 @@ function GradeBreakdown(props) {
         setGetRollupsId(id);
       }
 
+      if (!courseGradedUsers.includes(activeUserId)) {
+        return;
+      }
+
       if (
-        user &&
-        user.id &&
+        activeUser &&
         (!outcomeResults || !outcomeResults[courseId]) &&
         !getResultsId
       ) {
         const id = v4();
         dispatch(
-          getOutcomeResultsForCourse(id, user.id, courseId, token, subdomain)
+          getOutcomeResultsForCourse(
+            id,
+            courseGradedUsers,
+            courseId,
+            token,
+            subdomain
+          )
         );
         setLoadingText('your grade in this class');
         setGetResultsId(id);
       }
 
       if (
-        user &&
-        user.id &&
+        activeUser &&
+        activeUser.id &&
         (!assignments || !assignments[courseId]) &&
         !getAssignmentsId
       ) {
@@ -270,12 +292,45 @@ function GradeBreakdown(props) {
     return <Redirect to="/dashboard/grades" />;
   }
 
+  if (activeUser && users && courses) {
+    const course = courses.filter(c => c.id === courseId)[0];
+    if (course) {
+      const courseGradedUsers = course.enrollments.map(
+        e => e.associated_user_id || e.user_id
+      );
+      if (!courseGradedUsers.includes(activeUserId)) {
+        return (
+          <div>
+            <Typography.Title level={3}>
+              {activeUser.name} isn't in {course.name}.
+            </Typography.Title>
+            <Typography.Text>
+              However, the students below are-- click to switch to them:
+            </Typography.Text>
+            <ul>
+              {courseGradedUsers.map(uId => (
+                <li key={uId}>
+                  <Button
+                    type="link"
+                    onClick={() => dispatch(changeActiveUser(uId))}
+                  >
+                    {users[uId].name}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      }
+    }
+  }
+
   if (err) {
     return <ConnectedErrorModal error={err} />;
   }
 
   if (
-    !user ||
+    !activeUser ||
     !session ||
     !courses ||
     !allOutcomes ||
@@ -286,15 +341,7 @@ function GradeBreakdown(props) {
     !assignments ||
     !assignments[courseId]
   ) {
-    return (
-      <div align="center">
-        <Spin size="default" />
-        <span style={{ marginTop: '10px' }} />
-        <Typography.Title level={3}>
-          {`Loading ${loadingText}...`}
-        </Typography.Title>
-      </div>
-    );
+    return <Loading text={loadingText} />;
   }
 
   const course = props.courses.filter(c => c.id === courseId)[0];
@@ -307,11 +354,16 @@ function GradeBreakdown(props) {
   }
 
   const averageGrade = gradeAverages ? gradeAverages[courseId] : gradeAverages;
-  const grade = calculateGradeFromOutcomes({
-    [courseId]: props.outcomeRollups[courseId]
-  })[courseId];
+  const grade = calculateGradeFromOutcomes(
+    {
+      [courseId]: props.outcomeRollups[courseId]
+    },
+    activeUserId
+  )[courseId];
   const outcomes = props.outcomes[courseId];
-  const rollupScores = props.outcomeRollups[courseId][0].scores;
+  const rollup = props.outcomeRollups[courseId].filter(
+    or => parseInt(or.links.user) === activeUserId
+  )[0];
 
   if (!grade || grade.grade === 'N/A') {
     return (
@@ -325,6 +377,8 @@ function GradeBreakdown(props) {
       </div>
     );
   }
+
+  const rollupScores = rollup.scores;
 
   const { min } = gradeMapByGrade[grade.grade];
 
@@ -343,7 +397,9 @@ function GradeBreakdown(props) {
 
   const lowestOutcome = getLowestOutcome();
 
-  const results = outcomeResults[courseId];
+  const results = outcomeResults[courseId].filter(
+    r => parseInt(r.links.user) === activeUserId
+  );
 
   const outcomeTableData = rollupScores.map(rs => {
     const outcome = outcomes.filter(
@@ -576,6 +632,8 @@ const ConnectedGradeBreakdown = connect(state => ({
   outcomeAlignments: state.canvas.outcomeAlignments,
   assignments: state.canvas.assignments,
   user: state.canvas.user,
+  activeUserId: state.canvas.activeUserId,
+  users: state.canvas.users,
   session: state.plus.session,
   gradeAverages: state.plus.averages
 }))(GradeBreakdown);

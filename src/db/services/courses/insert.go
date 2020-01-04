@@ -14,6 +14,7 @@ type AssignmentInsertRequest struct {
 }
 
 type OutcomeRollupInsertRequest struct {
+	CanvasUserID  uint64
 	CourseID      uint64
 	OutcomeID     uint64
 	Score         float64
@@ -65,7 +66,7 @@ func InsertMultipleAssignments(db services.DB, req *[]AssignmentInsertRequest) e
 	return nil
 }
 
-func InsertMultipleOutcomeRollups(db services.DB, uID uint64, req *[]OutcomeRollupInsertRequest) error {
+func InsertMultipleOutcomeRollups(db services.DB, req *[]OutcomeRollupInsertRequest) error {
 	q := util.Sq.
 		Insert("outcome_rollups").
 		Columns(
@@ -80,7 +81,7 @@ func InsertMultipleOutcomeRollups(db services.DB, uID uint64, req *[]OutcomeRoll
 		q = q.Values(
 			or.CourseID,
 			or.OutcomeID,
-			uID,
+			or.CanvasUserID,
 			or.Score,
 			or.TimesAssessed,
 		)

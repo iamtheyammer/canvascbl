@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import v4 from 'uuid/v4';
 
-import { Typography, Table, Icon, Spin, Tag, Skeleton, Popover } from 'antd';
+import { Typography, Table, Icon, Tag, Skeleton, Popover } from 'antd';
 import { Accordion as MobileAccordion, List as MobileList } from 'antd-mobile';
 
 import {
@@ -25,6 +25,7 @@ import { getPreviousGrades } from '../../../actions/plus';
 import moment from 'moment';
 import { isMobile } from 'react-device-detect';
 import truncate from 'truncate';
+import Loading from '../Loading';
 
 function PreviousGrade(props) {
   const { userHasValidSubscription, grade, previousGrade } = props;
@@ -153,15 +154,20 @@ function Grades(props) {
     subdomain,
     loading,
     error,
-    user,
     courses,
     outcomeRollups,
+    gradedUsers,
+    users,
+    activeUserId,
     plus
   } = props;
 
   const err = error[Object.keys(error).filter(eid => allIds.includes(eid))[0]];
 
-  const activeCourses = courses ? getActiveCourses(courses) : courses;
+  const activeUser = users && activeUserId && users[activeUserId];
+
+  const activeCourses =
+    courses && activeUser ? getActiveCourses(courses, activeUser.id) : courses;
 
   useEffect(() => {
     if (allIds.some(id => loading.includes(id)) || err) {
@@ -180,7 +186,7 @@ function Grades(props) {
     // and if we haven't fetched rollups already
     // fetch rollups
     if (
-      (user && !outcomeRollups) ||
+      (gradedUsers.length && !outcomeRollups) ||
       ((() =>
         outcomeRollups
           ? activeCourses.some(c => !outcomeRollups[c.id])
@@ -192,7 +198,13 @@ function Grades(props) {
         const id = v4();
         ids.push(id);
         dispatch(
-          getOutcomeRollupsForCourse(id, user.id, c.id, token, subdomain)
+          getOutcomeRollupsForCourse(
+            id,
+            c.enrollments.map(e => e.associated_user_id || e.user_id),
+            c.id,
+            token,
+            subdomain
+          )
         );
       });
       setGetOutcomeRollupsForCourseIds(ids);
@@ -200,7 +212,7 @@ function Grades(props) {
     }
 
     if (
-      user &&
+      activeUser &&
       plus.session &&
       plus.session.hasValidSubscription &&
       !plus.previousGrades &&
@@ -219,24 +231,21 @@ function Grades(props) {
   }
 
   if (
-    !user ||
+    !activeUser ||
     !plus.session ||
     !courses ||
     !outcomeRollups ||
     allIds.some(id => loading.includes(id))
   ) {
-    return (
-      <div align="center">
-        <Spin />
-        <span style={{ paddingTop: '20px' }} />
-        <Typography.Title level={3}>
-          {`Loading ${loadingText}...`}
-        </Typography.Title>
-      </div>
-    );
+    return <Loading text={loadingText} />;
   }
 
-  const grades = calculateGradeFromOutcomes(outcomeRollups);
+  const grades = calculateGradeFromOutcomes(outcomeRollups, activeUserId);
+
+  const previousGrades =
+    plus &&
+    plus.previousGrades &&
+    plus.previousGrades.filter(pg => pg.canvasUserId === activeUserId);
 
   const data = activeCourses.map(c => ({
     key: c.id,
@@ -249,8 +258,8 @@ function Grades(props) {
       : plus &&
         plus.previousGrades &&
         !error[getPrevGradeId] &&
-        plus.previousGrades.filter(pg => pg.courseId === c.id)[0] &&
-        plus.previousGrades.filter(pg => pg.courseId === c.id)[0]
+        previousGrades.filter(pg => pg.courseId === c.id)[0] &&
+        previousGrades.filter(pg => pg.courseId === c.id)[0]
   }));
 
   if (isMobile) {
@@ -326,6 +335,9 @@ const ConnectedGrades = connect(state => ({
   courses: state.canvas.courses,
   plus: state.plus,
   outcomeRollups: state.canvas.outcomeRollups,
+  gradedUsers: state.canvas.gradedUsers,
+  users: state.canvas.users,
+  activeUserId: state.canvas.activeUserId,
   user: state.canvas.user,
   token: state.canvas.token,
   subdomain: state.canvas.subdomain,

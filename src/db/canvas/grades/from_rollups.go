@@ -3,6 +3,7 @@ package grades
 import (
 	"encoding/json"
 	"github.com/pkg/errors"
+	"strconv"
 )
 
 // CanvasRollupsResponse models the data returned from Canvas exactly. This should really only be used in relation
@@ -41,21 +42,24 @@ func GetCanvasRollupsResponseFromJsonString(j *string) (*CanvasRollupsResponse, 
 
 // GetOutcomeScoresFromCanvasRollupsResponse gets an array of outcome scores from a CanvasRollupsResponse,
 // often gotten from GetCanvasRollupsResponseFromJsonString.
-func GetOutcomeScoresFromCanvasRollupsResponse(crr *CanvasRollupsResponse) (*[]OutcomeScore, error) {
+func GetOutcomeScoresFromCanvasRollupsResponse(crr *CanvasRollupsResponse) (*map[uint64][]float64, error) {
 	rs := crr.Rollups
 
-	// there will be one rollup per user and we only do this by single user at the moment.
-	if len(rs) != 1 {
-		return nil, errors.New("error getting scores from canvas rollups: rollups.length != 1")
+	ret := map[uint64][]float64{}
+
+	for _, r := range rs {
+		uID, err := strconv.Atoi(r.Links.User)
+		if err != nil {
+			return nil, errors.Wrap(err, "error converting user id into an int")
+		}
+
+		var s []float64
+		for _, v := range r.Scores {
+			s = append(s, v.Score)
+		}
+
+		ret[uint64(uID)] = s
 	}
 
-	r := rs[0]
-
-	var s []OutcomeScore
-
-	for _, v := range r.Scores {
-		s = append(s, OutcomeScore{Score: v.Score, IsSuccessSkills: isSuccessSkillsOutcome(v.Title)})
-	}
-
-	return &s, nil
+	return &ret, nil
 }

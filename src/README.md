@@ -45,10 +45,10 @@ No query string parameters from Canvas or otherwise, except otherwise noted, are
 - `GET` `/api/canvas/courses/:courseID/outcome_groups` - Mirror of [this](https://canvas.instructure.com/doc/api/outcome_groups.html#method.outcome_groups_api.index) Canvas endpoint.
 - `GET` `/api/canvas/courses/:courseID/outcome_groups/:outcomeGroupID/outcomes` - Mirror of [this](https://canvas.instructure.com/doc/api/outcome_groups.html#method.outcome_groups_api.outcomes) Canvas endpoint.
 - `GET` `/api/canvas/courses/:courseID/outcome_results` - Mirror of [this](https://canvas.instructure.com/doc/api/outcome_results.html#method.outcome_results.index) Canvas endpoint.
-  - Requires the [`userId` param](#userid-param)
+  - Requires the `user_ids[]` query param from Canvas
   - Supports the `include[]` query param from Canvas
 - `GET` `/api/canvas/courses/:courseID/outcome_rollups` - Mirror of [this](https://canvas.instructure.com/doc/api/outcome_results.html#method.outcome_results.rollups) Canvas endpoint.
-  - Requires the [`userId` param](#userid-param)
+  - Requires the `user_ids[]` query param from Canvas
   - Supports the `include[]` query param from Canvas
 - `GET` `/api/canvas/courses/:courseID/outcome_alignments` - Mirror of [this](https://canvas.instructure.com/doc/api/outcomes.html#method.outcomes_api.outcome_alignments) Canvas endpoint.
   - Requires the [`userId` param](#userid-param)

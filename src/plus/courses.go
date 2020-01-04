@@ -3,6 +3,7 @@ package plus
 import (
 	"encoding/json"
 	"github.com/iamtheyammer/canvascbl/backend/src/db"
+	"github.com/iamtheyammer/canvascbl/backend/src/db/services/users"
 	"github.com/iamtheyammer/canvascbl/backend/src/middlewares"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
@@ -38,7 +39,24 @@ func GetAverageGradeForCourseHandler(w http.ResponseWriter, req *http.Request, p
 		return
 	}
 
-	avg, numFactors, err := db.GetMemoizedAverageGradeForCourse(uint64(cID), session.CanvasUserID)
+	obsP, err := db.ListObservees(&users.ListObserveesRequest{ObserverCanvasUserID: session.CanvasUserID})
+	if err != nil {
+		util.HandleError(errors.Wrap(err, "error listing observees"))
+		util.SendInternalServerError(w)
+		return
+	}
+	obs := *obsP
+
+	var usersToList []uint64
+	if len(obs) > 0 {
+		for _, o := range obs {
+			usersToList = append(usersToList, o.CanvasUserID)
+		}
+	} else {
+		usersToList = append(usersToList, session.CanvasUserID)
+	}
+
+	avg, numFactors, err := db.GetMemoizedAverageGradeForCourse(uint64(cID), usersToList)
 	if err != nil {
 		util.HandleError(errors.Wrap(err, "error getting memoized average for course"))
 		util.SendInternalServerError(w)

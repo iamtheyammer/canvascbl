@@ -99,7 +99,7 @@ func HandleObservees(observees *string, requestingUserID uint64) {
 	}
 
 	// get the user's current observees
-	dbObserveesP, err := userssvc.ListUserObservees(trx, requestingUserID)
+	dbObserveesP, err := userssvc.ListObservees(trx, &userssvc.ListObserveesRequest{ObserverCanvasUserID: requestingUserID})
 	if err != nil {
 		handleError(errors.Wrap(err, "error listing user observees"))
 		return
@@ -206,4 +206,8 @@ func HandleObservees(observees *string, requestingUserID uint64) {
 	}
 
 	return
+}
+
+func ListObservees(req *userssvc.ListObserveesRequest) (*[]userssvc.Observee, error) {
+	return userssvc.ListObservees(util.DB, req)
 }

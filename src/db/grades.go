@@ -17,17 +17,22 @@ var memoizedGradeAverages = map[uint64]struct {
 }{}
 
 // InsertGrade inserts a grade from a outcome_rollups canvas API response
-func InsertGrade(rr *string, courseID *string, userID *string) {
+func InsertGrade(rr *string, courseID *string, userIDs *[]string) {
 	cID, err := strconv.Atoi(*courseID)
 	if err != nil {
 		handleError(errors.Wrap(err, "error converting courseID to int"))
 		return
 	}
 
-	uID, err := strconv.Atoi(*userID)
-	if err != nil {
-		handleError(errors.Wrap(err, "error converting userID to int"))
-		return
+	var userIDInts []uint64
+
+	for _, v := range *userIDs {
+		uID, err := strconv.Atoi(v)
+		if err != nil {
+			handleError(errors.Wrap(err, "error converting userID to int"))
+			return
+		}
+		userIDInts = append(userIDInts, uint64(uID))
 	}
 
 	crr, err := grades.GetCanvasRollupsResponseFromJsonString(rr)
@@ -48,35 +53,25 @@ func InsertGrade(rr *string, courseID *string, userID *string) {
 		return
 	}
 
-	var ssScores []float64
-	var noSsScores []float64
-	for _, v := range os {
-		if !v.IsSuccessSkills {
-			noSsScores = append(noSsScores, v.Score)
+	var req []gradessvc.InsertRequest
+
+	for uID, scores := range os {
+		if len(scores) < 1 {
+			continue
 		}
 
-		ssScores = append(ssScores, v.Score)
+		req = append(req, gradessvc.InsertRequest{
+			Grade:        grades.CalculateGradeFromOutcomeScores(scores).Grade,
+			CourseID:     cID,
+			UserCanvasID: int(uID),
+		})
 	}
 
-	ssGrade := grades.CalculateGradeFromOutcomeScores(ssScores)
-	noSsGrade := grades.CalculateGradeFromOutcomeScores(noSsScores)
-
-	grade := ssGrade
-	hasSuccessSkills := -1
-
-	if noSsGrade.Rank > ssGrade.Rank {
-		grade = ssGrade
-		hasSuccessSkills = 0
-	} else if ssGrade.Rank > noSsGrade.Rank {
-		hasSuccessSkills = 1
+	if len(req) < 1 {
+		return
 	}
 
-	err = gradessvc.Insert(util.DB, &gradessvc.InsertRequest{
-		Grade:            grade.Grade,
-		HasSuccessSkills: hasSuccessSkills,
-		CourseID:         cID,
-		UserCanvasID:     uID,
-	})
+	err = gradessvc.Insert(util.DB, &req)
 
 	if err != nil {
 		handleError(errors.Wrap(err, "database error when inserting grades"))
@@ -90,8 +85,8 @@ func GetAverageGradeForCourse(courseID uint64) (*gradessvc.CourseGradeAverage, e
 	return gradessvc.GetAverageForCourse(util.DB, courseID)
 }
 
-func GetMemoizedAverageGradeForCourse(courseID uint64, userID uint64) (*float64, *uint64, error) {
-	cs, err := courses.GetForUser(util.DB, userID)
+func GetMemoizedAverageGradeForCourse(courseID uint64, userIDs []uint64) (*float64, *uint64, error) {
+	cs, err := courses.GetForUser(util.DB, userIDs)
 	if err != nil {
 		return nil, nil, nil
 	}
@@ -141,10 +136,10 @@ func GetMemoizedAverageGradeForCourse(courseID uint64, userID uint64) (*float64,
 	return &v.Result, &v.NumInputs, nil
 }
 
-func GetGradesForUserBeforeDate(userID uint64, before time.Time) (*[]gradessvc.Grade, error) {
+func GetGradesForUserBeforeDate(userIDs []uint64, before time.Time) (*[]gradessvc.Grade, error) {
 	gs, err := gradessvc.List(util.DB, &gradessvc.ListRequest{
-		UserCanvasID: &userID,
-		Before:       &before,
+		UserCanvasIDs: &userIDs,
+		Before:        &before,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting grades")

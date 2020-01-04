@@ -5,25 +5,27 @@ import (
 	"github.com/iamtheyammer/canvascbl/backend/src/req"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"net/http"
+	"net/url"
+	"strconv"
 )
 
 // Get gets all of a user's courses
 func Get(rd *util.RequestDetails) (*http.Response, string, error) {
-	url := fmt.Sprintf(
+	u := fmt.Sprintf(
 		"https://%s.instructure.com/api/v1/courses",
 		rd.Subdomain,
 	)
-	return req.MakeAuthenticatedGetRequest(url, rd.Token)
+	return req.MakeAuthenticatedGetRequest(u, rd.Token)
 }
 
 // GetOutcomesByCourse gets all outcomes for a specific course
 func GetOutcomesByCourse(rd *util.RequestDetails, courseID string) (*http.Response, string, error) {
-	url := fmt.Sprintf(
+	u := fmt.Sprintf(
 		"https://%s.instructure.com/api/v1/courses/%s/outcome_groups",
 		rd.Subdomain,
 		courseID,
 	)
-	return req.MakeAuthenticatedGetRequest(url, rd.Token)
+	return req.MakeAuthenticatedGetRequest(u, rd.Token)
 }
 
 // GetOutcomesByCourseAndOutcomeGroup gets all outcomes in a course's outcome group
@@ -32,55 +34,67 @@ func GetOutcomesByCourseAndOutcomeGroup(
 	courseID string,
 	outcomeGroupID string,
 ) (*http.Response, string, error) {
-	url := fmt.Sprintf(
+	u := fmt.Sprintf(
 		"https://%s.instructure.com/api/v1/courses/%s/outcome_groups/%s/outcomes?per_page=100",
 		rd.Subdomain,
 		courseID,
 		outcomeGroupID,
 	)
-	return req.MakeAuthenticatedGetRequest(url, rd.Token)
+	return req.MakeAuthenticatedGetRequest(u, rd.Token)
 }
 
 // GetOutcomeResultsByCourse gets outcome results for the specified course
 func GetOutcomeResultsByCourse(
 	rd *util.RequestDetails,
 	courseID string,
-	userID string,
+	userIDs []string,
 	include string,
 ) (*http.Response, string, error) {
-	url := fmt.Sprintf(
-		"https://%s.instructure.com/api/v1/courses/%s/outcome_results?user_ids[]=%s&per_page=100",
-		rd.Subdomain,
-		courseID,
-		userID,
-	)
-
-	if len(include) > 1 {
-		url = fmt.Sprintf("%s&include[]=%s", url, include)
+	u := url.URL{
+		Scheme: "https",
+		Host:   fmt.Sprintf("%s.instructure.com", rd.Subdomain),
+		Path:   fmt.Sprintf("/api/v1/courses/%s/outcome_results", courseID),
 	}
 
-	return req.MakeAuthenticatedGetRequest(url, rd.Token)
+	q := u.Query()
+	for _, v := range userIDs {
+		q.Add("user_ids[]", v)
+	}
+
+	if len(include) > 0 {
+		q.Add("include[]", include)
+	}
+
+	q.Add("per_page", strconv.Itoa(len(userIDs)*100))
+	u.RawQuery = q.Encode()
+
+	return req.MakeAuthenticatedGetRequest(u.String(), rd.Token)
 }
 
 // GetOutcomeRollupsByCourse gets outcome rollups for a specific course
 func GetOutcomeRollupsByCourse(
 	rd *util.RequestDetails,
 	courseID string,
-	userID string,
+	userIDs []string,
 	include string,
 ) (*http.Response, string, error) {
-	url := fmt.Sprintf(
-		"https://%s.instructure.com/api/v1/courses/%s/outcome_rollups?user_ids[]=%s&per_page=100",
-		rd.Subdomain,
-		courseID,
-		userID,
-	)
-
-	if len(include) > 1 {
-		url = fmt.Sprintf("%s&include[]=%s", url, include)
+	u := url.URL{
+		Scheme: "https",
+		Host:   fmt.Sprintf("%s.instructure.com", rd.Subdomain),
+		Path:   fmt.Sprintf("/api/v1/courses/%s/outcome_rollups", courseID),
 	}
 
-	return req.MakeAuthenticatedGetRequest(url, rd.Token)
+	q := u.Query()
+	for _, v := range userIDs {
+		q.Add("user_ids[]", v)
+	}
+
+	if len(include) > 0 {
+		q.Add("include[]", include)
+	}
+	u.RawQuery = q.Encode()
+
+	return req.MakeAuthenticatedGetRequest(u.String(), rd.Token)
 }
 
 // GetAssignmentsByCourse gets all assignments for a specified course
@@ -89,17 +103,17 @@ func GetAssignmentsByCourse(
 	courseID string,
 	include string,
 ) (*http.Response, string, error) {
-	url := fmt.Sprintf(
+	u := fmt.Sprintf(
 		"https://%s.instructure.com/api/v1/courses/%s/assignments?per_page=100",
 		rd.Subdomain,
 		courseID,
 	)
 
 	if len(include) > 1 {
-		url = fmt.Sprintf("%s&include[]=%s", url, include)
+		u = fmt.Sprintf("%s&include[]=%s", u, include)
 	}
 
-	return req.MakeAuthenticatedGetRequest(url, rd.Token)
+	return req.MakeAuthenticatedGetRequest(u, rd.Token)
 }
 
 func GetOutcomeAlignmentsByCourse(
@@ -107,12 +121,12 @@ func GetOutcomeAlignmentsByCourse(
 	courseID string,
 	userID string,
 ) (*http.Response, string, error) {
-	url := fmt.Sprintf(
+	u := fmt.Sprintf(
 		"https://%s.instructure.com/api/v1/courses/%s/outcome_alignments?student_id=%s",
 		rd.Subdomain,
 		courseID,
 		userID,
 	)
 
-	return req.MakeAuthenticatedGetRequest(url, rd.Token)
+	return req.MakeAuthenticatedGetRequest(u, rd.Token)
 }

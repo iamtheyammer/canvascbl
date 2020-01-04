@@ -19,6 +19,17 @@ type ListRequest struct {
 	Offset       uint64
 }
 
+type ListObserveesRequest struct {
+	ID                   uint64
+	ObserverCanvasUserID uint64
+	ObserveeCanvasUserID uint64
+	ObserveeName         string
+
+	ActiveOnly bool
+	Limit      uint64
+	Offset     uint64
+}
+
 type User struct {
 	ID   uint64
 	Name string
@@ -154,8 +165,8 @@ func GetByStripeID(db services.DB, stripeID string) (*User, error) {
 	return &u, nil
 }
 
-func ListUserObservees(db services.DB, userID uint64) (*[]Observee, error) {
-	query, args, err := util.Sq.
+func ListObservees(db services.DB, req *ListObserveesRequest) (*[]Observee, error) {
+	q := util.Sq.
 		Select(
 			"id",
 			"observer_canvas_user_id",
@@ -164,9 +175,33 @@ func ListUserObservees(db services.DB, userID uint64) (*[]Observee, error) {
 			"deleted_at",
 			"inserted_at",
 		).
-		From("observees").
-		Where(sq.Eq{"observer_canvas_user_id": userID}).
-		ToSql()
+		From("observees")
+
+	if req.ID != 0 {
+		q = q.Where(sq.Eq{"id": req.ID})
+	}
+
+	if req.ObserverCanvasUserID != 0 {
+		q = q.Where(sq.Eq{"observer_canvas_user_id": req.ObserverCanvasUserID})
+	}
+
+	if req.ObserveeCanvasUserID != 0 {
+		q = q.Where(sq.Eq{"observee_canvas_user_id": req.ObserverCanvasUserID})
+	}
+
+	if req.ActiveOnly {
+		q = q.Where(sq.Eq{"deleted_at": nil})
+	}
+
+	if req.Limit != 0 {
+		q = q.Limit(req.Limit)
+	}
+
+	if req.Offset != 0 {
+		q = q.Offset(req.Offset)
+	}
+
+	query, args, err := q.ToSql()
 	if err != nil {
 		return nil, errors.Wrap(err, "error building list observees sql")
 	}

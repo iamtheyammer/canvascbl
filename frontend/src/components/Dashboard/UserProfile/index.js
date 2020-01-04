@@ -34,12 +34,19 @@ function UserProfile(props) {
   }
 
   return (
-    <Descriptions title="My Profile" bordered>
-      <Descriptions.Item label="Name">{user.name}</Descriptions.Item>
-      <Descriptions.Item label="Email">{user.primary_email}</Descriptions.Item>
-      <Descriptions.Item label="ID">{user.id}</Descriptions.Item>
-      <Descriptions.Item label="Time Zone">{user.time_zone}</Descriptions.Item>
-    </Descriptions>
+    <div>
+      <Typography.Title level={2}>My Profile</Typography.Title>
+      <Descriptions bordered>
+        <Descriptions.Item label="Name">{user.name}</Descriptions.Item>
+        <Descriptions.Item label="Email">
+          {user.primary_email}
+        </Descriptions.Item>
+        <Descriptions.Item label="ID">{user.id}</Descriptions.Item>
+        <Descriptions.Item label="Time Zone">
+          {user.time_zone}
+        </Descriptions.Item>
+      </Descriptions>
+    </div>
   );
 }
 
