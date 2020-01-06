@@ -174,11 +174,9 @@ function GradeBreakdown(props) {
         return;
       }
 
-      // we can display the page without loading alignments, plus feature
+      // we can display the page without loading alignments
       if (
         !getOutcomeAlignmentsId &&
-        session &&
-        session.hasValidSubscription &&
         activeUserId &&
         (!outcomeAlignments || !outcomeAlignments[courseId])
       ) {
@@ -428,10 +426,7 @@ function GradeBreakdown(props) {
     };
   });
 
-  // only exists if the user has a current session to save the load time
   const assignmentsByOutcome =
-    session &&
-    session.hasValidSubscription &&
     outcomeAlignments &&
     outcomeAlignments[courseId] &&
     outcomes.reduce((acc = {}, o) => {
@@ -483,17 +478,9 @@ function GradeBreakdown(props) {
                   <ConnectedAverageOutcomeScore outcomeId={d.id} />
                 </MobileList.Item>
                 <MobileAccordion>
-                  <MobileAccordion.Panel
-                    header={
-                      <div>
-                        <PlusIcon style={{ height: '1em' }} /> Future
-                        Assignments
-                      </div>
-                    }
-                  >
+                  <MobileAccordion.Panel header={<div>Future Assignments</div>}>
                     {
                       <FutureAssignmentsForOutcome
-                        userHasValidSubscription={session.hasValidSubscription}
                         outcomeAssignments={assignmentsByOutcome[d.id]}
                       />
                     }
@@ -574,12 +561,8 @@ function GradeBreakdown(props) {
                 Average Score
               </Typography.Title>
               <ConnectedAverageOutcomeScore outcomeId={record.id} />
-              <Typography.Title level={4}>
-                <Icon component={PlusIcon} style={{ paddingRight: '5px' }} />
-                Future Assignments
-              </Typography.Title>
+              <Typography.Title level={4}>Future Assignments</Typography.Title>
               <FutureAssignmentsForOutcome
-                userHasValidSubscription={session.hasValidSubscription}
                 outcomeAssignments={assignmentsByOutcome[record.id]}
               />
               <Typography.Title level={4}>Assignments</Typography.Title>

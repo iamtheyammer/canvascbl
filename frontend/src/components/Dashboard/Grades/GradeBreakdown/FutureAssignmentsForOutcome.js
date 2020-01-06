@@ -41,16 +41,7 @@ const tableColumns = [
 ];
 
 function FutureAssignmentsForOutcome(props) {
-  const { userHasValidSubscription, outcomeAssignments } = props;
-
-  if (!userHasValidSubscription) {
-    return (
-      <Typography.Text>
-        You need CanvasCBL+ to use this feature. Go to the Upgrades page at the
-        top to check it out and upgrade!
-      </Typography.Text>
-    );
-  }
+  const { outcomeAssignments } = props;
 
   const futureAssignments = outcomeAssignments.filter(
     a => a.due_at && moment(a.due_at).isAfter()
@@ -98,8 +89,6 @@ function FutureAssignmentsForOutcome(props) {
 }
 
 FutureAssignmentsForOutcome.propTypes = {
-  // whether the user has a valid subscription
-  userHasValidSubscription: PropTypes.bool.isRequired,
   // assignments that map to this outcome
   outcomeAssignments: PropTypes.arrayOf(
     PropTypes.shape({
