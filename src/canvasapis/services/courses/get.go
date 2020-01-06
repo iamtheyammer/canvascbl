@@ -6,7 +6,6 @@ import (
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"net/http"
 	"net/url"
-	"strconv"
 )
 
 // Get gets all of a user's courses
@@ -65,7 +64,8 @@ func GetOutcomeResultsByCourse(
 		q.Add("include[]", include)
 	}
 
-	q.Add("per_page", strconv.Itoa(len(userIDs)*100))
+	// max = 100
+	q.Add("per_page", "100")
 	u.RawQuery = q.Encode()
 
 	return req.MakeAuthenticatedGetRequest(u.String(), rd.Token)
@@ -92,6 +92,9 @@ func GetOutcomeRollupsByCourse(
 	if len(include) > 0 {
 		q.Add("include[]", include)
 	}
+
+	// max = 100
+	q.Add("per_page", "100")
 	u.RawQuery = q.Encode()
 
 	return req.MakeAuthenticatedGetRequest(u.String(), rd.Token)
