@@ -34,7 +34,7 @@ function* getObservees({ id, token, subdomain, userId }) {
     );
     yield put(gotObservees(observeesRequest.data));
   } catch (e) {
-    yield put(canvasProxyError(id, e.res));
+    yield put(canvasProxyError(id, e.response));
   }
   yield put(endLoading(id));
 }

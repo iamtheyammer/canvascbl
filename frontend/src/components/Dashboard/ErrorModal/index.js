@@ -6,7 +6,8 @@ import { Modal, Icon } from 'antd';
 import v4 from 'uuid/v4';
 import {
   deleteCanvasToken,
-  getNewTokenFromRefreshToken
+  getNewTokenFromRefreshToken,
+  logout
 } from '../../../actions/canvas';
 
 class ErrorModal extends Component {
@@ -22,6 +23,7 @@ class ErrorModal extends Component {
   };
 
   handleCancel = () => {
+    this.props.dispatch(logout(this.props.token, this.props.subdomain));
     this.setState({ redirect: true });
   };
 
@@ -48,8 +50,23 @@ class ErrorModal extends Component {
     const canvasStatusCode = parseInt(result.headers['x-canvas-status-code']);
 
     if (canvasStatusCode === 401) {
+      const message = result.data.errors[0].message;
+
+      if (message === 'Insufficient scopes on access token.') {
+        Modal.info({
+          title: 'Re-login required',
+          content:
+            "We've added some cool new features to CanvasCBL that require you to log out and log back in.",
+          closable: false,
+          icon: <Icon type="exclamation-circle" style={{ color: '#D8000C' }} />,
+          okText: 'Logout',
+          onOk: this.handleCancel
+        });
+        return;
+      }
+
       if (refreshToken) {
-        if (result.data.errors[0].message === 'Invalid access token.') {
+        if (message === 'Invalid access token.') {
           Modal.info({
             title: 'Re-Authorizing...',
             content: 'Please wait while we re-authorize with Canvas.',
@@ -81,7 +98,7 @@ class ErrorModal extends Component {
 
   render() {
     if (this.state.redirect) {
-      return <Redirect to="/dashboard/logout" />;
+      return <Redirect to="/" />;
     }
 
     return <div />;

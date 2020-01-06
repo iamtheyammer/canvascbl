@@ -20,7 +20,7 @@ function Home(props) {
 
   const [cookies] = useCookies(['session_string']);
 
-  if (props.token || cookies.session_string) {
+  if (props.token) {
     return <Redirect to="/dashboard" />;
   }
 

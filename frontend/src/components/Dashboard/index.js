@@ -85,7 +85,7 @@ function Dashboard(props) {
   }, [session]);
 
   // if no token exists, redirect
-  if (!localStorage.token && !cookies.session_string) {
+  if (!localStorage.token) {
     return <Redirect to="/" />;
   } else if (localStorage.token && !token) {
     // otherwise, wait for token
@@ -126,8 +126,9 @@ function Dashboard(props) {
     setGetObserveesId(id);
   }
 
-  if (error[getUserId] || error[getObserveesId] || error[getSessionId]) {
-    return <ConnectedErrorModal error={error[getUserId]} />;
+  const err = error[getUserId] || error[getObserveesId] || error[getSessionId];
+  if (err) {
+    return <ConnectedErrorModal error={err} />;
   }
 
   if (session && session.status === 1) {

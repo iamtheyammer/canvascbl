@@ -52,6 +52,8 @@ function loggedOut(forwardUrl, error) {
 
   if (forwardUrl.length > 1) {
     window.location = forwardUrl;
+  } else {
+    window.location.reload();
   }
 
   return {
