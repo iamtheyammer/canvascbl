@@ -7,6 +7,12 @@ import store from './store/index';
 
 // import * as serviceWorker from './serviceWorker';
 
+console.log(
+  '---------------\n',
+  'Hey there, curious fellow! While we love inquisitive minds, please note that reverse-engineering any part of CanvasCBL is against our terms of service. Thank you for using CanvasCBL!\n',
+  '---------------'
+);
+
 ReactDOM.render(
   <CookiesProvider>
     <Provider store={store}>

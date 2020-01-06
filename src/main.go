@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/iamtheyammer/canvascbl/backend/src/admin"
 	"github.com/iamtheyammer/canvascbl/backend/src/canvasapis"
 	"github.com/iamtheyammer/canvascbl/backend/src/checkout"
 	"github.com/iamtheyammer/canvascbl/backend/src/env"
@@ -61,6 +62,7 @@ func getRouter() *httprouter.Router {
 
 	router.GET("/api/checkout/session", checkout.CreateCheckoutSessionHandler)
 	router.GET("/api/checkout/products", checkout.ListProductsHandler)
+	router.POST("/api/checkout/redeem", checkout.RedeemHandler)
 	router.GET("/api/checkout/subscriptions", checkout.ListSubscriptionsHandler)
 	router.DELETE("/api/checkout/subscriptions", checkout.CancelSubscriptionHandler)
 	// stripe webhook handler
@@ -74,6 +76,8 @@ func getRouter() *httprouter.Router {
 	// no google needed for now but we could bring it back later.
 	//router.GET("/api/google/oauth2/request", googleapis.OAuth2RequestHandler)
 	//router.GET("/api/google/oauth2/response", googleapis.OAuth2ResponseHandler)
+
+	router.POST("/api/admin/gift_cards", admin.GenerateGiftCardsHandler)
 
 	return router
 }

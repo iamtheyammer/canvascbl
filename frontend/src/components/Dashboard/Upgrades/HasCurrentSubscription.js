@@ -3,7 +3,14 @@ import { connect } from 'react-redux';
 import v4 from 'uuid/v4';
 import { isMobile } from 'react-device-detect';
 
-import { Typography, Descriptions, Spin, Popconfirm, Button } from 'antd';
+import {
+  Typography,
+  Descriptions,
+  Spin,
+  Popconfirm,
+  Button,
+  Popover
+} from 'antd';
 import { Button as MobileButton } from 'antd-mobile';
 import {
   cancelSubscription,
@@ -92,6 +99,12 @@ function HasCurrentSubscription(props) {
         </Descriptions.Item>
       </Descriptions>
       <Typography.Title level={3}>Manage Subscription</Typography.Title>
+      <Popover content="Cancel your current subscription, then enter your gift card code.">
+        <Typography.Text type={'link'}>
+          Have a gift card or promotional code?
+        </Typography.Text>
+      </Popover>
+      <br />
       <Typography.Text>
         Canceling your CanvasCBL+ subscription takes effect immediately.
       </Typography.Text>

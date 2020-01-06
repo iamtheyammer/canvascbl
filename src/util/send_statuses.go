@@ -1,62 +1,61 @@
 package util
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 )
 
+type errorJsonResponse struct {
+	Error string `json:"error"`
+}
+
 func SendUnauthorized(w http.ResponseWriter, reason string) {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusUnauthorized)
-	_, err := fmt.Fprintf(w, "Unauthorized request: %s", reason)
-	if err != nil {
-		log.Fatal(err)
-	}
+	jError, _ := json.Marshal(&errorJsonResponse{Error: reason})
+	SendJSONResponse(w, jError)
 	return
 }
 
 func SendBadRequest(w http.ResponseWriter, reason string) {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusBadRequest)
-	_, err := fmt.Fprintf(w, "Bad request: %s", reason)
-	if err != nil {
-		log.Fatal(err)
-	}
+	jError, _ := json.Marshal(&errorJsonResponse{Error: reason})
+	SendJSONResponse(w, jError)
 	return
 }
 
 func SendInternalServerError(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusInternalServerError)
-	_, err := fmt.Fprint(w, "Internal Server Error")
-	if err != nil {
-		log.Fatal(err)
-	}
+	jError, _ := json.Marshal(&errorJsonResponse{Error: "Internal Server Error"})
+	SendJSONResponse(w, jError)
 	return
 }
 
 func SendMethodNotAllowed(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusMethodNotAllowed)
-	_, err := fmt.Fprint(w, "Method not allowed")
-	if err != nil {
-		log.Fatal(err)
-	}
+	jError, _ := json.Marshal(&errorJsonResponse{Error: "Method Not Allowed"})
+	SendJSONResponse(w, jError)
 	return
 }
 
 func SendNotFound(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusNotFound)
-	_, err := fmt.Fprint(w, "Not found")
-	if err != nil {
-		log.Fatal(err)
-	}
+	jError, _ := json.Marshal(&errorJsonResponse{Error: "Not Found"})
+	SendJSONResponse(w, jError)
 	return
 }
 
 func SendNotFoundWithReason(w http.ResponseWriter, reason string) {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusNotFound)
-	_, err := fmt.Fprint(w, reason)
-	if err != nil {
-		log.Fatal(err)
-	}
+	jError, _ := json.Marshal(&errorJsonResponse{Error: reason})
+	SendJSONResponse(w, jError)
 	return
 }
 

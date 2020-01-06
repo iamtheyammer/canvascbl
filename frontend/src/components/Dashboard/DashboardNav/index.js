@@ -55,7 +55,7 @@ function DashboardNav(props) {
                 <Link to="/dashboard/upgrades">Upgrades</Link>
               </MobileList.Item>
               <MobileList.Item />
-              {observees && observees.length && (
+              {observees && observees.length > 1 && (
                 <div>
                   <ObserveeHandler mobileToggleMenu={toggleMenu} />
                   <MobileList.Item />

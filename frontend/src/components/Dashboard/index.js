@@ -27,6 +27,7 @@ import { getObservees, getUser } from '../../actions/canvas';
 import ConnectedErrorModal from './ErrorModal';
 import { getSessionInformation } from '../../actions/plus';
 import './index.css';
+import ConnectedRedeem from './Upgrades/Redeem';
 
 const { Content, Footer } = Layout;
 
@@ -35,7 +36,8 @@ const getBreadcrumbNameMap = (courses = []) => {
     '/dashboard': 'Dashboard',
     '/dashboard/profile': 'Profile',
     '/dashboard/grades': 'Grades',
-    '/dashboard/upgrades': 'Upgrades'
+    '/dashboard/upgrades': 'Upgrades',
+    '/dashboard/upgrades/redeem': 'Redeem'
   };
 
   courses.forEach(
@@ -147,12 +149,30 @@ function Dashboard(props) {
         component={ConnectedGradeBreakdown}
       />
       <Route exact path="/dashboard/upgrades" component={ConnectedUpgrades} />
+      <Route
+        exact
+        path="/dashboard/upgrades/redeem"
+        component={ConnectedRedeem}
+      />
       <Route exact path="/dashboard/logout" component={ConnectedLogout} />
       <Route render={() => <Redirect to="/" />} />
     </Switch>
   );
 
   if (isMobile) {
+    function displayContent() {
+      if (
+        subdomain &&
+        token &&
+        !loading.includes(getUserId) &&
+        !loading.includes(getSessionId)
+      ) {
+        return routes;
+      } else {
+        return loading;
+      }
+    }
+
     return (
       <DashboardNav>
         <div
@@ -163,12 +183,7 @@ function Dashboard(props) {
             height: 'auto'
           }}
         >
-          {subdomain &&
-          token &&
-          !loading.includes(getUserId) &&
-          !loading.includes(getSessionId)
-            ? routes
-            : loading}
+          {displayContent()}
         </div>
       </DashboardNav>
     );

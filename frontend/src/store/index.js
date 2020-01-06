@@ -4,8 +4,8 @@ import { createStore, applyMiddleware, compose } from 'redux';
 import createSagaMiddleware from 'redux-saga';
 import env from '../util/env';
 
-import canvasRootSaga from '../sagas/canvas';
 import reducers from '../reducers';
+import rootSaga from '../sagas';
 
 const sagaMiddleware = createSagaMiddleware();
 
@@ -18,6 +18,6 @@ const composer =
 
 const store = createStore(reducers, composer(applyMiddleware(...middlewares)));
 
-sagaMiddleware.run(canvasRootSaga);
+sagaMiddleware.run(rootSaga);
 
 export default store;

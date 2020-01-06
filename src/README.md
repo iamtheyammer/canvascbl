@@ -83,14 +83,24 @@ Users need a valid subscription to use all endpoints except for those marked \[N
 - `GET` `/api/checkout/products` \[NS\] - Lists all products as JSON.
 - `GET` `/api/checkout/session` - Gets a Stripe checkout session ID by product ID.
   - Requires the `productId` param, received from `/api/checkout/products`.
+- `POST` `/api/checkout/redeem` - Lets you redeem gift cards
+  - Body should look something like this: `{ "codes": ["ABCD-EFGH-IJKL", ...] }`
 - `GET` `/api/checkout/subscriptions` - Returns an array of all currently valid subscriptions the user holds.
 - `DELETE` `/api/checkout/subscriptions` - Cancels your current subscription effective immediately.
 - `POST` `/api/checkout/webhook` - To be used as the Stripe webhook URL. As it verifies Stripe-Signature, there is no reason to send requests here.
 
-#### Sessions
+### Sessions
 
 These endpoints require a session, generated from the `/api/canvas/users/profile/self` endpoint with `?generateSession=true`.
 Provide it in the X-Session-String header or as a cookie (`session_string`).
+
+### Admin
+
+These endpoints require a user's status to be `2` (admin). They're a growing set of endpoints for doing things only admins would need to do.
+
+- `POST` `/api/admin/gift_cards` - Creates gift cards
+  - Requires URL param `quantity`-- the number of gift cards to generate -- ex: `quantity=200`
+  - Requires URL param `valid_for`-- the number of seconds the card will be valid for; ex: `valid_for=2629800`
 
 ## OAuth2
 
