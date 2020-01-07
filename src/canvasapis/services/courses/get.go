@@ -11,7 +11,7 @@ import (
 // Get gets all of a user's courses
 func Get(rd *util.RequestDetails) (*http.Response, string, error) {
 	u := fmt.Sprintf(
-		"https://%s.instructure.com/api/v1/courses",
+		"https://%s.instructure.com/api/v1/courses?per_page=100",
 		rd.Subdomain,
 	)
 	return req.MakeAuthenticatedGetRequest(u, rd.Token)

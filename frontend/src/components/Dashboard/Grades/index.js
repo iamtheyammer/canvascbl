@@ -26,6 +26,8 @@ import moment from 'moment';
 import { isMobile } from 'react-device-detect';
 import truncate from 'truncate';
 import Loading from '../Loading';
+import Padding from '../../Padding';
+import ConnectedObserveeHandler from '../DashboardNav/ObserveeHandler';
 
 function PreviousGrade(props) {
   const { userHasValidSubscription, grade, previousGrade } = props;
@@ -159,6 +161,7 @@ function Grades(props) {
     gradedUsers,
     users,
     activeUserId,
+    observees,
     plus
   } = props;
 
@@ -166,8 +169,8 @@ function Grades(props) {
 
   const activeUser = users && activeUserId && users[activeUserId];
 
-  const activeCourses =
-    courses && activeUser ? getActiveCourses(courses, activeUser.id) : courses;
+  const allActiveCourses =
+    courses && activeUser ? getActiveCourses(courses) : courses;
 
   useEffect(() => {
     if (allIds.some(id => loading.includes(id)) || err) {
@@ -183,7 +186,7 @@ function Grades(props) {
 
     // if user AND no outcome rollups
     // or if we're missing a rollup for a class
-    // and if we haven't fetched rollups already
+    // and if rollups aren't loading
     // fetch rollups
     if (
       (gradedUsers.length && !outcomeRollups) ||
@@ -191,10 +194,12 @@ function Grades(props) {
         outcomeRollups
           ? activeCourses.some(c => !outcomeRollups[c.id])
           : false)() &&
-        !getOutcomeRollupsForCourseIds.length)
+        !loading.includes(lId =>
+          getOutcomeRollupsForCourseIds.some(id => id === lId)
+        ))
     ) {
       const ids = [];
-      activeCourses.forEach(c => {
+      allActiveCourses.forEach(c => {
         const id = v4();
         ids.push(id);
         dispatch(
@@ -240,6 +245,9 @@ function Grades(props) {
     return <Loading text={loadingText} />;
   }
 
+  const activeCourses =
+    courses && activeUser ? getActiveCourses(courses, activeUser.id) : [];
+
   const grades = calculateGradeFromOutcomes(outcomeRollups, activeUserId);
 
   const previousGrades =
@@ -262,10 +270,18 @@ function Grades(props) {
         previousGrades.filter(pg => pg.courseId === c.id)[0]
   }));
 
+  const gradesTitle = (
+    <Typography.Title level={2}>
+      {observees && observees.length
+        ? `${users[activeUserId].name.split(' ')[0]}'s Grades`
+        : 'Grades'}
+    </Typography.Title>
+  );
+
   if (isMobile) {
     return (
       <div>
-        <Typography.Title level={2}>Grades</Typography.Title>
+        {gradesTitle}
         <MobileAccordion>
           {data.map(d => (
             <MobileAccordion.Panel
@@ -274,7 +290,7 @@ function Grades(props) {
               header={
                 <div style={{ paddingRight: '6px' }}>
                   <div style={{ float: 'left', overflow: 'hidden' }}>
-                    {truncate(d.name, 25)}
+                    {truncate(d.name, 20)}
                   </div>
                   <div style={{ float: 'right' }}>{d.grade}</div>
                 </div>
@@ -309,16 +325,23 @@ function Grades(props) {
             </MobileAccordion.Panel>
           ))}
         </MobileAccordion>
+        {observees && observees.length > 0 && (
+          <div>
+            <Padding br />
+            <Typography.Title level={3}>Switch Observees</Typography.Title>
+            <ConnectedObserveeHandler />
+          </div>
+        )}
       </div>
     );
   }
 
   return (
     <div>
-      <Typography.Title level={2}>Grades</Typography.Title>
+      {gradesTitle}
       <Typography.Text type="secondary">
-        If you have a grade in a class, click on the name to see a detailed
-        breakdown of your grade.
+        If {observees && observees.length ? 'your student has' : 'you have'} a
+        grade in a class, click on the name to see a detailed breakdown.
       </Typography.Text>
       <div style={{ marginBottom: '12px' }} />
       <Table columns={tableColumns} dataSource={data} />
@@ -341,6 +364,7 @@ const ConnectedGrades = connect(state => ({
   user: state.canvas.user,
   token: state.canvas.token,
   subdomain: state.canvas.subdomain,
+  observees: state.canvas.observees,
   error: state.error,
   loading: state.loading
 }))(Grades);

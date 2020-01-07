@@ -16,20 +16,23 @@ function Index(props) {
   if (isMobile) {
     return (
       <MobileAccordion>
-        <MobileAccordion.Panel header={users[activeUserId].name}>
+        <MobileAccordion.Panel header={<b>{users[activeUserId].name}</b>}>
           <MobileList>
-            {observees.map(o => (
-              <MobileList.Item
-                type="link"
-                key={o.id}
-                onClick={() => {
-                  dispatch(changeActiveUser(o.id));
-                  mobileToggleMenu();
-                }}
-              >
-                {o.name}
-              </MobileList.Item>
-            ))}
+            {observees.map(
+              o =>
+                o.id !== activeUserId && (
+                  <MobileList.Item
+                    type="link"
+                    key={o.id}
+                    onClick={() => {
+                      dispatch(changeActiveUser(o.id));
+                      mobileToggleMenu && mobileToggleMenu();
+                    }}
+                  >
+                    {o.name}
+                  </MobileList.Item>
+                )
+            )}
           </MobileList>
         </MobileAccordion.Panel>
       </MobileAccordion>
@@ -38,11 +41,17 @@ function Index(props) {
 
   const menu = (
     <Menu>
-      {observees.map(o => (
-        <Menu.Item key={o.id} onClick={() => dispatch(changeActiveUser(o.id))}>
-          {o.name}
-        </Menu.Item>
-      ))}
+      {observees.map(
+        o =>
+          o.id !== activeUserId && (
+            <Menu.Item
+              key={o.id}
+              onClick={() => dispatch(changeActiveUser(o.id))}
+            >
+              {o.name}
+            </Menu.Item>
+          )
+      )}
     </Menu>
   );
 
