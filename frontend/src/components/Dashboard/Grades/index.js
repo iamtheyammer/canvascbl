@@ -328,7 +328,7 @@ function Grades(props) {
         {observees && observees.length > 0 && (
           <div>
             <Padding br />
-            <Typography.Title level={3}>Switch Observees</Typography.Title>
+            <Typography.Title level={3}>Switch Students</Typography.Title>
             <ConnectedObserveeHandler />
           </div>
         )}
