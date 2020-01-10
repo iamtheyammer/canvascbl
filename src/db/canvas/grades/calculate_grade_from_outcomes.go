@@ -41,6 +41,12 @@ func CalculateGradeFromOutcomeScores(os []float64) Grade {
 	// first 75% of outcomes
 	countedOutcomes := sortedOutcomes[:outcomesOverMinNeeded]
 
+	// if there is only one graded outcome in a class, that outcome is counted
+	// this also fixes an array[-1] bug
+	if len(countedOutcomes) < 1 {
+		countedOutcomes = sortedOutcomes
+	}
+
 	lowestCountedOutcome := countedOutcomes[len(countedOutcomes)-1]
 
 	// overall
