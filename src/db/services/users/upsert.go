@@ -2,6 +2,7 @@ package users
 
 import (
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services"
+	"github.com/iamtheyammer/canvascbl/backend/src/orautil"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/pkg/errors"
 )
@@ -19,18 +20,38 @@ type UpsertObserveesRequest struct {
 }
 
 // UpsertProfile upserts a user profile
-func UpsertProfile(db services.DB, ur *UpsertRequest) error {
-	query, args, err := util.Sq.
-		Insert("users").
-		SetMap(map[string]interface{}{
-			"name":           ur.Name,
-			"email":          ur.Email,
-			"lti_user_id":    ur.LTIUserID,
-			"canvas_user_id": ur.CanvasUserID,
-		}).
-		// normally would be ignore, but emails and names can change
-		Suffix("ON CONFLICT ON CONSTRAINT users_lti_user_id_key DO UPDATE SET name = ?, email = ?", ur.Name, ur.Email).
-		ToSql()
+func UpsertProfile(db services.DB, req *UpsertRequest) error {
+	query, args, err := orautil.BuildUpsert(
+		"users",
+		[]orautil.UpsertableColumn{
+			{
+				Name:  "canvas_user_id",
+				Value: req.CanvasUserID,
+			},
+		},
+		[]orautil.UpsertableColumn{
+			{
+				"name",
+				req.Name,
+				false,
+			},
+			{
+				"email",
+				req.Email,
+				false,
+			},
+			{
+				"lti_user_id",
+				req.LTIUserID,
+				true,
+			},
+			{
+				"canvas_user_id",
+				req.CanvasUserID,
+				true,
+			},
+		},
+	)
 	if err != nil {
 		return errors.Wrap(err, "error building upsert users sql")
 	}
@@ -57,6 +78,13 @@ func UpsertUserObservees(db services.DB, req *UpsertObserveesRequest) error {
 
 	for _, o := range req.Observees {
 		q = q.Values(req.ObserverCanvasUserID, o.CanvasUserID, o.Name)
+	}
+
+	checks := []orautil.UpsertableColumn{
+		{
+			Name: "observer_canvas_user_id",
+
+		}
 	}
 
 	query, args, err := q.ToSql()

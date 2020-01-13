@@ -2,6 +2,7 @@ package users
 
 import (
 	"database/sql"
+	"fmt"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/canvas/users"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services"
@@ -15,7 +16,6 @@ type ListRequest struct {
 	Email        string
 	LTIUserID    string
 	CanvasUserID uint64
-	Limit        uint64
 	Offset       uint64
 }
 
@@ -54,8 +54,7 @@ type Observee struct {
 func List(db services.DB, req *ListRequest) (*[]User, error) {
 	q := util.Sq.
 		Select("id", "name", "email", "lti_user_id", "canvas_user_id", "inserted_at", "status").
-		From("users").
-		Limit(services.DefaultSelectLimit)
+		From("users")
 
 	if req.ID > 0 {
 		q = q.Where(sq.Eq{"id": req.ID})
@@ -73,10 +72,6 @@ func List(db services.DB, req *ListRequest) (*[]User, error) {
 		q = q.Where(sq.Eq{"canvas_user_id": req.CanvasUserID})
 	}
 
-	if req.Limit > 0 {
-		q = q.Limit(req.Limit)
-	}
-
 	if req.Offset > 0 {
 		q = q.Offset(req.Offset)
 	}
@@ -85,6 +80,8 @@ func List(db services.DB, req *ListRequest) (*[]User, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "error building list users sql")
 	}
+
+	fmt.Println(query, args)
 
 	rows, err := db.Query(query, args...)
 	if err != nil {
