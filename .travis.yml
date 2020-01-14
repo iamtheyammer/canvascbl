@@ -15,6 +15,7 @@ before_deploy: export REACT_APP_CURRENT_VERSION=`NODE_DISABLE_COLORS=1 node -e '
 deploy:
   - provider: script
     script: bash deploy.sh $HEROKU_API_KEY $HEROKU_APP_NAME $HEROKU_PROCESS_NAME
+    edge: true
     on:
       branch: containerize-backend
   - provider: pages
@@ -25,6 +26,7 @@ deploy:
     committer_from_gh: true
     target_branch: gh-pages
     repo: iamtheyammer/canvascbl-stg
+    edge: true
     on:
        branch: staging
   - provider: pages
@@ -34,6 +36,6 @@ deploy:
     local_dir: bin/build
     committer_from_gh: true
     target_branch: gh-pages
+    edge: true
     on:
        branch: master
-  edge: true
