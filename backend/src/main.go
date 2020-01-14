@@ -110,7 +110,8 @@ func (_ MiddlewareRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func main() {
 	if env.Env != env.EnvironmentDevelopment {
 		err := sentry.Init(sentry.ClientOptions{
-			Dsn: "https://23b83ef8c4b149a5bf6fa88e87a36227@sentry.io/1881435",
+			Dsn:         env.SentryDSN,
+			Environment: string(env.Env),
 		})
 
 		if err != nil {
