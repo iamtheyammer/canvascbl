@@ -17,7 +17,12 @@ deploy:
     script: bash deploy.sh $HEROKU_API_KEY $HEROKU_APP_NAME $HEROKU_PROCESS_NAME
     edge: true
     on:
-      branch: containerize-backend
+      branch: master
+  - provider: script
+    script: bash deploy.sh $HEROKU_API_KEY $HEROKU_APP_NAME $HEROKU_PROCESS_NAME
+    edge: true
+    on:
+      branch: staging
   - provider: pages
     cleanup: false
     github_token: $GITHUB_TOKEN
