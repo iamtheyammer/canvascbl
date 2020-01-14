@@ -12,6 +12,7 @@ fi
 
 cd backend || exit 1
 
+heroku container:login
 heroku container:push "$HEROKU_PROCESS_NAME" -a "$HEROKU_APP_NAME"
 heroku container:release "$HEROKU_PROCESS_NAME" -a "$HEROKU_APP_NAME"
 
