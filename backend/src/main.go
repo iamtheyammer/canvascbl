@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/getsentry/sentry-go"
 	"github.com/iamtheyammer/canvascbl/backend/src/admin"
 	"github.com/iamtheyammer/canvascbl/backend/src/canvasapis"
 	"github.com/iamtheyammer/canvascbl/backend/src/checkout"
@@ -9,9 +10,11 @@ import (
 	"github.com/iamtheyammer/canvascbl/backend/src/plus"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
+	"github.com/pkg/errors"
 	"github.com/stripe/stripe-go"
 	"log"
 	"net/http"
+	"time"
 )
 
 type MiddlewareRouter struct{}
@@ -105,6 +108,18 @@ func (_ MiddlewareRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	if env.Env != env.EnvironmentDevelopment {
+		err := sentry.Init(sentry.ClientOptions{
+			Dsn: "https://23b83ef8c4b149a5bf6fa88e87a36227@sentry.io/1881435",
+		})
+
+		if err != nil {
+			panic(errors.Wrap(err, "error initializing sentry"))
+		} else {
+			fmt.Println("INFO: Successfully initialized Sentry.")
+		}
+	}
+
 	mw := MiddlewareRouter{}
 
 	if env.ProxyAllowedSubdomains[0] == "*" {
@@ -123,6 +138,9 @@ func main() {
 
 	// Close db
 	defer util.DB.Close()
+
+	// Flush sentry queue
+	defer sentry.Flush(5 * time.Second)
 
 	log.Fatal(http.ListenAndServe(env.HTTPPort, mw))
 }

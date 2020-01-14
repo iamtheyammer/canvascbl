@@ -5,6 +5,7 @@ import (
 	"github.com/iamtheyammer/canvascbl/backend/src/db"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
+	"github.com/pkg/errors"
 	"net/http"
 )
 
@@ -21,6 +22,7 @@ type product struct {
 func ListProductsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	cp, err := db.CheckoutListProducts()
 	if err != nil {
+		util.HandleError(errors.Wrap(err, "error listing products"))
 		util.SendInternalServerError(w)
 		return
 	}

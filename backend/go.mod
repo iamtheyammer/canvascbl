@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/Masterminds/squirrel v1.1.0
+	github.com/getsentry/sentry-go v0.4.0
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
 	github.com/iamtheyammer/cfjwt v0.1.3
 	github.com/julienschmidt/httprouter v1.2.0
