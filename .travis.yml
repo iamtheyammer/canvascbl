@@ -3,6 +3,9 @@ language: go
 go:
   - 1.x
 
+services:
+  - docker
+
 before_install: cd frontend && nvm install `cat .nvmrc` && nvm use && cd ..
 
 install: cd frontend && npm install && cd ..
@@ -13,24 +16,34 @@ script: make ci
 before_deploy: export REACT_APP_CURRENT_VERSION=`NODE_DISABLE_COLORS=1 node -e 'console.log(Date.now())'` && echo $CNAME > bin/build/CNAME
 
 deploy:
+  - provider: script
+    script: bash deploy.sh $HEROKU_API_KEY $HEROKU_APP_NAME $HEROKU_PROCESS_NAME
+    edge: true
+    on:
+      branch: master
+  - provider: script
+    script: bash deploy.sh $HEROKU_API_KEY $HEROKU_APP_NAME $HEROKU_PROCESS_NAME
+    edge: true
+    on:
+      branch: staging
   - provider: pages
-    skip_cleanup: true
+    cleanup: false
     github_token: $GITHUB_TOKEN
     keep_history: false
     local_dir: bin/build
-    name: "I Yam Who I Yam (stg)"
-    email: "iamtheyammer@gmail.com"
+    committer_from_gh: true
     target_branch: gh-pages
     repo: iamtheyammer/canvascbl-stg
+    edge: true
     on:
        branch: staging
   - provider: pages
-    skip_cleanup: true
+    cleanup: false
     github_token: $GITHUB_TOKEN
     keep_history: false
     local_dir: bin/build
-    name: "I Yam Who I Yam"
-    email: "iamtheyammer@gmail.com"
+    committer_from_gh: true
     target_branch: gh-pages
+    edge: true
     on:
        branch: master

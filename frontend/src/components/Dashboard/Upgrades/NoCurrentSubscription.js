@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { isMobile } from 'react-device-detect';
+import { Link } from 'react-router-dom';
 
 import { Typography, Col, Row, Card, Icon, Modal, Button } from 'antd';
 import {
@@ -21,6 +22,7 @@ import howToGetAnAImg from './how-to-get-an-a.png';
 import previousGradeImg from './previous-grade.png';
 import futureAssignmentsImg from './future-assignments.png';
 import logoNavbarImg from './logo-navbar.png';
+import Padding from '../../Padding';
 
 const stripe = window.Stripe(env.stripeApiKeyPub);
 
@@ -149,6 +151,10 @@ function NoCurrentSubscription(props) {
         >
           Purchase
         </MobileButton>
+        <Padding top={10} />
+        <Link to="/dashboard/upgrades/redeem">
+          Have a gift card or promotion code?
+        </Link>
       </div>
     );
   }
@@ -175,11 +181,11 @@ function NoCurrentSubscription(props) {
               </Col>
             ))}
           </Row>
-          <div style={{ padding: '10px' }} />
+          <Padding all={10} />
         </div>
       ))}
 
-      <div style={{ padding: '10px' }} />
+      <Padding all={'10 px'} />
       <Typography.Title level={3}>Get Started</Typography.Title>
       <Typography.Text>
         Ready to take the leap? Click below to subscribe! New users get a 7 day
@@ -196,6 +202,10 @@ function NoCurrentSubscription(props) {
       >
         Purchase {product.name} for ${product.price}/month
       </Button>
+      <Padding br />
+      <Link to="/dashboard/upgrades/redeem">
+        Have a gift card or promotion code?
+      </Link>
     </div>
   );
 }

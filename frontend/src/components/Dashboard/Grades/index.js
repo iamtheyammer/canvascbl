@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import v4 from 'uuid/v4';
 
-import { Typography, Table, Icon, Spin, Tag, Skeleton, Popover } from 'antd';
+import { Typography, Table, Icon, Tag, Skeleton, Popover } from 'antd';
 import { Accordion as MobileAccordion, List as MobileList } from 'antd-mobile';
 
 import {
@@ -25,6 +25,9 @@ import { getPreviousGrades } from '../../../actions/plus';
 import moment from 'moment';
 import { isMobile } from 'react-device-detect';
 import truncate from 'truncate';
+import Loading from '../Loading';
+import Padding from '../../Padding';
+import ConnectedObserveeHandler from '../DashboardNav/ObserveeHandler';
 
 function PreviousGrade(props) {
   const { userHasValidSubscription, grade, previousGrade } = props;
@@ -153,15 +156,21 @@ function Grades(props) {
     subdomain,
     loading,
     error,
-    user,
     courses,
     outcomeRollups,
+    gradedUsers,
+    users,
+    activeUserId,
+    observees,
     plus
   } = props;
 
   const err = error[Object.keys(error).filter(eid => allIds.includes(eid))[0]];
 
-  const activeCourses = courses ? getActiveCourses(courses) : courses;
+  const activeUser = users && activeUserId && users[activeUserId];
+
+  const allActiveCourses =
+    courses && activeUser ? getActiveCourses(courses) : courses;
 
   useEffect(() => {
     if (allIds.some(id => loading.includes(id)) || err) {
@@ -177,22 +186,30 @@ function Grades(props) {
 
     // if user AND no outcome rollups
     // or if we're missing a rollup for a class
-    // and if we haven't fetched rollups already
+    // and if rollups aren't loading
     // fetch rollups
     if (
-      (user && !outcomeRollups) ||
+      (gradedUsers.length && !outcomeRollups) ||
       ((() =>
         outcomeRollups
           ? activeCourses.some(c => !outcomeRollups[c.id])
           : false)() &&
-        !getOutcomeRollupsForCourseIds.length)
+        !loading.includes(lId =>
+          getOutcomeRollupsForCourseIds.some(id => id === lId)
+        ))
     ) {
       const ids = [];
-      activeCourses.forEach(c => {
+      allActiveCourses.forEach(c => {
         const id = v4();
         ids.push(id);
         dispatch(
-          getOutcomeRollupsForCourse(id, user.id, c.id, token, subdomain)
+          getOutcomeRollupsForCourse(
+            id,
+            c.enrollments.map(e => e.associated_user_id || e.user_id),
+            c.id,
+            token,
+            subdomain
+          )
         );
       });
       setGetOutcomeRollupsForCourseIds(ids);
@@ -200,7 +217,7 @@ function Grades(props) {
     }
 
     if (
-      user &&
+      activeUser &&
       plus.session &&
       plus.session.hasValidSubscription &&
       !plus.previousGrades &&
@@ -219,24 +236,24 @@ function Grades(props) {
   }
 
   if (
-    !user ||
+    !activeUser ||
     !plus.session ||
     !courses ||
     !outcomeRollups ||
     allIds.some(id => loading.includes(id))
   ) {
-    return (
-      <div align="center">
-        <Spin />
-        <span style={{ paddingTop: '20px' }} />
-        <Typography.Title level={3}>
-          {`Loading ${loadingText}...`}
-        </Typography.Title>
-      </div>
-    );
+    return <Loading text={loadingText} />;
   }
 
-  const grades = calculateGradeFromOutcomes(outcomeRollups);
+  const activeCourses =
+    courses && activeUser ? getActiveCourses(courses, activeUser.id) : [];
+
+  const grades = calculateGradeFromOutcomes(outcomeRollups, activeUserId);
+
+  const previousGrades =
+    plus &&
+    plus.previousGrades &&
+    plus.previousGrades.filter(pg => pg.canvasUserId === activeUserId);
 
   const data = activeCourses.map(c => ({
     key: c.id,
@@ -249,14 +266,22 @@ function Grades(props) {
       : plus &&
         plus.previousGrades &&
         !error[getPrevGradeId] &&
-        plus.previousGrades.filter(pg => pg.courseId === c.id)[0] &&
-        plus.previousGrades.filter(pg => pg.courseId === c.id)[0]
+        previousGrades.filter(pg => pg.courseId === c.id)[0] &&
+        previousGrades.filter(pg => pg.courseId === c.id)[0]
   }));
+
+  const gradesTitle = (
+    <Typography.Title level={2}>
+      {observees && observees.length
+        ? `${users[activeUserId].name.split(' ')[0]}'s Grades`
+        : 'Grades'}
+    </Typography.Title>
+  );
 
   if (isMobile) {
     return (
       <div>
-        <Typography.Title level={2}>Grades</Typography.Title>
+        {gradesTitle}
         <MobileAccordion>
           {data.map(d => (
             <MobileAccordion.Panel
@@ -265,7 +290,7 @@ function Grades(props) {
               header={
                 <div style={{ paddingRight: '6px' }}>
                   <div style={{ float: 'left', overflow: 'hidden' }}>
-                    {truncate(d.name, 25)}
+                    {truncate(d.name, 20)}
                   </div>
                   <div style={{ float: 'right' }}>{d.grade}</div>
                 </div>
@@ -300,16 +325,23 @@ function Grades(props) {
             </MobileAccordion.Panel>
           ))}
         </MobileAccordion>
+        {observees && observees.length > 0 && (
+          <div>
+            <Padding br />
+            <Typography.Title level={3}>Switch Students</Typography.Title>
+            <ConnectedObserveeHandler />
+          </div>
+        )}
       </div>
     );
   }
 
   return (
     <div>
-      <Typography.Title level={2}>Grades</Typography.Title>
+      {gradesTitle}
       <Typography.Text type="secondary">
-        If you have a grade in a class, click on the name to see a detailed
-        breakdown of your grade.
+        If {observees && observees.length ? 'your student has' : 'you have'} a
+        grade in a class, click on the name to see a detailed breakdown.
       </Typography.Text>
       <div style={{ marginBottom: '12px' }} />
       <Table columns={tableColumns} dataSource={data} />
@@ -326,9 +358,13 @@ const ConnectedGrades = connect(state => ({
   courses: state.canvas.courses,
   plus: state.plus,
   outcomeRollups: state.canvas.outcomeRollups,
+  gradedUsers: state.canvas.gradedUsers,
+  users: state.canvas.users,
+  activeUserId: state.canvas.activeUserId,
   user: state.canvas.user,
   token: state.canvas.token,
   subdomain: state.canvas.subdomain,
+  observees: state.canvas.observees,
   error: state.error,
   loading: state.loading
 }))(Grades);

@@ -2,14 +2,16 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
 import ConnectedApp from './App';
-import { createStore } from 'redux';
 import { CookiesProvider } from 'react-cookie';
-import reducers from './reducers';
-import middlewares from './middleware/index';
+import store from './store/index';
 
 // import * as serviceWorker from './serviceWorker';
 
-const store = createStore(reducers, middlewares);
+console.log(
+  '---------------\n',
+  'Hey there, curious fellow! While we love inquisitive minds, please note that reverse-engineering any part of CanvasCBL is against our terms of service. Thank you for using CanvasCBL!\n',
+  '---------------'
+);
 
 ReactDOM.render(
   <CookiesProvider>

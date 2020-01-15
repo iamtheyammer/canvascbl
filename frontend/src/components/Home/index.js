@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Redirect } from 'react-router-dom';
 import { connect } from 'react-redux';
-import { useCookies } from 'react-cookie';
 import './index.css';
 import banner from '../../assets/banner.svg';
 
@@ -18,9 +17,7 @@ import env from '../../util/env';
 function Home(props) {
   const [enableSignin, setEnableSignin] = useState(false);
 
-  const [cookies] = useCookies(['session_string']);
-
-  if (props.token || cookies.session_string) {
+  if (props.token) {
     return <Redirect to="/dashboard" />;
   }
 

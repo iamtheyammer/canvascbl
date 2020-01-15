@@ -12,8 +12,6 @@ import {
   Popover,
   Typography,
   Spin,
-  Modal,
-  Icon,
   notification
 } from 'antd';
 
@@ -25,10 +23,11 @@ import ConnectedUpgrades from './Upgrades';
 import ConnectedLogout from './Logout';
 import UpdateHandler from './UpdateHandler';
 import env from '../../util/env';
-import { getUser, logout } from '../../actions/canvas';
+import { getObservees, getUser } from '../../actions/canvas';
 import ConnectedErrorModal from './ErrorModal';
 import { getSessionInformation } from '../../actions/plus';
 import './index.css';
+import ConnectedRedeem from './Upgrades/Redeem';
 
 const { Content, Footer } = Layout;
 
@@ -37,7 +36,8 @@ const getBreadcrumbNameMap = (courses = []) => {
     '/dashboard': 'Dashboard',
     '/dashboard/profile': 'Profile',
     '/dashboard/grades': 'Grades',
-    '/dashboard/upgrades': 'Upgrades'
+    '/dashboard/upgrades': 'Upgrades',
+    '/dashboard/upgrades/redeem': 'Redeem'
   };
 
   courses.forEach(
@@ -53,11 +53,13 @@ function Dashboard(props) {
 
   const [hasSentUserToGa, setHasSentUserToGa] = useState(false);
   const [getUserId, setGetUserId] = useState();
+  const [getObserveesId, setGetObserveesId] = useState();
   const [getSessionId, setGetSessionId] = useState();
 
   const {
     location,
     user,
+    observees,
     subdomain,
     session,
     loading,
@@ -83,7 +85,7 @@ function Dashboard(props) {
   }, [session]);
 
   // if no token exists, redirect
-  if (!localStorage.token && !cookies.session_string) {
+  if (!localStorage.token) {
     return <Redirect to="/" />;
   } else if (localStorage.token && !token) {
     // otherwise, wait for token
@@ -118,27 +120,19 @@ function Dashboard(props) {
     setGetSessionId(id);
   }
 
-  if (error[getUserId] || error[getSessionId]) {
-    return <ConnectedErrorModal error={error[getUserId]} />;
+  if (token && user && !observees && !getObserveesId) {
+    const id = v4();
+    dispatch(getObservees(user.id, id, token, subdomain));
+    setGetObserveesId(id);
+  }
+
+  const err = error[getUserId] || error[getObserveesId] || error[getSessionId];
+  if (err) {
+    return <ConnectedErrorModal error={err} />;
   }
 
   if (session && session.status === 1) {
     return <Redirect to={'/dashboard/logout'} />;
-  }
-
-  if (user && session && user.primary_email !== session.email) {
-    Modal.confirm({
-      icon: <Icon type="exclamation-circle" style={{ color: '#D8000C' }} />,
-      title: 'Session mismatch',
-      content:
-        "There's a deep issue with your sessions or you're trying to use someone else's subscription. " +
-        'Either way, contact support to try again.',
-      okText: 'Logout',
-      cancelText: 'Logout',
-      onCancel: () => dispatch(logout(token, subdomain)),
-      onOk: () => dispatch(logout(token, subdomain))
-    });
-    return null;
   }
 
   const routes = (
@@ -156,12 +150,30 @@ function Dashboard(props) {
         component={ConnectedGradeBreakdown}
       />
       <Route exact path="/dashboard/upgrades" component={ConnectedUpgrades} />
+      <Route
+        exact
+        path="/dashboard/upgrades/redeem"
+        component={ConnectedRedeem}
+      />
       <Route exact path="/dashboard/logout" component={ConnectedLogout} />
       <Route render={() => <Redirect to="/" />} />
     </Switch>
   );
 
   if (isMobile) {
+    function displayContent() {
+      if (
+        subdomain &&
+        token &&
+        !loading.includes(getUserId) &&
+        !loading.includes(getSessionId)
+      ) {
+        return routes;
+      } else {
+        return loading;
+      }
+    }
+
     return (
       <DashboardNav>
         <div
@@ -172,12 +184,7 @@ function Dashboard(props) {
             height: 'auto'
           }}
         >
-          {subdomain &&
-          token &&
-          !loading.includes(getUserId) &&
-          !loading.includes(getSessionId)
-            ? routes
-            : loading}
+          {displayContent()}
         </div>
       </DashboardNav>
     );
@@ -236,6 +243,7 @@ const ConnectedDashboard = connect(state => ({
   subdomain: state.canvas.subdomain,
   courses: state.canvas.courses,
   user: state.canvas.user,
+  observees: state.canvas.observees,
   session: state.plus.session,
   loading: state.loading,
   error: state.error

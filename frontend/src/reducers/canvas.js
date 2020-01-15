@@ -13,7 +13,9 @@ import {
   CANVAS_GOT_TOKEN,
   CANVAS_SENT_TOKEN,
   CANVAS_DELETED_TOKEN,
-  CANVAS_GOT_OUTCOME_ALIGNMENTS_FOR_COURSE
+  CANVAS_GOT_OUTCOME_ALIGNMENTS_FOR_COURSE,
+  CANVAS_GOT_OBSERVEES,
+  CANVAS_CHANGE_ACTIVE_USER
 } from '../actions/canvas';
 
 export default function canvas(state = {}, action) {
@@ -65,12 +67,19 @@ export default function canvas(state = {}, action) {
     case CANVAS_GOT_USER_PROFILE:
       return {
         ...state,
-        user: action.user
+        user: action.user,
+        users: {
+          ...state.users,
+          [action.user.id]: action.user
+        }
       };
     case CANVAS_GOT_USER_COURSES:
       return {
         ...state,
-        courses: action.courses
+        courses: action.courses,
+        gradedUsers: action.gradedUsers,
+        // by default, the active user is the first graded user
+        activeUserId: action.gradedUsers[0]
       };
     case CANVAS_GOT_OUTCOME_ROLLUPS_FOR_COURSE:
       const courseId = action.courseId;
@@ -129,6 +138,23 @@ export default function canvas(state = {}, action) {
           ...state.outcomeAlignments,
           [action.courseId]: action.alignments
         }
+      };
+    case CANVAS_GOT_OBSERVEES:
+      return {
+        ...state,
+        observees: action.observees,
+        users: {
+          ...state.users,
+          ...action.observees.reduce(
+            (acc, val) => ({ ...acc, [val.id]: val }),
+            {}
+          )
+        }
+      };
+    case CANVAS_CHANGE_ACTIVE_USER:
+      return {
+        ...state,
+        activeUserId: action.id
       };
     default:
       return state;

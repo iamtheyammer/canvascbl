@@ -29,39 +29,18 @@ const mobileTabList = tabList.map(t => ({ title: t.tab, sub: t.key }));
 function GradeCard(props) {
   const [activeTabKey, setActiveTabKey] = useState(tabList[0].key);
 
-  const {
-    currentGrade,
-    averageGrade,
-    gradeHasSuccessSkills,
-    userHasValidSubscription
-  } = props;
+  const { currentGrade, averageGrade, userHasValidSubscription } = props;
 
   function generateCardContent(key) {
     switch (key) {
       case 'userGrade':
         const { min, max } = gradeMapByGrade[currentGrade];
 
-        let successSkillsText = '';
-        switch (gradeHasSuccessSkills) {
-          case true:
-            successSkillsText =
-              'Success skills are counted because they made your grade higher.';
-            break;
-          case false:
-            successSkillsText =
-              'Success skills were not counted because lowered your grade.';
-            break;
-          default:
-            successSkillsText =
-              'Your grade with and without success skills is identical.';
-            break;
-        }
-
         return (
           <CenteredStatisticWithText
             stat={currentGrade}
             text={`Your current grade, ${currentGrade}, requires 75% of outcomes to be
-              above ${max} and no outcomes to be below ${min}. ${successSkillsText}`}
+              above ${max} and no outcomes to be below ${min}.`}
           />
         );
       case 'averageGrade':
@@ -143,8 +122,7 @@ GradeCard.propTypes = {
     numFactors: PropTypes.number.isRequired,
     averageGrade: PropTypes.string.isRequired,
     error: PropTypes.string
-  }),
-  gradeHasSuccessSkills: PropTypes.bool
+  })
 };
 
 export default GradeCard;

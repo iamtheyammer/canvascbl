@@ -22,6 +22,7 @@ export const CANVAS_GOT_NEW_TOKEN_FROM_REFRESH_TOKEN =
 
 export const CANVAS_GOT_USER_PROFILE = 'CANVAS_GOT_USER_PROFILE';
 
+export const CANVAS_GET_USER_COURSES = 'CANVAS_GET_USER_COURSES';
 export const CANVAS_GOT_USER_COURSES = 'CANVAS_GOT_USER_COURSES';
 
 export const CANVAS_GOT_OUTCOME_RESULTS_FOR_COURSE =
@@ -39,6 +40,11 @@ export const CANVAS_GOT_ASSIGNMENTS_FOR_COURSE =
 export const CANVAS_GOT_OUTCOME_ALIGNMENTS_FOR_COURSE =
   'CANVAS_GOT_OUTCOME_ALIGNMENTS_FOR_COURSE';
 
+export const CANVAS_GET_OBSERVEES = 'CANVAS_GET_OBSERVEES';
+export const CANVAS_GOT_OBSERVEES = 'CANVAS_GOT_OBSERVEES';
+
+export const CANVAS_CHANGE_ACTIVE_USER = 'CANVAS_CHANGE_ACTIVE_USER';
+
 function loggedOut(forwardUrl, error) {
   localStorage.token = '';
   localStorage.subdomain = '';
@@ -46,6 +52,8 @@ function loggedOut(forwardUrl, error) {
 
   if (forwardUrl.length > 1) {
     window.location = forwardUrl;
+  } else {
+    window.location.reload();
   }
 
   return {
@@ -224,23 +232,20 @@ export function getUser(id, shouldGenerateSession = true, token, subdomain) {
   };
 }
 
-function gotUserCourses(courses) {
+export function gotUserCourses(courses, gradedUsers) {
   return {
     type: CANVAS_GOT_USER_COURSES,
-    courses
+    courses,
+    gradedUsers
   };
 }
 
 export function getUserCourses(id, token, subdomain) {
-  return async dispatch => {
-    dispatch(startLoading(id));
-    try {
-      const userRes = await makeCanvasRequest('courses', token, subdomain);
-      dispatch(gotUserCourses(userRes.data));
-    } catch (e) {
-      dispatch(canvasProxyError(id, e.response));
-    }
-    dispatch(endLoading(id));
+  return {
+    type: CANVAS_GET_USER_COURSES,
+    id,
+    token,
+    subdomain
   };
 }
 
@@ -254,7 +259,7 @@ function gotOutcomeRollupsForCourse(results, courseId) {
 
 export function getOutcomeRollupsForCourse(
   id,
-  userId,
+  userIds,
   courseId,
   token,
   subdomain
@@ -266,9 +271,8 @@ export function getOutcomeRollupsForCourse(
         `courses/${courseId}/outcome_rollups`,
         token,
         subdomain,
-        {
-          userId
-        }
+        // axios will manage adding brackets and multiplying
+        { user_ids: userIds }
       );
       dispatch(
         gotOutcomeRollupsForCourse(outcomeResults.data.rollups, courseId)
@@ -291,7 +295,7 @@ function gotOutcomeRollupsAndOutcomesForCourse(results, outcomes, courseId) {
 
 export function getOutcomeRollupsAndOutcomesForCourse(
   id,
-  userId,
+  userIds,
   courseId,
   token,
   subdomain
@@ -304,7 +308,7 @@ export function getOutcomeRollupsAndOutcomesForCourse(
         token,
         subdomain,
         {
-          userId
+          user_ids: userIds
         }
       );
       // get outcomes
@@ -343,7 +347,7 @@ function gotOutcomeResultsForCourse(results, courseId) {
 
 export function getOutcomeResultsForCourse(
   id,
-  userId,
+  userIds,
   courseId,
   token,
   subdomain
@@ -356,7 +360,7 @@ export function getOutcomeResultsForCourse(
         token,
         subdomain,
         {
-          userId
+          user_ids: userIds
         }
       );
       dispatch(
@@ -427,5 +431,29 @@ export function getOutcomeAlignmentsForCourse(
       dispatch(canvasProxyError(id, e.res));
     }
     dispatch(endLoading(id));
+  };
+}
+
+export function gotObservees(observees) {
+  return {
+    type: CANVAS_GOT_OBSERVEES,
+    observees
+  };
+}
+
+export function getObservees(userId, id, token, subdomain) {
+  return {
+    type: CANVAS_GET_OBSERVEES,
+    userId,
+    id,
+    token,
+    subdomain
+  };
+}
+
+export function changeActiveUser(id) {
+  return {
+    type: CANVAS_CHANGE_ACTIVE_USER,
+    id
   };
 }
