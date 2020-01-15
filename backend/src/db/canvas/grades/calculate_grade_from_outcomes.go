@@ -16,14 +16,14 @@ type Grade struct {
 	AllAbove float64
 }
 
-// gradeMap is a map of possible grades
+// gradeMap is a slice of possible grades
 var gradeMap = []Grade{
 	{"A", 6, 3.3, 3},
 	{"A-", 5, 3.3, 2.5},
-	{"B+", 4, 2.6, 2.5},
-	{"B", 3, 2.6, 2.25},
-	{"B-", 2, 2.6, 2},
-	{"C", 1, 2.2, 0},
+	{"B+", 4, 2.6, 2.2},
+	{"B", 3, 2.6, 1.8},
+	{"B-", 2, 2.6, 1.5},
+	{"C", 1, 2.2, 1.5},
 	{"I", 0, 0, 0},
 }
 
@@ -52,9 +52,8 @@ func CalculateGradeFromOutcomeScores(os []float64) Grade {
 	// overall
 	lowestOutcome := sortedOutcomes[len(sortedOutcomes)-1]
 
-	// in Golang, maps are not ordered
-	// this means that we need to get all qualifying grades and sort.
-	var finalGrade Grade
+	// default to an I
+	finalGrade := gradeMap[6]
 
 	for _, v := range gradeMap {
 		// lowest outcome is over minimum (AllAbove)
