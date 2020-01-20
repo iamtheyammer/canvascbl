@@ -21,6 +21,7 @@ var (
 )
 
 type gradesErrorAction string
+type gradesInclude string
 
 // map[courseTitle<string>]map[userID<uint64>]grade<string>
 type simpleGrades map[string]map[uint64]string
@@ -36,8 +37,17 @@ const (
 	gradesErrorRevokedToken          = "the token/refresh token has been revoked or no longer works"
 	gradesErrorRefreshedTokenError   = "after refreshing the token, it is invalid"
 	gradesErrorUnknownCanvasError    = "there was an unknown error from canvas"
+	gradesErrorInvalidInclude        = "invalid include"
 	gradesErrorActionRedirectToOAuth = gradesErrorAction("redirect_to_oauth")
 	gradesErrorActionRetryOnce       = gradesErrorAction("retry_once")
+
+	gradesIncludeSession        = gradesInclude("session")
+	gradesIncludeUserProfile    = gradesInclude("user_profile")
+	gradesIncludeObservees      = gradesInclude("observees")
+	gradesIncludeCourses        = gradesInclude("courses")
+	gradesIncludeOutcomeResults = gradesInclude("outcome_results")
+	gradesIncludeSimpleGrades   = gradesInclude("simple_grades")
+	gradesIncludeDetailedGrades = gradesInclude("detailed_grades")
 )
 
 type gradesHandlerRequest struct {
@@ -76,13 +86,30 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 
 	req := gradesHandlerRequest{}
 	if session.Type == sessions.VerifiedSessionTypeSessionString {
-		req = gradesHandlerRequest{
-			true,
-			true,
-			true,
-			true,
-			true,
-			true,
+		inc := r.URL.Query()["include[]"]
+
+		// everything is permitted, what do they want?
+		for _, i := range inc {
+			switch gradesInclude(i) {
+			case gradesIncludeSession:
+				req.Session = true
+			case gradesIncludeUserProfile:
+				req.UserProfile = true
+			case gradesIncludeObservees:
+				req.Observees = true
+			case gradesIncludeCourses:
+				req.Courses = true
+			case gradesIncludeOutcomeResults:
+				req.OutcomeResults = true
+			case gradesIncludeSimpleGrades:
+			case gradesIncludeDetailedGrades:
+				req.DetailedGrades = true
+			default:
+				handleError(w, gradesErrorResponse{
+					Error: gradesErrorInvalidInclude,
+				}, http.StatusBadRequest)
+				return
+			}
 		}
 	} else if session.Type == sessions.VerifiedSessionTypeAPIKey {
 		util.SendUnauthorized(w, "api keys aren't implemented yet")

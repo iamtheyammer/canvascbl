@@ -192,18 +192,18 @@ type canvasAssignment struct {
 	Published              bool        `json:"published"`
 	QuizID                 int64       `json:"quiz_id"`
 	Rubric                 []struct {
-		CriterionUseRange bool    `json:"criterion_use_range"`
-		Description       string  `json:"description"`
-		ID                string  `json:"id"`
-		IgnoreForScoring  bool    `json:"ignore_for_scoring"`
-		LongDescription   string  `json:"long_description"`
-		OutcomeID         int64   `json:"outcome_id"`
-		Points            float64 `json:"points"`
-		Ratings           []struct {
-			Description     string  `json:"description"`
-			ID              string  `json:"id"`
-			LongDescription string  `json:"long_description"`
-			Points          float64 `json:"points"`
+		CriterionUseRange bool `json:"criterion_use_range"`
+		//Description       string  `json:"description"`
+		ID               string `json:"id"`
+		IgnoreForScoring bool   `json:"ignore_for_scoring"`
+		//LongDescription   string  `json:"long_description"`
+		OutcomeID int64   `json:"outcome_id"`
+		Points    float64 `json:"points"`
+		Ratings   []struct {
+			//Description     string  `json:"description"`
+			ID string `json:"id"`
+			//LongDescription string  `json:"long_description"`
+			Points float64 `json:"points"`
 		} `json:"ratings"`
 		VendorGUID interface{} `json:"vendor_guid"`
 	} `json:"rubric"`
@@ -265,8 +265,8 @@ type canvasOutcome struct {
 	MasteryPoints        float64 `json:"mastery_points"`
 	PointsPossible       float64 `json:"points_possible"`
 	Ratings              []struct {
-		Description string  `json:"description"`
-		Points      float64 `json:"points"`
+		//Description string  `json:"description"`
+		Points float64 `json:"points"`
 	} `json:"ratings"`
 	Title      string      `json:"title"`
 	URL        string      `json:"url"`
