@@ -8,9 +8,6 @@ import (
 
 // AddSessionToResponse adds the newly generated session string to a response.
 func AddSessionToResponse(w http.ResponseWriter, ss string) {
-	// for API use, possibly (can't hurt!)
-	w.Header().Set("X-Session-String", ss)
-
 	secure := true
 	sameSite := http.SameSiteStrictMode
 

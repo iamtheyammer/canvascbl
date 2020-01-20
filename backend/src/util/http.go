@@ -9,6 +9,8 @@ import (
 	"strings"
 )
 
+const CanvasProxyErrorCode = 450
+
 func SendJSONResponse(w http.ResponseWriter, j []byte) {
 	w.Header().Set("Content-Type", "application/json")
 	_, err := fmt.Fprint(w, string(j))
@@ -40,7 +42,7 @@ func SendCanvasError(w http.ResponseWriter, resp *http.Response, efc string) {
 	w.Header().Set("Content-Type", resp.Header.Get("Content-Type"))
 	// can't use 502 with cloudflare
 	//w.WriteHeader(http.StatusBadGateway)
-	w.WriteHeader(450)
+	w.WriteHeader(CanvasProxyErrorCode)
 	_, err := fmt.Fprint(w, efc)
 	if err != nil {
 		log.Fatal(err)

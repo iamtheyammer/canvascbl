@@ -181,7 +181,7 @@ func HandleObservees(observees *string, requestingUserID uint64) {
 	}
 
 	if len(toUpsert) > 0 {
-		err := userssvc.UpsertUserObservees(trx, &userssvc.UpsertObserveesRequest{
+		err := userssvc.InsertUserObservees(trx, &userssvc.UpsertObserveesRequest{
 			Observees:            toUpsert,
 			ObserverCanvasUserID: requestingUserID,
 		})

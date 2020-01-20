@@ -8,23 +8,20 @@ import (
 )
 
 type InsertRequest struct {
-	UserID *uint64
-	// google_users.id
-	GoogleUsersID uint64
-	CanvasUserID  *uint64
-	Token         string
-	ExpiresAt     *time.Time
+	CanvasUserID uint64
+	Token        string
+	RefreshToken string
+	ExpiresAt    *time.Time
 }
 
 func Insert(db services.DB, req *InsertRequest) error {
 	query, args, err := util.Sq.
 		Insert("canvas_tokens").
 		SetMap(map[string]interface{}{
-			"user_id":         req.UserID,
-			"google_users_id": req.GoogleUsersID,
-			"canvas_user_id":  req.CanvasUserID,
-			"token":           req.Token,
-			"expires_at":      req.ExpiresAt,
+			"canvas_user_id": req.CanvasUserID,
+			"token":          req.Token,
+			"refresh_token":  req.RefreshToken,
+			"expires_at":     req.ExpiresAt,
 		}).
 		Suffix("ON CONFLICT DO NOTHING").
 		ToSql()

@@ -7,6 +7,7 @@ import (
 	"github.com/iamtheyammer/canvascbl/backend/src/canvasapis"
 	"github.com/iamtheyammer/canvascbl/backend/src/checkout"
 	"github.com/iamtheyammer/canvascbl/backend/src/env"
+	"github.com/iamtheyammer/canvascbl/backend/src/gradesapi"
 	"github.com/iamtheyammer/canvascbl/backend/src/plus"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
@@ -58,11 +59,6 @@ func getRouter() *httprouter.Router {
 	router.GET("/api/canvas/oauth2/refresh_token", canvasapis.OAuth2RefreshTokenHandler)
 	router.DELETE("/api/canvas/oauth2/token", canvasapis.DeleteOAuth2TokenHandler)
 
-	// not holding tokens anymore.
-	//router.POST("/api/canvas/tokens", canvasapis.InsertCanvasTokenHandler)
-	//router.GET("/api/canvas/tokens", canvasapis.GetCanvasTokensHandler)
-	//router.DELETE("/api/canvas/tokens", canvasapis.DeleteCanvasTokenHandler)
-
 	router.GET("/api/checkout/session", checkout.CreateCheckoutSessionHandler)
 	router.GET("/api/checkout/products", checkout.ListProductsHandler)
 	router.POST("/api/checkout/redeem", checkout.RedeemHandler)
@@ -81,6 +77,11 @@ func getRouter() *httprouter.Router {
 	//router.GET("/api/google/oauth2/response", googleapis.OAuth2ResponseHandler)
 
 	router.POST("/api/admin/gift_cards", admin.GenerateGiftCardsHandler)
+
+	// API
+	router.GET("/api/v1/grades", gradesapi.GradesHandler)
+	router.GET("/api/v1/courses/:courseID/assignments", gradesapi.AssignmentsHandler)
+	router.GET("/api/v1/outcomes/:outcomeID", gradesapi.OutcomeHandler)
 
 	return router
 }

@@ -1,16 +1,35 @@
 package canvasapis
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/iamtheyammer/canvascbl/backend/src/canvasapis/services/oauth2"
+	"github.com/iamtheyammer/canvascbl/backend/src/canvasapis/services/users"
+	"github.com/iamtheyammer/canvascbl/backend/src/db"
+	"github.com/iamtheyammer/canvascbl/backend/src/db/services/canvas_tokens"
 	"github.com/iamtheyammer/canvascbl/backend/src/env"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
+	"github.com/pkg/errors"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 var OAuth2AuthURI = getOAuth2AuthURI()
+
+type canvasTokenGrantResponse struct {
+	AccessToken  string `json:"access_token"`
+	ExpiresIn    int64  `json:"expires_in"`
+	RefreshToken string `json:"refresh_token"`
+	TokenType    string `json:"token_type"`
+	User         struct {
+		EffectiveLocale string `json:"effective_locale"`
+		GlobalID        string `json:"global_id"`
+		ID              int64  `json:"id"`
+		Name            string `json:"name"`
+	} `json:"user"`
+}
 
 func getOAuth2AuthURI() string {
 	redirectURL := url.URL{
@@ -68,6 +87,46 @@ func OAuth2ResponseHandler(w http.ResponseWriter, r *http.Request, _ httprouter.
 		util.SendInternalServerError(w)
 		return
 	}
+
+	var tokenResp canvasTokenGrantResponse
+	err = json.Unmarshal([]byte(body), &tokenResp)
+	if err != nil {
+		util.HandleError(errors.Wrap(err, "error decoding canvas token grant response"))
+		util.SendInternalServerError(w)
+		return
+	}
+
+	exp := time.Now().Add(time.Duration(tokenResp.ExpiresIn) * time.Second)
+
+	err = db.InsertCanvasToken(&canvas_tokens.InsertRequest{
+		CanvasUserID: uint64(tokenResp.User.ID),
+		Token:        tokenResp.AccessToken,
+		RefreshToken: tokenResp.RefreshToken,
+		ExpiresAt:    &exp,
+	})
+	if err != nil {
+		util.HandleError(errors.Wrap(err, "error inserting canvas token"))
+		util.SendInternalServerError(w)
+		return
+	}
+
+	_, pBody, err := users.GetSelfProfile(&util.RequestDetails{
+		Token:     tokenResp.AccessToken,
+		Subdomain: env.CanvasOAuth2Subdomain,
+	})
+	if err != nil {
+		util.HandleError(errors.Wrap(err, "error getting self profile in oauth2 handler"))
+		util.SendInternalServerError(w)
+		return
+	}
+
+	ss, err := db.UpsertProfileAndGenerateSession(&pBody)
+	if err != nil {
+		util.SendInternalServerError(w)
+		return
+	}
+
+	util.AddSessionToResponse(w, *ss)
 
 	util.HandleCanvasOAuth2Response(w, resp, body)
 	return
