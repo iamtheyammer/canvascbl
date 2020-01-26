@@ -11,7 +11,7 @@ function AverageOutcomeScore(props) {
   const averageIsLoading = loading.includes(getAverageOutcomeScoreId);
   const getAverageError = error[getAverageOutcomeScoreId];
 
-  if (!plus.session.hasValidSubscription) {
+  if (!plus.session.has_valid_subscription) {
     return (
       <Typography.Text>
         You need CanvasCBL+ to use this feature. Go to the Upgrades page at the

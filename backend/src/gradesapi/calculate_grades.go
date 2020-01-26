@@ -123,6 +123,13 @@ func calculateGradeFromOutcomeResults(results map[uint64][]canvasOutcomeResult, 
 		avgs = append(avgs, avg)
 	}
 
+	if len(avgs) < 1 {
+		return &computedGrade{
+			Grade:    naGrade,
+			Averages: nil,
+		}
+	}
+
 	// what is 75% of len(s)
 	outcomesOverMinNeeded := int(math.Floor(float64(75*len(avgs)) / float64(100)))
 

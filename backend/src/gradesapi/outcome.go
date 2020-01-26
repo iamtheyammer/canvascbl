@@ -47,55 +47,34 @@ func OutcomeHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 		return
 	}
 
-	o, err := getCanvasOutcome(rd, oID)
-	if err != nil {
-		if errors.Is(err, canvasErrorInvalidAccessTokenError) {
-			// we need to use the refresh token
-			refreshErr := rd.refreshAccessToken()
-			if refreshErr != nil {
-				if errors.Is(refreshErr, canvasErrorInvalidAccessTokenError) {
-					handleError(w, gradesErrorResponse{
-						Error:  gradesErrorRevokedToken,
-						Action: gradesErrorActionRedirectToOAuth,
-					}, http.StatusForbidden)
-					return
-				}
-
-				handleISE(w, fmt.Errorf("error refreshing token: %w", refreshErr))
-				return
-			}
-
-			newO, newOErr := getCanvasOutcome(rd, oID)
-			if newOErr != nil {
-				if errors.Is(newOErr, canvasErrorInvalidAccessTokenError) {
-					handleError(w, gradesErrorResponse{
-						Error:  gradesErrorRefreshedTokenError,
-						Action: gradesErrorActionRedirectToOAuth,
-					}, http.StatusForbidden)
-					return
-				} else if errors.Is(err, canvasErrorUnknownError) {
-					handleError(w, gradesErrorUnknownCanvasErrorResponse, util.CanvasProxyErrorCode)
-					return
-				}
-
-				handleISE(w, fmt.Errorf("error getting newO: %w", newOErr))
-				return
-			}
-
-			o = newO
-		} else if errors.Is(err, canvasErrorInvalidAccessTokenError) {
-			handleError(w, gradesErrorResponse{
-				Error:  gradesErrorRefreshedTokenError,
-				Action: gradesErrorActionRedirectToOAuth,
-			}, http.StatusForbidden)
-			return
-		} else if errors.Is(err, canvasErrorUnknownError) {
-			handleError(w, gradesErrorUnknownCanvasErrorResponse, util.CanvasProxyErrorCode)
-			return
-		} else {
-			handleISE(w, fmt.Errorf("error getting canvas outcome %s: %w", oID, err))
-			return
+	var o *canvasOutcomeResponse
+	rd, err = handleRequestWithTokenRefresh(func(reqD *requestDetails) error {
+		out, outErr := getCanvasOutcome(*reqD, oID)
+		if outErr != nil {
+			return fmt.Errorf("error getting canvas outcome %s: %w", oID, outErr)
 		}
+
+		o = out
+		return nil
+	}, &rd, session.CanvasUserID)
+	if errors.Is(err, canvasErrorInvalidAccessTokenError) {
+		handleError(w, gradesErrorResponse{
+			Error:  gradesErrorRevokedToken,
+			Action: gradesErrorActionRedirectToOAuth,
+		}, http.StatusForbidden)
+		return
+	} else if errors.Is(err, canvasErrorInvalidAccessTokenError) {
+		handleError(w, gradesErrorResponse{
+			Error:  gradesErrorRefreshedTokenError,
+			Action: gradesErrorActionRedirectToOAuth,
+		}, http.StatusForbidden)
+		return
+	} else if errors.Is(err, canvasErrorUnknownError) {
+		handleError(w, gradesErrorUnknownCanvasErrorResponse, util.CanvasProxyErrorCode)
+		return
+	} else if err != nil {
+		handleISE(w, fmt.Errorf("error getting outcome %s: %w", oID, err))
+		return
 	}
 
 	go saveOutcomeToDB((*canvasOutcome)(o))

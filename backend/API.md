@@ -1,4 +1,4 @@
-# CanvasCBL Open API
+# CanvasCBL Open API - IN PROGRESS, NOT FINAL
 
 The CanvasCBL Open API allows third-party applications to access grades and other user information from CanvasCBL.
 
@@ -30,7 +30,17 @@ Your Client ID and Client Secret will be limited to the following scopes, with t
 | `average_course_grade` | A course's average grade. |
 | `average_outcome_score` | The average score for an outcome. |
 
-### GET /oauth2/authorize
+#### Query Params
+
+| Param | Example Value | Description |
+| ----: | ------------: | ----------: |
+| `response` | `code` | **Required.** Must be `code`. |
+| `client_id` | `d262d1d3-d969-4d48-ac1e-cfceec88b5c9` | **Required.** Your Client ID |
+| `scope` | `profile,observees,grades` | **Required.** Comma-separated list of scopes you would like access to. |
+| `redirect_uri` | `https://dcraft.com/oauth2/response` | **Required.** The URI where the user will be redirected after the authorization. Must match the Redirect URI on your OAuth2 Credentials. |
+| `purpose` | `d.Craft` | Helps the user identify what this token is for. |
+
+### GET /oauth2/authorize (FUTURE)
 
 This endpoint is the first step in the authentication flow. You should send a user to this link in their browser.
 
@@ -59,13 +69,13 @@ If an error occurred, your redirect URI will be appended with the `error` query 
 If the user accepted your access request, your redirect URI will be appended with the `code` query param. Use this code
 param in the [POST /oauth2/token route](#post-oauth2token).
 
-### POST /oauth2/token
+### POST /oauth2/token (FUTURE)
 
 This request, when successful, returns an OAuth2 Bearer token and an OAuth2 Refresh Token for the user.
 
 The user MUST NOT be able to see this request as it will contain your client secret.
 
-### Body
+#### Body
 
 Unlike all other CanvasCBL API requests, this body must be in the `application/x-www-form-urlencoded` format.
 
@@ -78,7 +88,7 @@ Unlike all other CanvasCBL API requests, this body must be in the `application/x
 | `code` | `016d46c5-8f39-4763-baa0-72985b2f2977` | Required for `grant_type` = `code`. | The `code` parameter sent to your redirect URI. |
 | `refresh_token` | `005f9d29-cffb-46b3-a6eb-5960bd325c80` | Required for `grant_type` = `refresh_token`. | Your refresh token. |
 
-### Response
+#### Response
 
 ```json5
 {

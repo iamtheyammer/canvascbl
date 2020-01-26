@@ -31,33 +31,8 @@ func getRouter() *httprouter.Router {
 		HandleOPTIONS:          true,
 	}
 
-	// saves to db
-	router.GET("/api/canvas/outcomes/:outcomeID", canvasapis.GetOutcomeByIDHandler)
-	// saves to db
-	router.GET("/api/canvas/users/profile/self", canvasapis.GetOwnUserProfileHandler)
-	// saves to db
-	router.GET("/api/canvas/users/profile/self/observees", canvasapis.GetOwnObserveesHandler)
-	// saves to db
-	router.GET("/api/canvas/courses", canvasapis.GetCoursesHandler)
-	// saves to db
-	router.GET("/api/canvas/courses/:courseID/assignments", canvasapis.GetAssignmentsByCourseHandler)
-	// no db needed
-	router.GET("/api/canvas/courses/:courseID/outcome_groups", canvasapis.GetOutcomesByCourseHandler)
-	router.GET(
-		"/api/canvas/courses/:courseID/outcome_groups/:outcomeGroupID/outcomes",
-		canvasapis.GetOutcomesByCourseAndOutcomeGroupHandler,
-	)
-	// saves to db
-	router.GET("/api/canvas/courses/:courseID/outcome_results", canvasapis.GetOutcomeResultsByCourseHandler)
-	// saves grades and specific outcome scores to DB
-	router.GET("/api/canvas/courses/:courseID/outcome_rollups", canvasapis.GetOutcomeRollupsByCourseHandler)
-	// doesn't save to db but a possibility
-	router.GET("/api/canvas/courses/:courseID/outcome_alignments", canvasapis.GetOutcomeAlignmentsByCourseHandler)
-
 	router.GET("/api/canvas/oauth2/request", canvasapis.OAuth2RequestHandler)
 	router.GET("/api/canvas/oauth2/response", canvasapis.OAuth2ResponseHandler)
-	router.GET("/api/canvas/oauth2/refresh_token", canvasapis.OAuth2RefreshTokenHandler)
-	router.DELETE("/api/canvas/oauth2/token", canvasapis.DeleteOAuth2TokenHandler)
 
 	router.GET("/api/checkout/session", checkout.CreateCheckoutSessionHandler)
 	router.GET("/api/checkout/products", checkout.ListProductsHandler)
@@ -81,6 +56,7 @@ func getRouter() *httprouter.Router {
 	// API
 	router.GET("/api/v1/grades", gradesapi.GradesHandler)
 	router.GET("/api/v1/courses/:courseID/assignments", gradesapi.AssignmentsHandler)
+	router.GET("/api/v1/courses/:courseID/outcome_alignments", gradesapi.AlignmentsHandler)
 	router.GET("/api/v1/outcomes/:outcomeID", gradesapi.OutcomeHandler)
 
 	return router

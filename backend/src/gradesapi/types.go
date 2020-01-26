@@ -301,3 +301,8 @@ type canvasErrorResponse struct {
 		Message string `json:"message"`
 	}
 }
+
+type canvasOAuth2ErrorResponse struct {
+	Error            string `json:"error"`
+	ErrorDescription string `json:"error_description"`
+}

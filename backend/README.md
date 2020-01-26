@@ -1,71 +1,16 @@
 # Canvas Proxy API
 
-Written in Golang for maximum speed.
+Written in Golang for maximum speed (and so many other absolutely wonderful things!).
 
-## Headers
+## CanvasCBL API
 
-### Request
+Documentation incoming [here](API.md).
 
-There are two headers for each request to `/api/canvas/*` (except for OAuth2):
-
-- `X-Canvas-Token`
-    - Auth token for Canvas. Required for all requests except for OAuth2.
-- `X-Canvas-Subdomain` (optional-- see [env vars](#environment-variables) for more info)
-    - Subdomain for Canvas-- so `hello` would make calls to `hello.instructure.com`.
-
-### Response
-
-Two headers are returned from every request:
-
-- `X-Canvas-Url` is returned from every request. It contains the URL that the proxy called. Helpful for debugging. Note that this header is always `omitted` for OAuth2 calls.
-- `X-Canvas-Status-Code` contains the status code returned from the proxied call to Canvas.
-
-If an error occurred, a `502 BAD GATEWAY` status will be returned from the proxy, except for OAuth2 calls.
-
-## Endpoints
+## Frontend Endpoints
 
 No query string parameters from Canvas or otherwise, except otherwise noted, are supported.
 
-### Outcomes
-
-- `GET` `/api/canvas/outcomes/:outcomeID` - Mirror of [this](https://canvas.instructure.com/doc/api/outcomes.html#method.outcomes_api.show) Canvas endpoint.
-
-### Users
-
-- `GET` `/api/canvas/users/profile/self` - Mirror of [this](https://canvas.instructure.com/doc/api/users.html#method.users.api_show) Canvas endpoint, with `:id` replaced with `self`.
-    - Supports a custom `generateSession` param which will generate a CanvasCBL session as a cookie (`session_string`) and as a header (`X-Session-String`). Can be used for future CanvasCBL+ calls.
-- `GET` `/api/canvas/users/profile/self/observees` - Mirror of [this](https://canvas.instructure.com/doc/api/user_observees.html#method.user_observees.index) Canvas endpoint with `:user_id` replaced with `self`.
-    - Requires a custom `user_id` query param for backend functions. The final requested url will have the supplied user ID instead of `self`. If you're confused, try it and look at the returned `X-Canvas-URL` header.
-
-### Courses
-
-- `GET` `/api/canvas/courses` - Mirror of [this](https://canvas.instructure.com/doc/api/courses.html#method.courses.index) Canvas endpoint.
-- `GET` `/api/canvas/courses/:courseID/assignments` - Mirror of [this](https://canvas.instructure.com/doc/api/assignments.html#method.assignments_api.index) Canvas endpoint.
-  - Supports the `include[]` query param from Canvas
-- `GET` `/api/canvas/courses/:courseID/outcome_groups` - Mirror of [this](https://canvas.instructure.com/doc/api/outcome_groups.html#method.outcome_groups_api.index) Canvas endpoint.
-- `GET` `/api/canvas/courses/:courseID/outcome_groups/:outcomeGroupID/outcomes` - Mirror of [this](https://canvas.instructure.com/doc/api/outcome_groups.html#method.outcome_groups_api.outcomes) Canvas endpoint.
-- `GET` `/api/canvas/courses/:courseID/outcome_results` - Mirror of [this](https://canvas.instructure.com/doc/api/outcome_results.html#method.outcome_results.index) Canvas endpoint.
-  - Requires the `user_ids[]` query param from Canvas
-  - Supports the `include[]` query param from Canvas
-- `GET` `/api/canvas/courses/:courseID/outcome_rollups` - Mirror of [this](https://canvas.instructure.com/doc/api/outcome_results.html#method.outcome_results.rollups) Canvas endpoint.
-  - Requires the `user_ids[]` query param from Canvas
-  - Supports the `include[]` query param from Canvas
-- `GET` `/api/canvas/courses/:courseID/outcome_alignments` - Mirror of [this](https://canvas.instructure.com/doc/api/outcomes.html#method.outcomes_api.outcome_alignments) Canvas endpoint.
-  - Requires the [`userId` param](#userid-param)
-
-#### `userId` param
-
-Sets the `user_ids[]` param to the value of the `userId` param. It should be equal to the ID of the user the token is for. This is required because students only have permission to list their own outcome results, and this endpoint defaults to listing results for all students. Ex: `userId=12345`
-
-### ~~Tokens~~ (deprecated)
-
-The API supports holding on to tokens. All tokens endpoints require a session.
-
-- `GET` `/api/canvas/tokens` - List your non-expired Tokens
-- `POST` `/api/canvas/tokens` - Add a token
-  - Body (JSON):
-    - `token` - the token to use; the API will check it before adding it-- if these checks fail it will return 400 bad request.
-    - [OPTIONAL] `expiresAt` - unix epoch in seconds; when the token will expire. if the token will never expire set it to null or 0 or just leave it out.
+Users need a valid session to use these. OAuth2 Access Tokens will not be permitted for use on these endpoints.
 
 ### CanvasCBL+
 
@@ -80,7 +25,9 @@ Users need a valid subscription to use all endpoints except for those marked \[N
 
 ### Checkout
 
-- `GET` `/api/checkout/products` \[NS\] - Lists all products as JSON.
+Users need a valid session to use all of these endpoints.
+
+- `GET` `/api/checkout/products` - Lists all products as JSON.
 - `GET` `/api/checkout/session` - Gets a Stripe checkout session ID by product ID.
   - Requires the `productId` param, received from `/api/checkout/products`.
 - `POST` `/api/checkout/redeem` - Lets you redeem gift cards
@@ -88,11 +35,6 @@ Users need a valid subscription to use all endpoints except for those marked \[N
 - `GET` `/api/checkout/subscriptions` - Returns an array of all currently valid subscriptions the user holds.
 - `DELETE` `/api/checkout/subscriptions` - Cancels your current subscription effective immediately.
 - `POST` `/api/checkout/webhook` - To be used as the Stripe webhook URL. As it verifies Stripe-Signature, there is no reason to send requests here.
-
-### Sessions
-
-These endpoints require a session, generated from the `/api/canvas/users/profile/self` endpoint with `?generateSession=true`.
-Provide it in the X-Session-String header or as a cookie (`session_string`).
 
 ### Admin
 
@@ -162,7 +104,7 @@ See the two below sections about Redirect URI Query String Params for handling t
 In the event of a successful grant from Canvas, two query string parameters will be in the URL to the Redirect URI.
 
 - `type` - `canvas`
-- `canvas_response` - contains the JSON payload from the Canvas token grant (examples [here](https://canvas.instructure.com/doc/api/file.oauth_endpoints.html))
+- `name` - The user's first and last name as a string
 - `subdomain` - the subdomain from the OAuth2 token grant
 
 #### Error Redirect URI Query String Params

@@ -8,7 +8,7 @@ import (
 
 type InsertRequest struct {
 	CanvasID       uint64
-	CourseID       uint64
+	CourseID       *uint64
 	ContextID      uint64
 	DisplayName    string
 	Title          string
@@ -26,10 +26,6 @@ func InsertOutcome(db services.DB, req *InsertRequest) error {
 		"title":           req.Title,
 		"mastery_points":  req.MasteryPoints,
 		"points_possible": req.PointsPossible,
-	}
-
-	if req.CourseID == 0 {
-		vals["course_id"] = nil
 	}
 
 	query, args, err := util.Sq.

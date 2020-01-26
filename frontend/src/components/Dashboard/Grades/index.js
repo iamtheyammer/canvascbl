@@ -6,14 +6,7 @@ import v4 from 'uuid/v4';
 import { Typography, Table, Icon, Tag, Skeleton, Popover } from 'antd';
 import { Accordion as MobileAccordion, List as MobileList } from 'antd-mobile';
 
-import {
-  getUserCourses,
-  getOutcomeRollupsForCourse
-} from '../../../actions/canvas';
-
-import calculateGradeFromOutcomes, {
-  gradeMapByGrade
-} from '../../../util/canvas/calculateGradeFromOutcomes';
+import { gradeMapByGrade } from '../../../util/canvas/gradeMapByGrade';
 import getActiveCourses from '../../../util/canvas/getActiveCourses';
 import ErrorModal from '../ErrorModal';
 
@@ -135,91 +128,30 @@ const tableColumns = [
 ];
 
 function Grades(props) {
-  const [getCoursesId, setGetCoursesId] = useState('');
-  const [
-    getOutcomeRollupsForCourseIds,
-    setGetOutcomeRollupsForCourseIds
-  ] = useState([]);
   const [getPrevGradeId, setGetPrevGradeId] = useState('');
-
-  const [loadingText, setLoadingText] = useState('');
-
-  const allIds = [
-    getCoursesId,
-    getPrevGradeId,
-    ...getOutcomeRollupsForCourseIds
-  ];
 
   const {
     dispatch,
-    token,
+    grades,
     subdomain,
     loading,
     error,
     courses,
-    outcomeRollups,
-    gradedUsers,
     users,
     activeUserId,
     observees,
     plus
   } = props;
 
-  const err = error[Object.keys(error).filter(eid => allIds.includes(eid))[0]];
+  const err = error[getPrevGradeId];
 
   const activeUser = users && activeUserId && users[activeUserId];
 
-  const allActiveCourses =
-    courses && activeUser ? getActiveCourses(courses) : courses;
-
   useEffect(() => {
-    if (allIds.some(id => loading.includes(id)) || err) {
-      return;
-    }
-    if (!courses && !getCoursesId) {
-      const id = v4();
-      dispatch(getUserCourses(id, token, subdomain));
-      setGetCoursesId(id);
-      setLoadingText('your courses');
-      return;
-    }
-
-    // if user AND no outcome rollups
-    // or if we're missing a rollup for a class
-    // and if rollups aren't loading
-    // fetch rollups
-    if (
-      (gradedUsers.length && !outcomeRollups) ||
-      ((() =>
-        outcomeRollups
-          ? activeCourses.some(c => !outcomeRollups[c.id])
-          : false)() &&
-        !loading.includes(lId =>
-          getOutcomeRollupsForCourseIds.some(id => id === lId)
-        ))
-    ) {
-      const ids = [];
-      allActiveCourses.forEach(c => {
-        const id = v4();
-        ids.push(id);
-        dispatch(
-          getOutcomeRollupsForCourse(
-            id,
-            c.enrollments.map(e => e.associated_user_id || e.user_id),
-            c.id,
-            token,
-            subdomain
-          )
-        );
-      });
-      setGetOutcomeRollupsForCourseIds(ids);
-      setLoadingText('your grades');
-    }
-
     if (
       activeUser &&
       plus.session &&
-      plus.session.hasValidSubscription &&
+      plus.session.has_valid_subscription &&
       !plus.previousGrades &&
       !getPrevGradeId
     ) {
@@ -235,20 +167,12 @@ function Grades(props) {
     return <ErrorModal error={err} />;
   }
 
-  if (
-    !activeUser ||
-    !plus.session ||
-    !courses ||
-    !outcomeRollups ||
-    allIds.some(id => loading.includes(id))
-  ) {
-    return <Loading text={loadingText} />;
+  if (!activeUser || !plus.session || !courses) {
+    return <Loading text="grades" />;
   }
 
   const activeCourses =
     courses && activeUser ? getActiveCourses(courses, activeUser.id) : [];
-
-  const grades = calculateGradeFromOutcomes(outcomeRollups, activeUserId);
 
   const previousGrades =
     plus &&
@@ -258,9 +182,11 @@ function Grades(props) {
   const data = activeCourses.map(c => ({
     key: c.id,
     name: c.name,
-    grade: grades[c.id] ? grades[c.id].grade : 'Error, try reloading',
+    grade: grades[activeUserId][c.id]
+      ? grades[activeUserId][c.id].grade.grade
+      : 'Error, try reloading',
     id: c.id,
-    userHasValidSubscription: plus.session.hasValidSubscription,
+    userHasValidSubscription: plus.session.has_valid_subscription,
     previousGrade: loading.includes(getPrevGradeId)
       ? 'loading'
       : plus &&
@@ -357,13 +283,11 @@ function Grades(props) {
 const ConnectedGrades = connect(state => ({
   courses: state.canvas.courses,
   plus: state.plus,
-  outcomeRollups: state.canvas.outcomeRollups,
   gradedUsers: state.canvas.gradedUsers,
+  grades: state.canvas.grades,
   users: state.canvas.users,
   activeUserId: state.canvas.activeUserId,
   user: state.canvas.user,
-  token: state.canvas.token,
-  subdomain: state.canvas.subdomain,
   observees: state.canvas.observees,
   error: state.error,
   loading: state.loading

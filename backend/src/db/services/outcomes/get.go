@@ -46,14 +46,17 @@ func GetUserMostRecentScore(db services.DB, userCanvasIDs []uint64) (*OutcomeRol
 
 	row := db.QueryRow(query, args...)
 
-	var ors OutcomeRollupScore
+	var (
+		ors           OutcomeRollupScore
+		timesAssessed sql.NullInt64
+	)
 	err = row.Scan(
 		&ors.ID,
 		&ors.CourseCanvasID,
 		&ors.OutcomeCanvasID,
 		&ors.UserCanvasID,
 		&ors.Score,
-		&ors.TimesAssessed,
+		&timesAssessed,
 		&ors.InsertedAt,
 	)
 	if err != nil {
@@ -62,6 +65,10 @@ func GetUserMostRecentScore(db services.DB, userCanvasIDs []uint64) (*OutcomeRol
 		}
 
 		return nil, errors.Wrap(err, "error executing get user most recent outcome rollup score sql")
+	}
+
+	if timesAssessed.Valid {
+		ors.TimesAssessed = uint64(timesAssessed.Int64)
 	}
 
 	return &ors, nil
@@ -96,14 +103,23 @@ func GetAverage(db services.DB, outcomeID uint64) (*OutcomeAverage, error) {
 
 	row := db.QueryRow(query, args...)
 
-	var oa OutcomeAverage
+	var (
+		oa  OutcomeAverage
+		avg sql.NullFloat64
+	)
 	oa.OutcomeCanvasID = outcomeID
-	err = row.Scan(&oa.AverageScore, &oa.NumFactors)
+	err = row.Scan(&avg, &oa.NumFactors)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
 		return nil, errors.Wrap(err, "error executing get outcome average sql")
+	}
+
+	if avg.Valid {
+		oa.AverageScore = avg.Float64
+	} else {
+		oa.AverageScore = -1
 	}
 
 	return &oa, nil

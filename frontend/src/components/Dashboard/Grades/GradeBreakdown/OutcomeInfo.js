@@ -5,7 +5,7 @@ import { isMobile } from 'react-device-detect';
 import calculateMeanAverage from '../../../../util/calculateMeanAverage';
 import roundNumberToDigits from '../../../../util/roundNumberToDigits';
 import v4 from 'uuid/v4';
-import { gradeMapByGrade } from '../../../../util/canvas/calculateGradeFromOutcomes';
+import { gradeMapByGrade } from '../../../../util/canvas/gradeMapByGrade';
 import { CenteredStatisticWithText } from './CenteredStatisticWithText';
 import { ReactComponent as plusIcon } from '../../../../assets/plus.svg';
 
@@ -47,8 +47,11 @@ function OutcomeInfo(props) {
   } = props;
 
   const { min: AMin, max: AMax } = gradeMapByGrade['A'];
+  const outcomeScores = Object.values(outcomeRollupScores)
+    .map(or => or.average)
+    .sort((a, b) => a - b);
   const seventyFivePercentOfOutcomes = Math.floor(
-    (75 * outcomeRollupScores.length) / 100
+    (75 * outcomeScores.length) / 100
   );
 
   function generateCardContent(key) {
@@ -56,21 +59,20 @@ function OutcomeInfo(props) {
       case 'lowestOutcome':
         return (
           <CenteredStatisticWithText
-            stat={lowestOutcome.rollupScore.score}
+            stat={+lowestOutcome.rollupScore.average.toFixed(2)}
             text={`Your lowest outcome is ${lowestOutcome.outcome
-              .display_name || lowestOutcome.outcome.title}, with a score of ${
-              lowestOutcome.rollupScore.score
-            }.\n
-This outcome's last assignment was ${
-              lowestOutcome.rollupScore.title
-            }, and this outcome has been assessed ${
-              lowestOutcome.rollupScore.count
-            } times.`}
+              .display_name ||
+              lowestOutcome.outcome
+                .title}, with a score of ${+lowestOutcome.rollupScore.average.toFixed(
+              2
+            )}.`}
           />
         );
       case 'averageOutcomeScore':
         const meanOutcomeScore = roundNumberToDigits(
-          calculateMeanAverage(outcomeRollupScores.map(or => or.score)),
+          calculateMeanAverage(
+            Object.values(outcomeRollupScores).map(or => or.average)
+          ),
           3
         );
         return (
@@ -92,7 +94,7 @@ This outcome's last assignment was ${
           );
         }
 
-        if (grade.grade === 'A') {
+        if (grade.grade.grade === 'A') {
           return (
             <div>
               <div align="center">
@@ -116,22 +118,22 @@ This outcome's last assignment was ${
                   <Typography.Text
                     delete={lowestOutcome.lowestCountedOutcome > AMax}
                   >
-                    {seventyFivePercentOfOutcomes}/{grade.sortedOutcomes.length}{' '}
+                    {seventyFivePercentOfOutcomes}/{outcomeScores.length}{' '}
                     outcomes are above {AMax} (currently,{' '}
-                    {grade.sortedOutcomes.filter(o => o < AMax).length} outcomes
-                    are not above {AMax})
+                    {outcomeScores.filter(o => o < AMax).length} outcomes are
+                    not above {AMax})
                   </Typography.Text>
                 </li>
                 <li>
-                  <Typography.Text
-                    delete={lowestOutcome.rollupScore.score >= AMin}
-                  >
+                  <Typography.Text delete={outcomeScores[0] >= AMin}>
                     No outcomes are below {AMin} (currently,{' '}
-                    {grade.sortedOutcomes.filter(o => o < AMin).length} outcomes
-                    are below {AMin})
+                    {outcomeScores.filter(o => o < AMin).length} outcomes are
+                    below {AMin})
                   </Typography.Text>
                 </li>
               </ul>
+              Please note that this section may not be technically accurate as
+              your lowest outcome score is dropped.
             </div>
           );
         }
@@ -144,7 +146,7 @@ This outcome's last assignment was ${
 
         return [
           cardWithContent(
-            `75% (rounded) of ${outcomeRollupScores.length} (number of outcomes with a grade) is ${seventyFivePercentOfOutcomes}.`
+            `75% (rounded) of ${outcomeScores.length} (number of outcomes with a grade) is ${seventyFivePercentOfOutcomes}.`
           ),
           cardWithContent(`More info is coming to this section in the future.`)
         ];

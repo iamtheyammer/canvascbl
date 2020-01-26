@@ -1,14 +1,8 @@
 import React, { Component } from 'react';
-import { connect } from 'react-redux';
 import { shape, object } from 'prop-types';
 import { Redirect } from 'react-router-dom';
 import { Modal, Icon } from 'antd';
-import v4 from 'uuid/v4';
-import {
-  deleteCanvasToken,
-  getNewTokenFromRefreshToken,
-  logout
-} from '../../../actions/canvas';
+import { logout } from '../../../actions/canvas';
 
 class ErrorModal extends Component {
   constructor(props) {
@@ -23,7 +17,7 @@ class ErrorModal extends Component {
   };
 
   handleCancel = () => {
-    this.props.dispatch(logout(this.props.token, this.props.subdomain));
+    this.props.dispatch(logout());
     this.setState({ redirect: true });
   };
 
@@ -40,7 +34,7 @@ class ErrorModal extends Component {
   };
 
   componentDidMount() {
-    const { res, error, token, refreshToken, subdomain, dispatch } = this.props;
+    const { res, error } = this.props;
     const result = res || error.res;
     if (!result) {
       this.handleUnknown();
@@ -65,34 +59,16 @@ class ErrorModal extends Component {
         return;
       }
 
-      if (refreshToken) {
-        if (message === 'Invalid access token.') {
-          Modal.info({
-            title: 'Re-Authorizing...',
-            content: 'Please wait while we re-authorize with Canvas.',
-            closable: false,
-            okButtonProps: { loading: true },
-            okText: 'One sec...',
-            icon: <Icon type="lock" />
-          });
-          dispatch(getNewTokenFromRefreshToken(v4(), subdomain, refreshToken));
-        } else {
-          Modal.destroyAll();
-          this.setState({ redirect: true });
-        }
-      } else {
-        dispatch(deleteCanvasToken(v4(), token));
-        Modal.info({
-          title: 'Invalid Canvas Token',
-          content:
-            "There's an issue with your Canvas token or subdomain. Click Logout to enter a different one.",
-          closable: false,
-          icon: <Icon type="exclamation-circle" style={{ color: '#D8000C' }} />,
-          okText: 'Logout',
-          onOk: this.handleCancel
-        });
-        return <Redirect to="/" />;
-      }
+      Modal.info({
+        title: 'Invalid Canvas Token',
+        content:
+          "There's an issue with your Canvas token or subdomain. Click Logout to enter a different one.",
+        closable: false,
+        icon: <Icon type="exclamation-circle" style={{ color: '#D8000C' }} />,
+        okText: 'Logout',
+        onOk: this.handleCancel
+      });
+      return <Redirect to="/" />;
     }
   }
 
@@ -105,15 +81,10 @@ class ErrorModal extends Component {
   }
 }
 
-const ConnectedErrorModal = connect(state => ({
-  refreshToken: state.canvas.refreshToken,
-  token: state.canvas.token
-}))(ErrorModal);
-
-ConnectedErrorModal.propTypes = {
+ErrorModal.propTypes = {
   error: shape({
     res: object
   })
 };
 
-export default ConnectedErrorModal;
+export default ErrorModal;

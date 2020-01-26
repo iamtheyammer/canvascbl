@@ -1,21 +1,50 @@
-import { all, put, takeEvery } from 'redux-saga/effects';
+import { all, put, takeEvery, takeLeading } from 'redux-saga/effects';
 import { endLoading, startLoading } from '../actions/loading';
-import makeCanvasRequest from '../util/canvas/makeCanvasRequest';
 import { canvasProxyError } from '../actions/error';
 import {
-  CANVAS_GET_OBSERVEES,
-  CANVAS_GET_USER_COURSES,
-  gotObservees,
-  gotUserCourses
+  CANVAS_GET_ASSIGNMENTS_FOR_COURSE,
+  CANVAS_GET_INDIVIDUAL_OUTCOME,
+  CANVAS_GET_INITIAL_DATA,
+  CANVAS_GET_OUTCOME_ALIGNMENTS_FOR_COURSE,
+  gotAssignmentsForCourse,
+  gotIndividualOutcome,
+  gotInitialData,
+  gotOutcomeAlignmentsForCourse
 } from '../actions/canvas';
-import getGradedUsersFromCourses from '../util/canvas/getGradedUsersFromCourses';
+import makeApiRequest from '../util/api/makeApiRequest';
+import { gotSessionInformation } from '../actions/plus';
 
-function* getUserCourses({ id, token, subdomain }) {
+function* getInitialData({ id }) {
   yield put(startLoading(id));
   try {
-    const userRes = yield makeCanvasRequest('courses', token, subdomain);
+    const gradesRequest = yield makeApiRequest('grades', {
+      include: [
+        'session',
+        'user_profile',
+        'observees',
+        'courses',
+        'outcome_results',
+        'detailed_grades'
+      ]
+    });
+    const {
+      session,
+      user_profile,
+      observees,
+      courses,
+      outcome_results,
+      detailed_grades
+    } = gradesRequest.data;
+    yield put(gotSessionInformation(session));
     yield put(
-      gotUserCourses(userRes.data, getGradedUsersFromCourses(userRes.data))
+      gotInitialData(
+        user_profile,
+        observees,
+        courses,
+        Object.keys(detailed_grades).map(uID => parseInt(uID)),
+        outcome_results,
+        detailed_grades
+      )
     );
   } catch (e) {
     yield put(canvasProxyError(id, e.response));
@@ -23,16 +52,38 @@ function* getUserCourses({ id, token, subdomain }) {
   yield put(endLoading(id));
 }
 
-function* getObservees({ id, token, subdomain, userId }) {
+function* getIndividualOutcome({ id, outcomeId }) {
   yield put(startLoading(id));
   try {
-    const observeesRequest = yield makeCanvasRequest(
-      'users/profile/self/observees',
-      token,
-      subdomain,
-      { user_id: userId }
+    const outcomeResponse = yield makeApiRequest(`outcomes/${outcomeId}`);
+    yield put(gotIndividualOutcome(outcomeResponse.data));
+  } catch (e) {
+    yield put(canvasProxyError(id, e.response));
+  }
+  yield put(endLoading(id));
+}
+
+function* getOutcomeAlignmentsForCourse({ id, courseId, studentId }) {
+  yield put(startLoading(id));
+  try {
+    const alignmentsResponse = yield makeApiRequest(
+      `courses/${courseId}/outcome_alignments`,
+      { student_id: studentId }
     );
-    yield put(gotObservees(observeesRequest.data));
+    yield put(gotOutcomeAlignmentsForCourse(courseId, alignmentsResponse.data));
+  } catch (e) {
+    yield put(canvasProxyError(id, e.response));
+  }
+  yield put(endLoading(id));
+}
+
+function* getAssignmentsForCourse({ id, courseId }) {
+  yield put(startLoading(id));
+  try {
+    const assignmentsResponse = yield makeApiRequest(
+      `courses/${courseId}/assignments`
+    );
+    yield put(gotAssignmentsForCourse(assignmentsResponse.data, courseId));
   } catch (e) {
     yield put(canvasProxyError(id, e.response));
   }
@@ -40,8 +91,13 @@ function* getObservees({ id, token, subdomain, userId }) {
 }
 
 function* watcher() {
-  yield takeEvery(CANVAS_GET_USER_COURSES, getUserCourses);
-  yield takeEvery(CANVAS_GET_OBSERVEES, getObservees);
+  yield takeLeading(CANVAS_GET_INITIAL_DATA, getInitialData);
+  yield takeEvery(CANVAS_GET_INDIVIDUAL_OUTCOME, getIndividualOutcome);
+  yield takeEvery(
+    CANVAS_GET_OUTCOME_ALIGNMENTS_FOR_COURSE,
+    getOutcomeAlignmentsForCourse
+  );
+  yield takeEvery(CANVAS_GET_ASSIGNMENTS_FOR_COURSE, getAssignmentsForCourse);
 }
 
 export default function* canvasRootSaga() {

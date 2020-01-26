@@ -139,7 +139,8 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 			// we need to use the refresh token
 			refreshErr := rd.refreshAccessToken()
 			if refreshErr != nil {
-				if errors.Is(refreshErr, canvasErrorInvalidAccessTokenError) {
+				if errors.Is(refreshErr, canvasErrorInvalidAccessTokenError) ||
+					errors.Is(refreshErr, canvasOAuth2ErrorRefreshTokenNotFound) {
 					handleError(w, gradesErrorResponse{
 						Error:  gradesErrorRevokedToken,
 						Action: gradesErrorActionRedirectToOAuth,
@@ -147,7 +148,7 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 					return
 				}
 
-				handleISE(w, fmt.Errorf("error getting a newProfile: %w", refreshErr))
+				handleISE(w, fmt.Errorf("error refreshing a token for a newProfile: %w", refreshErr))
 				return
 			}
 

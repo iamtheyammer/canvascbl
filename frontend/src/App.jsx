@@ -1,35 +1,16 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { HashRouter as Router, Route, Switch, Link } from 'react-router-dom';
-import { connect } from 'react-redux';
 import * as ReactGA from 'react-ga';
 import { isMobile } from 'react-device-detect';
 
-import { gotStoredCredentials } from './actions/canvas';
 
 import ConnectedHome from './components/Home';
-import ConnectedTokenEntry from './components/TokenEntry';
 import ConnectedOAuth2Response from './components/OAuth2Response';
 
 import Dashboard from './components/Dashboard';
 import env from './util/env';
 
 function App(props) {
-  useEffect(() => {
-    if (localStorage.token) {
-      props.dispatch(
-        gotStoredCredentials(
-          localStorage.token,
-          localStorage.refreshToken,
-          localStorage.subdomain || ''
-        )
-      );
-    }
-
-    // we pass in an empty array because React will only re-run this if the contents of that
-    // array change, and we want this code to run only once.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [true]);
-
   ReactGA.initialize(env.googleAnalyticsId);
 
   ReactGA.pageview('/');
@@ -42,7 +23,6 @@ function App(props) {
     <Router>
       <Switch>
         <Route exact path="/" component={ConnectedHome} />
-        <Route exact path="/tokenEntry" component={ConnectedTokenEntry} />
         <Route
           exact
           path="/oauth2response"
@@ -63,6 +43,4 @@ function App(props) {
   );
 }
 
-const ConnectedApp = connect(state => ({}))(App);
-
-export default ConnectedApp;
+export default App;

@@ -12,7 +12,7 @@ export const PLUS_GOT_AVERAGE_SCORE_FOR_OUTCOME =
 
 export const PLUS_GOT_PREVIOUS_GRADES = 'PLUS_GOT_PREVIOUS_GRADES';
 
-function gotSessionInformation(sessionInformation) {
+export function gotSessionInformation(sessionInformation) {
   return {
     type: PLUS_GOT_SESSION_INFORMATION,
     sessionInformation
@@ -21,14 +21,14 @@ function gotSessionInformation(sessionInformation) {
 
 export function getSessionInformation(id) {
   return async dispatch => {
-    startLoading(id);
+    dispatch(startLoading(id));
     try {
       const sessionRequest = await makePlusRequest('session');
       dispatch(gotSessionInformation(sessionRequest.data));
     } catch (e) {
-      dispatch(plusError(id, e.res));
+      dispatch(plusError(id, e.response));
     }
-    endLoading(id);
+    dispatch(endLoading(id));
   };
 }
 
@@ -42,14 +42,14 @@ function gotAverageGradeForCourse(courseId, averageGrade) {
 
 export function getAverageGradeForCourse(id, courseId) {
   return async dispatch => {
-    startLoading(id);
+    dispatch(startLoading(id));
     try {
       const avgGradeRequest = await makePlusRequest(`courses/${courseId}/avg`);
       dispatch(gotAverageGradeForCourse(courseId, avgGradeRequest.data));
     } catch (e) {
-      dispatch(plusError(id, e.res));
+      dispatch(plusError(id, e.response));
     }
-    endLoading(id);
+    dispatch(endLoading(id));
   };
 }
 
@@ -63,16 +63,16 @@ function gotAverageScoreForOutcome(outcomeId, avg) {
 
 export function getAverageScoreForOutcome(id, outcomeId) {
   return async dispatch => {
-    startLoading(id);
+    dispatch(startLoading(id));
     try {
       const avgOutcomeResponse = await makePlusRequest(
         `outcomes/${outcomeId}/avg`
       );
       dispatch(gotAverageScoreForOutcome(outcomeId, avgOutcomeResponse.data));
     } catch (e) {
-      dispatch(plusError(id, e.res));
+      dispatch(plusError(id, e.response));
     }
-    endLoading(id);
+    dispatch(endLoading(id));
   };
 }
 
@@ -85,13 +85,13 @@ function gotPreviousGrades(previousGrades) {
 
 export function getPreviousGrades(id) {
   return async dispatch => {
-    startLoading(id);
+    dispatch(startLoading(id));
     try {
       const prevGradesResponse = await makePlusRequest('grades/previous');
       dispatch(gotPreviousGrades(prevGradesResponse.data));
     } catch (e) {
-      dispatch(plusError(id, e.res));
+      dispatch(plusError(id, e.response));
     }
-    endLoading(id);
+    dispatch(endLoading(id));
   };
 }

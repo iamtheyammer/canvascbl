@@ -94,6 +94,12 @@ func GetAverageOutcomeScoreHandler(w http.ResponseWriter, req *http.Request, ps 
 		res.Error = notEnoughFactorsMessage
 	}
 
+	if avg.AverageScore == -1 {
+		res.AverageScore = -1
+		res.NumFactors = -1
+		res.Error = errorGettingAverageMessage
+	}
+
 	if len(res.Error) < 1 {
 		res.AverageScore = avg.AverageScore
 		res.NumFactors = int(avg.NumFactors)

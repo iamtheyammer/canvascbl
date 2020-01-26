@@ -44,11 +44,6 @@ func saveCoursesToDB(cs *[]canvasCourse) {
 }
 
 func saveObserveesToDB(cObs *[]canvasObservee, requestingUserID uint64) {
-	// if the user has no observees, let's do nothing.
-	if len(*cObs) < 1 {
-		return
-	}
-
 	var obs []users.Observee
 	for _, o := range *cObs {
 		obs = append(obs, users.Observee{
@@ -82,7 +77,7 @@ func saveObserveesToDB(cObs *[]canvasObservee, requestingUserID uint64) {
 	for _, o := range obs {
 		foundIDMatch := false
 		for _, dbO := range dbObservees {
-			if o.ID == dbO.CanvasUserID {
+			if o.CanvasUserID == dbO.CanvasUserID {
 				// if the names don't match, upsert
 				if o.Name != dbO.Name {
 					toUpsert = append(toUpsert, users.Observee{
@@ -112,7 +107,7 @@ func saveObserveesToDB(cObs *[]canvasObservee, requestingUserID uint64) {
 	for _, dbO := range dbObservees {
 		foundIDMatch := false
 		for _, o := range obs {
-			if dbO.CanvasUserID == o.ID {
+			if dbO.CanvasUserID == o.CanvasUserID {
 				foundIDMatch = true
 			}
 		}
@@ -212,6 +207,7 @@ func saveOutcomeResultsToDB(results processedOutcomeResults) {
 
 func saveGradesToDB(grds detailedGrades) {
 	var req []grades.InsertRequest
+	var rs []courses.OutcomeRollupInsertRequest
 	for uID, cs := range grds {
 		for cID, grd := range cs {
 			if grd.Grade == naGrade {
@@ -223,14 +219,35 @@ func saveGradesToDB(grds detailedGrades) {
 				CourseID:     int(cID),
 				UserCanvasID: int(uID),
 			})
+
+			for oID, avg := range grd.Averages {
+				rs = append(rs, courses.OutcomeRollupInsertRequest{
+					CanvasUserID: uID,
+					CourseID:     cID,
+					OutcomeID:    oID,
+					Score:        avg.Average,
+				})
+			}
 		}
 	}
 
-	err := grades.Insert(db, &req)
-	if err != nil {
-		util.HandleError(fmt.Errorf("error inserting grades: %w", err))
-		return
-	}
+	go func(request *[]grades.InsertRequest) {
+		err := grades.Insert(db, request)
+		if err != nil {
+			util.HandleError(fmt.Errorf("error inserting grades: %w", err))
+			return
+		}
+	}(&req)
+
+	go func(request *[]courses.OutcomeRollupInsertRequest) {
+		err := courses.InsertMultipleOutcomeRollups(db, request)
+		if err != nil {
+			util.HandleError(fmt.Errorf("error inserting multiple outcome averages (outcome rollups): %w", err))
+			return
+		}
+	}(&rs)
+
+	return
 }
 
 func saveAssignmentsToDB(ass []canvasAssignment, courseID string) {
@@ -258,15 +275,21 @@ func saveAssignmentsToDB(ass []canvasAssignment, courseID string) {
 }
 
 func saveOutcomeToDB(o *canvasOutcome) {
-	err := outcomes.UpsertOutcome(db, &outcomes.InsertRequest{
+	req := outcomes.InsertRequest{
 		CanvasID:       o.ID,
-		CourseID:       0,
+		CourseID:       &o.ContextID,
 		ContextID:      o.ContextID,
 		DisplayName:    o.DisplayName,
 		Title:          o.Title,
 		MasteryPoints:  o.MasteryPoints,
 		PointsPossible: o.PointsPossible,
-	})
+	}
+
+	if o.ContextType != "Course" {
+		req.CourseID = nil
+	}
+
+	err := outcomes.UpsertOutcome(db, &req)
 	if err != nil {
 		util.HandleError(fmt.Errorf("error saving outcome %d to db: %w", o.ID, err))
 		return

@@ -78,12 +78,17 @@ func InsertMultipleOutcomeRollups(db services.DB, req *[]OutcomeRollupInsertRequ
 		)
 
 	for _, or := range *req {
+		timesAssessed := &or.TimesAssessed
+		if or.TimesAssessed == 0 {
+			timesAssessed = nil
+		}
+
 		q = q.Values(
 			or.CourseID,
 			or.OutcomeID,
 			or.CanvasUserID,
 			or.Score,
-			or.TimesAssessed,
+			timesAssessed,
 		)
 	}
 

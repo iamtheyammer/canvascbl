@@ -1,7 +1,6 @@
 package db
 
 import (
-	"github.com/iamtheyammer/canvascbl/backend/src/db/canvas/outcomes"
 	outcomessvc "github.com/iamtheyammer/canvascbl/backend/src/db/services/outcomes"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/pkg/errors"
@@ -12,36 +11,6 @@ var memoizedOutcomeAverages = map[uint64]struct {
 	OutcomeAverage *outcomessvc.OutcomeAverage
 	ValidUntil     time.Time
 }{}
-
-// InsertOutcome inserts an outcome from a JSON outcome response from Canvas
-func InsertOutcome(or *string) {
-	cor, err := outcomes.OutcomeFromJSON(or)
-	if err != nil {
-		handleError(errors.Wrap(err, "error getting CanvasOutcomeResponse from JSON"))
-		return
-	}
-
-	cID := uint64(0)
-	if cor.ContextType == "Course" {
-		cID = uint64(cor.ContextID)
-	}
-
-	err = outcomessvc.InsertOutcome(util.DB, &outcomessvc.InsertRequest{
-		CanvasID:       uint64(cor.ID),
-		CourseID:       cID,
-		ContextID:      uint64(cor.ContextID),
-		DisplayName:    cor.DisplayName,
-		Title:          cor.Title,
-		MasteryPoints:  cor.MasteryPoints,
-		PointsPossible: cor.PointsPossible,
-	})
-	if err != nil {
-		handleError(errors.Wrap(err, "error inserting an outcome"))
-		return
-	}
-
-	return
-}
 
 func GetMemoizedOutcomeAverage(outcomeID uint64) (*outcomessvc.OutcomeAverage, error) {
 	v, ok := memoizedOutcomeAverages[outcomeID]
