@@ -3,7 +3,6 @@ import { HashRouter as Router, Route, Switch, Link } from 'react-router-dom';
 import * as ReactGA from 'react-ga';
 import { isMobile } from 'react-device-detect';
 
-
 import ConnectedHome from './components/Home';
 import ConnectedOAuth2Response from './components/OAuth2Response';
 
