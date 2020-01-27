@@ -160,12 +160,12 @@ func calculateGradeFromOutcomeResults(results map[uint64][]canvasOutcomeResult, 
 
 	for _, v := range gradeMap {
 		// lowest outcome is over minimum (AllAbove)
-		if v.AllAbove >= lowestOutcome {
+		if v.AllAbove > lowestOutcome {
 			continue
 		}
 
 		// lowestCountedOutcome must be above MostAbove
-		if v.MostAbove >= lowestCountedOutcome {
+		if v.MostAbove > lowestCountedOutcome {
 			continue
 		}
 
