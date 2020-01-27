@@ -19,6 +19,7 @@ Contains a set of APIs users need CanvasCBL+ to use. In the future, it will incl
 Users need a valid subscription to use all endpoints except for those marked \[NS\].
 
 - `GET` `/api/plus/session` \[NS\] - Returns info about your current session
+- `DELETE` `/api/plus/session` \[NS\] - Deletes the session_string cookie, effectively logging a user out.
 - `GET` `/api/plus/courses/:courseID/avg` - Returns the average grade for the course
 - `GET` `/api/plus/outcomes/:outcomeID/avg` - Returns the average score for the outcome
 - `GET` `/api/plus/grades/previous` - Returns the user's previous grades (5 min+ ago)

@@ -2,11 +2,13 @@ package plus
 
 import (
 	"encoding/json"
+	"github.com/iamtheyammer/canvascbl/backend/src/env"
 	"github.com/iamtheyammer/canvascbl/backend/src/middlewares"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
 	"github.com/pkg/errors"
 	"net/http"
+	"time"
 )
 
 type sessionInformation struct {
@@ -39,4 +41,24 @@ func GetSessionInformationHandler(w http.ResponseWriter, req *http.Request, _ ht
 
 	util.SendJSONResponse(w, sessj)
 	return
+}
+
+func ClearSessionHandler(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
+	secure := true
+	sameSite := http.SameSiteStrictMode
+
+	if env.Env == env.EnvironmentDevelopment {
+		secure = false
+		sameSite = http.SameSiteNoneMode
+	}
+
+	c := http.Cookie{
+		Name:     "session_string",
+		Value:    "",
+		Path:     "/",
+		SameSite: sameSite,
+		Secure:   secure,
+		Expires:  time.Now().Add(-time.Hour),
+	}
+	http.SetCookie(w, &c)
 }

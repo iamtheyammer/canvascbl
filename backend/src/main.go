@@ -43,6 +43,7 @@ func getRouter() *httprouter.Router {
 	router.POST("/api/checkout/webhook", checkout.StripeWebhookHandler)
 
 	router.GET("/api/plus/session", plus.GetSessionInformationHandler)
+	router.DELETE("/api/plus/session", plus.ClearSessionHandler)
 	router.GET("/api/plus/courses/:courseID/avg", plus.GetAverageGradeForCourseHandler)
 	router.GET("/api/plus/outcomes/:outcomeID/avg", plus.GetAverageOutcomeScoreHandler)
 	router.GET("/api/plus/grades/previous", plus.GetPreviousGradesHandler)

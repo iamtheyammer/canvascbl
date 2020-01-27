@@ -3,35 +3,6 @@ export const CANVAS_GOT_INITIAL_DATA = 'CANVAS_GOT_INITIAL_DATA';
 
 export const CANVAS_LOGOUT = 'CANVAS_LOGOUT';
 
-export const CANVAS_DELETED_TOKEN = 'CANVAS_DELETED_TOKEN';
-
-export const CANVAS_GOT_STORED_CREDENTIALS = 'CANVAS_GOT_STORED_CREDENTIALS';
-
-export const CANVAS_GOT_TOKEN_ENTRY = 'CANVAS_GOT_TOKEN_ENTRY';
-export const CANVAS_GOT_USER_OAUTH = 'CANVAS_GOT_USER_OAUTH';
-
-export const CANVAS_SENT_TOKEN = 'CANVAS_SENT_TOKEN';
-
-export const CANVAS_GOT_TOKEN = 'CANVAS_GOT_TOKEN';
-
-// dep
-export const CANVAS_GOT_NEW_TOKEN_FROM_REFRESH_TOKEN =
-  'CANVAS_GOT_NEW_TOKEN_FROM_REFRESH_TOKEN';
-
-export const CANVAS_GOT_USER_PROFILE = 'CANVAS_GOT_USER_PROFILE';
-
-export const CANVAS_GET_USER_COURSES = 'CANVAS_GET_USER_COURSES';
-export const CANVAS_GOT_USER_COURSES = 'CANVAS_GOT_USER_COURSES';
-
-export const CANVAS_GOT_OUTCOME_RESULTS_FOR_COURSE =
-  'CANVAS_GOT_OUTCOME_RESULTS_FOR_COURSE';
-
-export const CANVAS_GOT_OUTCOME_ROLLUPS_FOR_COURSE =
-  'CANVAS_GOT_OUTCOME_ROLLUPS_FOR_COURSE';
-
-export const CANVAS_GOT_OUTCOME_ROLLUPS_AND_OUTCOMES_FOR_COURSE =
-  'CANVAS_GOT_OUTCOME_ROLLUPS_AND_OUTCOMES_FOR_COURSE';
-
 export const CANVAS_GET_ASSIGNMENTS_FOR_COURSE =
   'CANVAS_GET_ASSIGNMENTS_FOR_COURSE';
 export const CANVAS_GOT_ASSIGNMENTS_FOR_COURSE =
@@ -77,8 +48,8 @@ export function gotInitialData(
   };
 }
 
-export function logout() {
-  // even that these are deprecated, we'll keep it here to flush old stuff
+export function loggedOut() {
+  // even that localstorage is deprecated, we'll keep it here to flush old stuff
   localStorage.clear();
 
   // super duper clear everything.
@@ -86,6 +57,13 @@ export function logout() {
 
   return {
     type: CANVAS_LOGOUT
+  };
+}
+
+export function logout(id) {
+  return {
+    type: CANVAS_LOGOUT,
+    id
   };
 }
 
