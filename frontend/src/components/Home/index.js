@@ -48,7 +48,7 @@ function Home(props) {
     } else if (getSessionErr.res.data.error === 'expired session') {
       window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request?intent=reauth`;
       return null;
-    } else if (getSession.res.data.error.includes('no session string')) {
+    } else if (getSessionErr.res.data.error.includes('no session string')) {
     } else {
       getSessionErrText =
         'There was a server error. Contact support or try again later.';
