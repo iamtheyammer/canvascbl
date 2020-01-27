@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/sessions"
+	"github.com/iamtheyammer/canvascbl/backend/src/env"
 	"github.com/iamtheyammer/canvascbl/backend/src/middlewares"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
@@ -194,7 +195,7 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 	wg := sync.WaitGroup{}
 
 	var (
-		allCourses *canvasCoursesResponse
+		allCourses *[]canvasCourse
 		observees  *canvasUserObserveesResponse
 	)
 
@@ -211,7 +212,14 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 			return
 		}
 
-		allCourses = coursesResp
+		var cs []canvasCourse
+		for _, c := range *coursesResp {
+			if int(c.EnrollmentTermID) >= env.CanvasCurrentEnrollmentTermID {
+				cs = append(cs, c)
+			}
+		}
+
+		allCourses = &cs
 		mutex.Unlock()
 		return
 	}()
