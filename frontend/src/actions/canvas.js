@@ -50,7 +50,9 @@ export function gotInitialData(
 
 export function loggedOut() {
   // even that localstorage is deprecated, we'll keep it here to flush old stuff
+  const prevVersion = localStorage.prevVersion;
   localStorage.clear();
+  localStorage.prevVersion = prevVersion;
 
   // super duper clear everything.
   window.location.reload();
