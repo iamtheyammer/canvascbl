@@ -77,6 +77,8 @@ func calculateGradeFromOutcomeResults(results map[uint64][]canvasOutcomeResult, 
 				DidDropWorstScore: false,
 				Average:           rs[0].Score,
 			}
+
+			avgs = append(avgs, rs[0].Score)
 			continue
 		}
 

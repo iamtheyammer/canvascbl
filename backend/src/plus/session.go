@@ -61,4 +61,6 @@ func ClearSessionHandler(w http.ResponseWriter, _ *http.Request, _ httprouter.Pa
 		Expires:  time.Now().Add(-time.Hour),
 	}
 	http.SetCookie(w, &c)
+
+	util.SendNoContent(w)
 }
