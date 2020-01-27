@@ -240,20 +240,21 @@ func OAuth2ResponseHandler(w http.ResponseWriter, r *http.Request, _ httprouter.
 		return
 	}
 
+	ss, err := db.UpsertProfileAndGenerateSession(&pBody)
+	if err != nil {
+		util.SendInternalServerError(w)
+		return
+	}
+
 	err = db.InsertCanvasToken(&canvas_tokens.InsertRequest{
 		CanvasUserID: uint64(tokenResp.User.ID),
 		Token:        tokenResp.AccessToken,
 		RefreshToken: tokenResp.RefreshToken,
 		ExpiresAt:    &exp,
 	})
+
 	if err != nil {
 		util.HandleError(errors.Wrap(err, "error inserting canvas token"))
-		util.SendInternalServerError(w)
-		return
-	}
-
-	ss, err := db.UpsertProfileAndGenerateSession(&pBody)
-	if err != nil {
 		util.SendInternalServerError(w)
 		return
 	}
@@ -261,23 +262,6 @@ func OAuth2ResponseHandler(w http.ResponseWriter, r *http.Request, _ httprouter.
 	util.AddSessionToResponse(w, *ss)
 
 	util.SendRedirect(w, getSuccessOAuth2URI(tokenResp.User.Name, state.Intent))
-	return
-}
-
-func OAuth2RefreshTokenHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	refreshToken := r.URL.Query().Get("refresh_token")
-	if len(refreshToken) < 1 {
-		util.SendBadRequest(w, "no refresh_token specified")
-		return
-	}
-
-	resp, body, err := oauth2.GetAccessFromRefresh(refreshToken)
-	if err != nil {
-		util.SendInternalServerError(w)
-		return
-	}
-
-	util.HandleCanvasResponse(w, resp, body)
 	return
 }
 
