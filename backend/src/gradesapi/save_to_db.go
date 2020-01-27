@@ -269,7 +269,7 @@ func saveAssignmentsToDB(ass []canvasAssignment, courseID string) {
 
 	err = courses.InsertMultipleAssignments(db, &req)
 	if err != nil {
-		util.HandleError(fmt.Errorf("error inserting multiple assignments for course %d: %w", courseID, err))
+		util.HandleError(fmt.Errorf("error inserting multiple assignments for course %s: %w", courseID, err))
 		return
 	}
 }
