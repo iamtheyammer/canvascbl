@@ -41,14 +41,16 @@ function Home(props) {
   }
 
   const getSessionErr = error[getSessionId];
-  let getSessionErrText =
-    'There was a server error. Contact support or try again later.';
+  let getSessionErrText = '';
   if (getSessionErr) {
     if (!getSessionErr.res || !getSessionErr.res.data) {
       getSessionErrText = 'There was an error checking your sign-in status.';
     } else if (getSessionErr.res.data.error === 'expired session') {
       window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request?intent=reauth`;
       return null;
+    } else {
+      getSessionErrText =
+        'There was a server error. Contact support or try again later.';
     }
   }
 
