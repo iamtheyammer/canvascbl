@@ -10,26 +10,23 @@ import (
 )
 
 type CanvasToken struct {
-	ID            uint64
-	UserID        uint64
-	GoogleUsersID uint64
-	CanvasUserID  uint64
-	Token         string
-	ExpiresAt     time.Time
-	InsertedAt    time.Time
+	ID           uint64
+	CanvasUserID uint64
+	Token        string
+	RefreshToken string
+	ExpiresAt    time.Time
+	InsertedAt   time.Time
 }
 
 type ListRequest struct {
-	ID            uint64
-	UserID        uint64
-	GoogleUsersID uint64
-	CanvasUserID  uint64
-	Token         string
+	ID           uint64
+	CanvasUserID uint64
+	Token        string
+	RefreshToken string
 
-	Limit          uint64
-	Offset         uint64
-	NotExpiredOnly bool
-	OrderBy        []string
+	Limit   uint64
+	Offset  uint64
+	OrderBy []string
 }
 
 // List lists Canvas tokens. Default order is insertion descending.
@@ -37,10 +34,9 @@ func List(db services.DB, req *ListRequest) (*[]CanvasToken, error) {
 	q := util.Sq.
 		Select(
 			"id",
-			"user_id",
-			"google_users_id",
 			"canvas_user_id",
 			"token",
+			"refresh_token",
 			"expires_at",
 			"inserted_at",
 		).
@@ -48,14 +44,6 @@ func List(db services.DB, req *ListRequest) (*[]CanvasToken, error) {
 
 	if req.ID > 0 {
 		q = q.Where(sq.Eq{"id": req.ID})
-	}
-
-	if req.UserID > 0 {
-		q = q.Where(sq.Eq{"user_id": req.UserID})
-	}
-
-	if req.GoogleUsersID > 0 {
-		q = q.Where(sq.Eq{"google_users_id": req.GoogleUsersID})
 	}
 
 	if req.CanvasUserID > 0 {
@@ -66,6 +54,10 @@ func List(db services.DB, req *ListRequest) (*[]CanvasToken, error) {
 		q = q.Where(sq.Eq{"token": req.Token})
 	}
 
+	if len(req.RefreshToken) > 0 {
+		q = q.Where(sq.Eq{"refresh_token": req.Token})
+	}
+
 	if req.Limit > 0 {
 		q = q.Limit(req.Limit)
 	} else {
@@ -74,10 +66,6 @@ func List(db services.DB, req *ListRequest) (*[]CanvasToken, error) {
 
 	if req.Offset > 0 {
 		q = q.Limit(req.Offset)
-	}
-
-	if req.NotExpiredOnly {
-		q = q.Where("(expires_at IS NULL OR expires_at > NOW())")
 	}
 
 	if len(req.OrderBy) > 0 {
@@ -102,31 +90,20 @@ func List(db services.DB, req *ListRequest) (*[]CanvasToken, error) {
 
 	for rows.Next() {
 		var (
-			ct           CanvasToken
-			userID       sql.NullInt64
-			canvasUserID sql.NullInt64
-			expiresAt    sql.NullTime
+			ct        CanvasToken
+			expiresAt sql.NullTime
 		)
 
 		err := rows.Scan(
 			&ct.ID,
-			&userID,
-			&ct.GoogleUsersID,
-			&canvasUserID,
+			&ct.CanvasUserID,
 			&ct.Token,
+			&ct.RefreshToken,
 			&expiresAt,
 			&ct.InsertedAt,
 		)
 		if err != nil {
 			return nil, errors.Wrap(err, "error scanning list canvas tokens rows")
-		}
-
-		if userID.Valid {
-			ct.UserID = uint64(userID.Int64)
-		}
-
-		if canvasUserID.Valid {
-			ct.CanvasUserID = uint64(canvasUserID.Int64)
 		}
 
 		if expiresAt.Valid {

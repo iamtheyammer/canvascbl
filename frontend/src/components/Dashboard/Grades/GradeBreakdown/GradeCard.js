@@ -4,7 +4,6 @@ import { Tabs as MobileTabs } from 'antd-mobile';
 import * as PropTypes from 'prop-types';
 import { isMobile } from 'react-device-detect';
 import { CenteredStatisticWithText } from './CenteredStatisticWithText';
-import { gradeMapByGrade } from '../../../../util/canvas/calculateGradeFromOutcomes';
 import { ReactComponent as plusIcon } from '../../../../assets/plus.svg';
 
 const tabList = [
@@ -34,12 +33,12 @@ function GradeCard(props) {
   function generateCardContent(key) {
     switch (key) {
       case 'userGrade':
-        const { min, max } = gradeMapByGrade[currentGrade];
+        const { all_above: min, most_above: max } = currentGrade;
 
         return (
           <CenteredStatisticWithText
-            stat={currentGrade}
-            text={`Your current grade, ${currentGrade}, requires 75% of outcomes to be
+            stat={currentGrade.grade}
+            text={`Your current grade, ${currentGrade.grade}, requires 75% of outcomes to be
               above ${max} and no outcomes to be below ${min}.`}
           />
         );
@@ -116,7 +115,7 @@ function GradeCard(props) {
 }
 
 GradeCard.propTypes = {
-  currentGrade: PropTypes.string.isRequired,
+  currentGrade: PropTypes.object.isRequired,
   userHasValidSubscription: PropTypes.bool.isRequired,
   averageGrade: PropTypes.shape({
     numFactors: PropTypes.number.isRequired,

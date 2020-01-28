@@ -1,4 +1,9 @@
-const { override, fixBabelImports } = require("customize-cra");
+const {
+  override,
+  fixBabelImports,
+  addWebpackPlugin
+} = require("customize-cra");
+const Dotenv = require("dotenv-webpack");
 
 module.exports = override(
   fixBabelImports("import-antd", {
@@ -14,5 +19,6 @@ module.exports = override(
     libraryName: "lodash",
     libraryDirectory: "",
     camel2DashComponentName: false // default: true
-  })
+  }),
+  addWebpackPlugin(new Dotenv())
 );

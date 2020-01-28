@@ -33,7 +33,7 @@ function Redeem(props) {
     dispatch
   } = props;
 
-  if (session && session.hasValidSubscription === true) {
+  if (session && session.has_valid_subscription === true) {
     return <Redirect to="/dashboard/upgrades" />;
   }
 

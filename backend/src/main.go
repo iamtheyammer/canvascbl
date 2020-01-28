@@ -7,6 +7,7 @@ import (
 	"github.com/iamtheyammer/canvascbl/backend/src/canvasapis"
 	"github.com/iamtheyammer/canvascbl/backend/src/checkout"
 	"github.com/iamtheyammer/canvascbl/backend/src/env"
+	"github.com/iamtheyammer/canvascbl/backend/src/gradesapi"
 	"github.com/iamtheyammer/canvascbl/backend/src/plus"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
@@ -30,38 +31,8 @@ func getRouter() *httprouter.Router {
 		HandleOPTIONS:          true,
 	}
 
-	// saves to db
-	router.GET("/api/canvas/outcomes/:outcomeID", canvasapis.GetOutcomeByIDHandler)
-	// saves to db
-	router.GET("/api/canvas/users/profile/self", canvasapis.GetOwnUserProfileHandler)
-	// saves to db
-	router.GET("/api/canvas/users/profile/self/observees", canvasapis.GetOwnObserveesHandler)
-	// saves to db
-	router.GET("/api/canvas/courses", canvasapis.GetCoursesHandler)
-	// saves to db
-	router.GET("/api/canvas/courses/:courseID/assignments", canvasapis.GetAssignmentsByCourseHandler)
-	// no db needed
-	router.GET("/api/canvas/courses/:courseID/outcome_groups", canvasapis.GetOutcomesByCourseHandler)
-	router.GET(
-		"/api/canvas/courses/:courseID/outcome_groups/:outcomeGroupID/outcomes",
-		canvasapis.GetOutcomesByCourseAndOutcomeGroupHandler,
-	)
-	// saves to db
-	router.GET("/api/canvas/courses/:courseID/outcome_results", canvasapis.GetOutcomeResultsByCourseHandler)
-	// saves grades and specific outcome scores to DB
-	router.GET("/api/canvas/courses/:courseID/outcome_rollups", canvasapis.GetOutcomeRollupsByCourseHandler)
-	// doesn't save to db but a possibility
-	router.GET("/api/canvas/courses/:courseID/outcome_alignments", canvasapis.GetOutcomeAlignmentsByCourseHandler)
-
 	router.GET("/api/canvas/oauth2/request", canvasapis.OAuth2RequestHandler)
 	router.GET("/api/canvas/oauth2/response", canvasapis.OAuth2ResponseHandler)
-	router.GET("/api/canvas/oauth2/refresh_token", canvasapis.OAuth2RefreshTokenHandler)
-	router.DELETE("/api/canvas/oauth2/token", canvasapis.DeleteOAuth2TokenHandler)
-
-	// not holding tokens anymore.
-	//router.POST("/api/canvas/tokens", canvasapis.InsertCanvasTokenHandler)
-	//router.GET("/api/canvas/tokens", canvasapis.GetCanvasTokensHandler)
-	//router.DELETE("/api/canvas/tokens", canvasapis.DeleteCanvasTokenHandler)
 
 	router.GET("/api/checkout/session", checkout.CreateCheckoutSessionHandler)
 	router.GET("/api/checkout/products", checkout.ListProductsHandler)
@@ -72,6 +43,7 @@ func getRouter() *httprouter.Router {
 	router.POST("/api/checkout/webhook", checkout.StripeWebhookHandler)
 
 	router.GET("/api/plus/session", plus.GetSessionInformationHandler)
+	router.DELETE("/api/plus/session", plus.ClearSessionHandler)
 	router.GET("/api/plus/courses/:courseID/avg", plus.GetAverageGradeForCourseHandler)
 	router.GET("/api/plus/outcomes/:outcomeID/avg", plus.GetAverageOutcomeScoreHandler)
 	router.GET("/api/plus/grades/previous", plus.GetPreviousGradesHandler)
@@ -81,6 +53,12 @@ func getRouter() *httprouter.Router {
 	//router.GET("/api/google/oauth2/response", googleapis.OAuth2ResponseHandler)
 
 	router.POST("/api/admin/gift_cards", admin.GenerateGiftCardsHandler)
+
+	// API
+	router.GET("/api/v1/grades", gradesapi.GradesHandler)
+	router.GET("/api/v1/courses/:courseID/assignments", gradesapi.AssignmentsHandler)
+	router.GET("/api/v1/courses/:courseID/outcome_alignments", gradesapi.AlignmentsHandler)
+	router.GET("/api/v1/outcomes/:outcomeID", gradesapi.OutcomeHandler)
 
 	return router
 }

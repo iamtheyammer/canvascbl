@@ -29,17 +29,19 @@ func Session(w http.ResponseWriter, req *http.Request) *sessions.VerifiedSession
 		sessionString = cSession.Value
 	}
 
-	hSession := req.Header.Get("X-Session-String")
-	if len(hSession) > 0 {
-		if len(sessionString) > 0 && hSession != sessionString {
-			util.SendBadRequest(w, "you sent a cookie session and a header session and they don't match")
-			return nil
+	if env.Env == env.EnvironmentDevelopment || env.Env == env.EnvironmentStaging {
+		hSession := req.Header.Get("X-Session-String")
+		if len(hSession) > 0 {
+			if len(sessionString) > 0 && hSession != sessionString {
+				util.SendBadRequest(w, "you sent a cookie session and a header session and they don't match")
+				return nil
+			}
+			sessionString = hSession
 		}
-		sessionString = hSession
 	}
 
 	if len(sessionString) < 1 {
-		util.SendUnauthorized(w, "no session string (pass it in via the session_string cookie or the X-Session-String header)")
+		util.SendUnauthorized(w, "no session string (pass it in via the session_string cookie)")
 		return nil
 	}
 

@@ -6,7 +6,16 @@ import moment from 'moment';
 import { isMobile } from 'react-device-detect';
 import { flatten } from 'lodash';
 
-import { Typography, notification, Row, Col, Button, Table, Icon } from 'antd';
+import {
+  Typography,
+  notification,
+  Row,
+  Col,
+  Button,
+  Table,
+  Icon,
+  Tag
+} from 'antd';
 
 import {
   WhiteSpace as MobileWhiteSpace,
@@ -17,16 +26,12 @@ import {
 import './index.css';
 
 import {
-  getOutcomeResultsForCourse,
-  getUserCourses,
   getAssignmentsForCourse,
-  getOutcomeRollupsAndOutcomesForCourse,
   getOutcomeAlignmentsForCourse,
-  changeActiveUser
+  changeActiveUser,
+  getIndividualOutcome
 } from '../../../../actions/canvas';
-import calculateGradeFromOutcomes, {
-  gradeMapByGrade
-} from '../../../../util/canvas/calculateGradeFromOutcomes';
+import { dateAsc } from '../../../../util/sort';
 
 import { desc } from '../../../../util/sort';
 import ConnectedErrorModal from '../../ErrorModal';
@@ -59,6 +64,25 @@ const outcomeTableColumns = [
     dataIndex: 'score',
     key: 'score',
     sorter: (a, b) => a.score - b.score
+  },
+  {
+    title: 'Worst Score Dropped',
+    dataIndex: 'worstScoreDropped',
+    key: 'worstScoreDropped',
+    render: didDrop => (
+      <Tag color={didDrop ? 'green' : 'red'}>{didDrop ? 'Yes' : 'No'}</Tag>
+    ),
+    sorter: (a, b) => {
+      const A = a.worstScoreDropped;
+      const B = b.worstScoreDropped;
+      if (A === B) {
+        return 0;
+      } else if (A && !B) {
+        return 1;
+      }
+
+      return -1;
+    }
   },
   {
     title: 'Times Assessed',
@@ -115,9 +139,7 @@ const assignmentTableOutcomes = [
 ];
 
 function GradeBreakdown(props) {
-  const [getCoursesId, setGetCoursesId] = useState('');
-  const [getRollupsId, setGetRollupsId] = useState('');
-  const [getResultsId, setGetResultsId] = useState('');
+  const [getOutcomesIds, setGetOutcomesIds] = useState([]);
   const [getAssignmentsId, setGetAssignmentsId] = useState('');
   const [getOutcomeAlignmentsId, setGetOutcomeAlignmentsId] = useState('');
   const [getPlusAverageId, setGetPlusAverageId] = useState('');
@@ -126,26 +148,23 @@ function GradeBreakdown(props) {
 
   const {
     dispatch,
-    token,
-    subdomain,
     loading,
+    grades,
     error,
     activeUserId,
     users,
     courses,
-    outcomeRollups,
+    outcomes,
     outcomeResults,
     outcomeAlignments,
+    observees,
     assignments,
     session,
     gradeAverages
   } = props;
 
   const err =
-    error[getCoursesId] ||
-    error[getRollupsId] ||
-    error[getResultsId] ||
-    error[getAssignmentsId];
+    error[getOutcomeAlignmentsId] || getOutcomesIds.filter(id => error[id])[0];
 
   const courseId = parseInt(props.match.params.courseId);
 
@@ -157,47 +176,11 @@ function GradeBreakdown(props) {
     () => {
       if (isNaN(courseId)) return;
 
-      // loading before fetch because we don't want to request twice
-      if (
-        loading.includes(getCoursesId) ||
-        loading.includes(getRollupsId) ||
-        err
-      ) {
-        return;
-      }
-
-      if (!courses && !getCoursesId) {
-        const id = v4();
-        dispatch(getUserCourses(id, token, subdomain));
-        setGetCoursesId(id);
-        setLoadingText('your courses');
-        return;
-      }
-
-      // we can display the page without loading alignments
-      if (
-        !getOutcomeAlignmentsId &&
-        activeUserId &&
-        (!outcomeAlignments || !outcomeAlignments[courseId])
-      ) {
-        const id = v4();
-        dispatch(
-          getOutcomeAlignmentsForCourse(
-            id,
-            courseId,
-            activeUserId,
-            token,
-            subdomain
-          )
-        );
-        setGetOutcomeAlignmentsId(id);
-      }
-
       // we can display the page without the average loading
       if (
         !getPlusAverageId &&
         session &&
-        session.hasValidSubscription &&
+        session.has_valid_subscription &&
         (!gradeAverages || !gradeAverages[courseId])
       ) {
         const id = v4();
@@ -215,47 +198,49 @@ function GradeBreakdown(props) {
         e => e.associated_user_id || e.user_id
       );
 
-      if (
-        activeUser &&
-        courses &&
-        (!outcomeRollups || !allOutcomes || !allOutcomes[courseId]) &&
-        !getRollupsId
-      ) {
-        const id = v4();
-        dispatch(
-          getOutcomeRollupsAndOutcomesForCourse(
-            id,
-            courseGradedUsers,
-            courseId,
-            token,
-            subdomain
-          )
-        );
-        setLoadingText('your grades');
-        setGetRollupsId(id);
-      }
-
       if (!courseGradedUsers.includes(activeUserId)) {
         return;
       }
 
+      // we can display the page without loading alignments
       if (
-        activeUser &&
-        (!outcomeResults || !outcomeResults[courseId]) &&
-        !getResultsId
+        !getOutcomeAlignmentsId &&
+        activeUserId &&
+        (!outcomeAlignments || !outcomeAlignments[courseId])
       ) {
         const id = v4();
-        dispatch(
-          getOutcomeResultsForCourse(
-            id,
-            courseGradedUsers,
-            courseId,
-            token,
-            subdomain
-          )
-        );
-        setLoadingText('your grade in this class');
-        setGetResultsId(id);
+        dispatch(getOutcomeAlignmentsForCourse(id, courseId, activeUserId));
+        setGetOutcomeAlignmentsId(id);
+      }
+
+      if (!grades[activeUserId][courseId].averages) {
+        return;
+      }
+
+      const neededOutcomes = Object.keys(
+        grades[activeUserId][courseId].averages
+      );
+
+      // if active user and courses and no outcomes are loading and not every needed outcome had
+      if (
+        activeUser &&
+        courses &&
+        !getOutcomesIds.length &&
+        (!getOutcomesIds.some(oId => loading.includes(oId)) &&
+          !neededOutcomes.every(
+            id => allOutcomes && allOutcomes.some(o => o.id === parseInt(id))
+          ))
+      ) {
+        neededOutcomes.forEach(noId => {
+          const id = v4();
+          dispatch(getIndividualOutcome(id, noId));
+          setLoadingText('outcomes');
+          setGetOutcomesIds([...getOutcomesIds, id]);
+        });
+      }
+
+      if (!courseGradedUsers.includes(activeUserId)) {
+        return;
       }
 
       if (
@@ -265,7 +250,7 @@ function GradeBreakdown(props) {
         !getAssignmentsId
       ) {
         const id = v4();
-        dispatch(getAssignmentsForCourse(id, courseId, token, subdomain));
+        dispatch(getAssignmentsForCourse(id, courseId));
         setLoadingText('your assignments');
         setGetAssignmentsId(id);
       }
@@ -321,12 +306,27 @@ function GradeBreakdown(props) {
   }
 
   if (
+    !grades[activeUserId][courseId] ||
+    grades[activeUserId][courseId].grade.grade === 'N/A'
+  ) {
+    return (
+      <div align="center">
+        <Typography.Title level={3}>
+          Grade Breakdown isn't available for this course
+          {observees.length > 1 && ' for this student'}.
+        </Typography.Title>
+        <Link to="/dashboard/grades">
+          <Button type="primary">Back to Grades</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  if (
     !activeUser ||
     !session ||
     !courses ||
     !allOutcomes ||
-    !allOutcomes[courseId] ||
-    !outcomeRollups ||
     !outcomeResults ||
     !outcomeResults[courseId] ||
     !assignments ||
@@ -345,64 +345,46 @@ function GradeBreakdown(props) {
   }
 
   const averageGrade = gradeAverages ? gradeAverages[courseId] : gradeAverages;
-  const grade = calculateGradeFromOutcomes(
-    {
-      [courseId]: props.outcomeRollups[courseId]
-    },
-    activeUserId
-  )[courseId];
-  const outcomes = props.outcomes[courseId];
-  const rollup = props.outcomeRollups[courseId].filter(
-    or => parseInt(or.links.user) === activeUserId
-  )[0];
+  const grade = grades[activeUserId][courseId];
 
-  if (!grade || grade.grade === 'N/A') {
-    return (
-      <div align="center">
-        <Typography.Title level={3}>
-          Grade Breakdown Isn't Available for {course.name}.
-        </Typography.Title>
-        <Link to="/dashboard/grades">
-          <Button type="primary">Back to Grades</Button>
-        </Link>
-      </div>
-    );
-  }
-
-  const rollupScores = rollup.scores;
-
-  const { min } = gradeMapByGrade[grade.grade];
+  const rollupScores = grade.averages;
 
   function getLowestOutcome() {
-    const rollupScore = rollupScores.filter(
-      rs => rs.score === grade.lowestOutcome
+    const rollupScore = Object.entries(rollupScores).sort(
+      (a, b) => a[1].average - b[1].average
     )[0];
-    const outcome = outcomes.filter(
-      o => o.id === parseInt(rollupScore.links.outcome)
-    )[0];
+    const outcome = outcomes.filter(o => o.id === parseInt(rollupScore[0]))[0];
     return {
-      outcome,
-      rollupScore
+      rollupScore: rollupScore[1],
+      outcome
     };
   }
 
   const lowestOutcome = getLowestOutcome();
 
-  const results = outcomeResults[courseId].filter(
-    r => parseInt(r.links.user) === activeUserId
-  );
-
-  const outcomeTableData = rollupScores.map(rs => {
-    const outcome = outcomes.filter(
-      o => o.id === parseInt(rs.links.outcome)
+  const outcomeTableData = Object.entries(rollupScores).map(([oId, avg]) => {
+    const outcome = outcomes.filter(o => o.id === parseInt(oId))[0];
+    const results = outcomeResults[courseId][activeUserId][oId];
+    const lastAssignmentResult = results.sort((a, b) =>
+      dateAsc(a.submitted_or_assessed_at, b.submitted_or_assessed_at)
     )[0];
+    const lastAssignmentId = parseInt(
+      lastAssignmentResult.links.assignment.split('_')[1]
+    );
+    const lastAssignment = lastAssignmentResult
+      ? assignments[courseId].filter(a => a.id === lastAssignmentId)[0]
+      : {};
+
+    // use alignments to figure out things like lastAssignment and timesAssessed
     return {
-      name: outcome.display_name || outcome.title,
-      score: rs.score,
-      lastAssignment: rs.title,
-      timesAssessed: rs.count,
+      name: outcome ? outcome.display_name || outcome.title : 'Error',
+      score: +avg.average.toFixed(2),
+      worstScoreDropped: avg.did_drop_worst_score,
+      lastAssignment: lastAssignment ? lastAssignment.name : 'Unavailable',
+      timesAssessed: results.length,
       key: outcome.id,
       id: outcome.id,
+      // can be reworked to use the new outcome_alignments
       assignmentTableData: results
         .filter(or => parseInt(or.links.learning_outcome) === outcome.id)
         .map(r => {
@@ -450,15 +432,15 @@ function GradeBreakdown(props) {
         <GradeCard
           currentGrade={grade.grade}
           averageGrade={averageGrade}
-          userHasValidSubscription={session.hasValidSubscription}
+          userHasValidSubscription={session.has_valid_subscription}
         />
         <MobileWhiteSpace />
         <OutcomeInfo
           lowestOutcome={lowestOutcome}
-          min={min}
+          min={grade.grade.all_above}
           outcomeRollupScores={rollupScores}
           grade={grade}
-          userHasValidSubscription={session.hasValidSubscription}
+          userHasValidSubscription={session.has_valid_subscription}
         />
         <MobileWhiteSpace />
         <Typography.Title level={3}>Outcomes</Typography.Title>
@@ -470,6 +452,9 @@ function GradeBreakdown(props) {
                   <Typography.Text>{d.name}</Typography.Text>
                 </MobileList.Item>
                 <MobileList.Item extra={d.score}>Score</MobileList.Item>
+                <MobileList.Item extra={d.worstScoreDropped ? 'Yes' : 'No'}>
+                  Worst Score Dropped
+                </MobileList.Item>
                 <MobileList.Item extra={d.timesAssessed}>
                   Times Assessed
                 </MobileList.Item>
@@ -533,16 +518,16 @@ function GradeBreakdown(props) {
           <GradeCard
             currentGrade={grade.grade}
             averageGrade={averageGrade}
-            userHasValidSubscription={session.hasValidSubscription}
+            userHasValidSubscription={session.has_valid_subscription}
           />
         </Col>
         <Col span={16}>
           <OutcomeInfo
             lowestOutcome={lowestOutcome}
-            min={min}
+            min={grade.grade.all_above}
             outcomeRollupScores={rollupScores}
             grade={grade}
-            userHasValidSubscription={session.hasValidSubscription}
+            userHasValidSubscription={session.has_valid_subscription}
           />
         </Col>
       </Row>
@@ -591,12 +576,14 @@ const ConnectedGradeBreakdown = connect(state => ({
   loading: state.loading,
   error: state.error,
   courses: state.canvas.courses,
+  grades: state.canvas.grades,
   token: state.canvas.token,
   subdomain: state.canvas.subdomain,
   outcomes: state.canvas.outcomes,
   outcomeRollups: state.canvas.outcomeRollups,
   outcomeResults: state.canvas.outcomeResults,
   outcomeAlignments: state.canvas.outcomeAlignments,
+  observees: state.canvas.observees,
   assignments: state.canvas.assignments,
   user: state.canvas.user,
   activeUserId: state.canvas.activeUserId,

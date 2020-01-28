@@ -8,17 +8,24 @@ import (
 	"github.com/pkg/errors"
 )
 
+type VerifiedSessionType string
+
+const (
+	VerifiedSessionTypeAPIKey        = VerifiedSessionType("apikey")
+	VerifiedSessionTypeSessionString = VerifiedSessionType("session_string")
+)
+
 type VerifiedSession struct {
-	SessionString string
+	SessionString string              `json:"-"`
+	Type          VerifiedSessionType `json:"-"`
 	// users.id
-	UserID       uint64
-	CanvasUserID uint64
-	UserStatus   int
-	//GoogleUsersID        string
-	Email                string
-	HasValidSubscription bool
-	SubscriptionStatus   string
-	SessionIsExpired     bool
+	UserID               uint64 `json:"user_id"`
+	CanvasUserID         uint64 `json:"canvas_user_id"`
+	UserStatus           int    `json:"status"`
+	Email                string `json:"email"`
+	HasValidSubscription bool   `json:"has_valid_subscription"`
+	SubscriptionStatus   string `json:"subscription_status"`
+	SessionIsExpired     bool   `json:"-"`
 }
 
 func Verify(db services.DB, sessionString string) (*VerifiedSession, error) {
@@ -100,6 +107,9 @@ func Verify(db services.DB, sessionString string) (*VerifiedSession, error) {
 	}
 
 	vs.SessionString = sessionString
+
+	// currently, every verified session is a session string
+	vs.Type = VerifiedSessionTypeSessionString
 
 	return &vs, nil
 }

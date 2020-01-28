@@ -43,7 +43,7 @@ function Upgrades(props) {
 
   return (
     <div>
-      {session.hasValidSubscription ? (
+      {session.has_valid_subscription ? (
         <ConnectedHasValidSubscription />
       ) : (
         <ConnectedNoCurrentSubscription />

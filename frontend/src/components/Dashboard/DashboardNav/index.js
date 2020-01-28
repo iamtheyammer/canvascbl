@@ -21,7 +21,7 @@ const { Header } = Layout;
 
 function DashboardNav(props) {
   const { session, observees } = props;
-  const userHasActiveSubscription = session && session.hasValidSubscription;
+  const userHasActiveSubscription = session && session.has_valid_subscription;
 
   const [shouldShowMobileMenu, setShouldShowMobileMenu] = useState(false);
 

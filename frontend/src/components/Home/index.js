@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Redirect } from 'react-router-dom';
 import { connect } from 'react-redux';
 import './index.css';
@@ -10,15 +10,49 @@ import {
   Button as MobileButton
 } from 'antd-mobile';
 import { isMobile } from 'react-device-detect';
+import v4 from 'uuid/v4';
 import getUrlPrefix from '../../util/getUrlPrefix';
 import PopoutLink from '../PopoutLink';
 import env from '../../util/env';
+import {
+  setGetSessionId,
+  setSigninButtonAvailability
+} from '../../actions/components/home';
+import { getSessionInformation } from '../../actions/plus';
 
 function Home(props) {
-  const [enableSignin, setEnableSignin] = useState(false);
+  const {
+    signInButtonAvailability,
+    getSessionId,
+    loading,
+    error,
+    session,
+    dispatch
+  } = props;
 
-  if (props.token) {
+  if (!session && !getSessionId) {
+    const id = v4();
+    dispatch(getSessionInformation(id));
+    dispatch(setGetSessionId(id));
+  }
+
+  if (session) {
     return <Redirect to="/dashboard" />;
+  }
+
+  const getSessionErr = error[getSessionId];
+  let getSessionErrText = '';
+  if (getSessionErr) {
+    if (!getSessionErr.res || !getSessionErr.res.data) {
+      getSessionErrText = 'There was an error checking your sign-in status.';
+    } else if (getSessionErr.res.data.error === 'expired session') {
+      window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request?intent=reauth`;
+      return null;
+    } else if (getSessionErr.res.data.error.includes('no session string')) {
+    } else {
+      getSessionErrText =
+        'There was a server error. Contact support or try again later.';
+    }
   }
 
   if (isMobile) {
@@ -37,21 +71,28 @@ function Home(props) {
           please accept the Terms and Conditions, then log in with Canvas.
         </Typography.Text>
         <MobileCheckbox.AgreeItem
-          onChange={e => setEnableSignin(e.target.checked)}
+          onChange={e =>
+            dispatch(setSigninButtonAvailability(e.target.checked))
+          }
         >
           I accept the{' '}
           <PopoutLink url={env.privacyPolicyUrl}>privacy policy</PopoutLink> and{' '}
           <PopoutLink url={env.termsOfServiceUrl}>terms of service</PopoutLink>
         </MobileCheckbox.AgreeItem>
-        <MobileButton
-          type="primary"
-          disabled={!enableSignin}
-          onClick={() =>
-            (window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request`)
-          }
-        >
-          Sign in with Canvas
-        </MobileButton>
+        {getSessionErrText.length ? (
+          <Typography.Text type="danger">{getSessionErrText}</Typography.Text>
+        ) : (
+          <MobileButton
+            type="primary"
+            disabled={!signInButtonAvailability}
+            loading={loading.includes(getSessionId)}
+            onClick={() =>
+              (window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request`)
+            }
+          >
+            Sign in with Canvas
+          </MobileButton>
+        )}
       </div>
     );
   }
@@ -74,7 +115,9 @@ function Home(props) {
         </div>
         <div>
           <Checkbox
-            onChange={e => setEnableSignin(e.target.checked)}
+            onChange={e =>
+              dispatch(setSigninButtonAvailability(e.target.checked))
+            }
             className="center-checkbox"
           >
             I accept the{' '}
@@ -85,17 +128,22 @@ function Home(props) {
             </PopoutLink>
           </Checkbox>
           <div style={{ marginTop: '15px' }} />
-          <Button
-            type="primary"
-            size={!enableSignin ? 'default' : 'large'}
-            className="center button"
-            disabled={!enableSignin}
-            onClick={() =>
-              (window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request`)
-            }
-          >
-            Sign in with Canvas
-          </Button>
+          {getSessionErrText.length ? (
+            <Typography.Text type="danger">{getSessionErrText}</Typography.Text>
+          ) : (
+            <Button
+              type="primary"
+              size={!signInButtonAvailability ? 'default' : 'large'}
+              loading={loading.includes(getSessionId)}
+              className="center button"
+              disabled={!signInButtonAvailability}
+              onClick={() =>
+                (window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request?intent=auth`)
+              }
+            >
+              Sign in with Canvas
+            </Button>
+          )}
         </div>
       </Card>
     </div>
@@ -103,7 +151,11 @@ function Home(props) {
 }
 
 const ConnectedHome = connect(state => ({
-  token: state.canvas.token
+  getSessionId: state.components.home.getSessionId,
+  signInButtonAvailability: state.components.home.signInButtonAvailability,
+  loading: state.loading,
+  error: state.error,
+  session: state.plus.session
 }))(Home);
 
 export default ConnectedHome;

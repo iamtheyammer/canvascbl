@@ -3,17 +3,9 @@ import { connect } from 'react-redux';
 import { Switch, Route, Redirect, Link } from 'react-router-dom';
 import * as ReactGA from 'react-ga';
 import v4 from 'uuid/v4';
-import { useCookies } from 'react-cookie';
 import { isMobile } from 'react-device-detect';
 
-import {
-  Layout,
-  Breadcrumb,
-  Popover,
-  Typography,
-  Spin,
-  notification
-} from 'antd';
+import { Layout, Breadcrumb, Popover, Typography, notification } from 'antd';
 
 import DashboardNav from './DashboardNav';
 import ConnectedUserProfile from './UserProfile';
@@ -23,11 +15,12 @@ import ConnectedUpgrades from './Upgrades';
 import ConnectedLogout from './Logout';
 import UpdateHandler from './UpdateHandler';
 import env from '../../util/env';
-import { getObservees, getUser } from '../../actions/canvas';
+import { getInitialData } from '../../actions/canvas';
 import ConnectedErrorModal from './ErrorModal';
-import { getSessionInformation } from '../../actions/plus';
 import './index.css';
 import ConnectedRedeem from './Upgrades/Redeem';
+import Loading from './Loading';
+import getUrlPrefix from '../../util/getUrlPrefix';
 
 const { Content, Footer } = Layout;
 
@@ -48,24 +41,10 @@ const getBreadcrumbNameMap = (courses = []) => {
 };
 
 function Dashboard(props) {
-  const { token } = props;
-  const [cookies] = useCookies(['session_string']);
-
   const [hasSentUserToGa, setHasSentUserToGa] = useState(false);
-  const [getUserId, setGetUserId] = useState();
-  const [getObserveesId, setGetObserveesId] = useState();
-  const [getSessionId, setGetSessionId] = useState();
+  const [getInitialDataId, setGetInitialDataId] = useState();
 
-  const {
-    location,
-    user,
-    observees,
-    subdomain,
-    session,
-    loading,
-    error,
-    dispatch
-  } = props;
+  const { location, user, session, loading, error, dispatch } = props;
 
   useEffect(() => {
     ReactGA.pageview(
@@ -84,14 +63,6 @@ function Dashboard(props) {
     }
   }, [session]);
 
-  // if no token exists, redirect
-  if (!localStorage.token) {
-    return <Redirect to="/" />;
-  } else if (localStorage.token && !token) {
-    // otherwise, wait for token
-    return null;
-  }
-
   const pathSnippets = location.pathname.split('/').filter(i => i);
   const breadcrumbNameMap = getBreadcrumbNameMap(props.courses || []);
   const breadcrumbItems = pathSnippets.map((_, index) => {
@@ -108,27 +79,35 @@ function Dashboard(props) {
     setHasSentUserToGa(true);
   }
 
-  if (token && !user && !getUserId) {
+  if (!user && !getInitialDataId) {
     const id = v4();
-    dispatch(getUser(id, !cookies['session_string'], token, subdomain));
-    setGetUserId(id);
+    dispatch(getInitialData(id));
+    setGetInitialDataId(id);
   }
 
-  if (token && user && !session && !getSessionId) {
-    const id = v4();
-    dispatch(getSessionInformation(id));
-    setGetSessionId(id);
-  }
-
-  if (token && user && !observees && !getObserveesId) {
-    const id = v4();
-    dispatch(getObservees(user.id, id, token, subdomain));
-    setGetObserveesId(id);
-  }
-
-  const err = error[getUserId] || error[getObserveesId] || error[getSessionId];
+  const err = error[getInitialDataId];
   if (err) {
-    return <ConnectedErrorModal error={err} />;
+    const data = err.res.data;
+    switch (data.action) {
+      case 'redirect_to_oauth':
+        window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request`;
+        return null;
+      case 'retry':
+        const id = v4();
+        dispatch(getInitialData(id));
+        setGetInitialDataId(id);
+        return null;
+      default:
+        if (data.error.includes('no session string')) {
+          return <Redirect to={'/'} />;
+        } else if (data.error === 'expired session') {
+          window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request?intent=reauth`;
+          return null;
+        } else if (data.error === 'invalid session string') {
+          return <Redirect to="/" />;
+        }
+        return <ConnectedErrorModal error={err} />;
+    }
   }
 
   if (session && session.status === 1) {
@@ -162,15 +141,10 @@ function Dashboard(props) {
 
   if (isMobile) {
     function displayContent() {
-      if (
-        subdomain &&
-        token &&
-        !loading.includes(getUserId) &&
-        !loading.includes(getSessionId)
-      ) {
+      if (user && !loading.includes(getInitialDataId)) {
         return routes;
       } else {
-        return loading;
+        return <Loading text="CanvasCBL" />;
       }
     }
 
@@ -204,18 +178,10 @@ function Dashboard(props) {
               minHeight: 280
             }}
           >
-            {token &&
-            (!loading.includes(getUserId) ||
-              !loading.includes(getSessionId)) ? (
+            {user && !loading.includes(getInitialDataId) ? (
               routes
             ) : (
-              <div align="center">
-                <Spin />
-                <span style={{ paddingTop: '20px' }} />
-                <Typography.Title
-                  level={3}
-                >{`Loading your user...`}</Typography.Title>
-              </div>
+              <Loading text="CanvasCBL" />
             )}
           </div>
         </Content>

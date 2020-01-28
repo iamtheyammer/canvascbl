@@ -6,9 +6,9 @@ import (
 	"net/http"
 )
 
-func MakeAuthenticatedGetRequest(url string, token string) (*http.Response, string, error) {
-	client := http.Client{}
+var client = http.Client{}
 
+func MakeAuthenticatedGetRequest(url string, token string) (*http.Response, string, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, "", err
