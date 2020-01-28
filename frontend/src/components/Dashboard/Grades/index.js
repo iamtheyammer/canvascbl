@@ -10,6 +10,7 @@ import { gradeMapByGrade } from '../../../util/canvas/gradeMapByGrade';
 import getActiveCourses from '../../../util/canvas/getActiveCourses';
 import ErrorModal from '../ErrorModal';
 
+import env from '../../../util/env';
 import { ReactComponent as PopOutIcon } from '../../../assets/pop_out.svg';
 import { ReactComponent as plusIcon } from '../../../assets/plus.svg';
 import { desc } from '../../../util/sort';
@@ -117,8 +118,7 @@ const tableColumns = [
             </span>
           )}
         <PopoutLink
-          url={`https://${localStorage.subdomain ||
-            'canvas'}.instructure.com/courses/${record.id}`}
+          url={`https://${env.defaultSubdomain}.instructure.com/courses/${record.id}`}
         >
           Open on Canvas <Icon component={PopOutIcon} />
         </PopoutLink>
