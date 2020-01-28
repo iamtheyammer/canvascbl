@@ -362,51 +362,59 @@ function GradeBreakdown(props) {
 
   const lowestOutcome = getLowestOutcome();
 
-  const outcomeTableData = Object.entries(rollupScores).map(([oId, avg]) => {
-    const outcome = outcomes.filter(o => o.id === parseInt(oId))[0];
-    const results = outcomeResults[courseId][activeUserId][oId];
-    const lastAssignmentResult = results.sort((a, b) =>
-      dateAsc(a.submitted_or_assessed_at, b.submitted_or_assessed_at)
-    )[0];
-    const lastAssignmentId = parseInt(
-      lastAssignmentResult.links.assignment.split('_')[1]
-    );
-    const lastAssignment = lastAssignmentResult
-      ? assignments[courseId].filter(a => a.id === lastAssignmentId)[0]
-      : {};
+  const outcomeTableData = Object.entries(rollupScores)
+    .map(([oId, avg]) => {
+      const outcome = outcomes.filter(o => o.id === parseInt(oId))[0];
+      if (!outcome) {
+        return {};
+      }
 
-    // use alignments to figure out things like lastAssignment and timesAssessed
-    return {
-      name: outcome ? outcome.display_name || outcome.title : 'Error',
-      score: +avg.average.toFixed(2),
-      worstScoreDropped: avg.did_drop_worst_score,
-      lastAssignment: lastAssignment ? lastAssignment.name : 'Unavailable',
-      timesAssessed: results.length,
-      key: outcome.id,
-      id: outcome.id,
-      // can be reworked to use the new outcome_alignments
-      assignmentTableData: results
-        .filter(or => parseInt(or.links.learning_outcome) === outcome.id)
-        .map(r => {
-          const linkedAssignmentId = parseInt(r.links.assignment.split('_')[1]);
-          const assignment = assignments[courseId].filter(
-            a => a.id === linkedAssignmentId
-          )[0];
-          return {
-            assignmentName: assignment ? assignment.name : 'unavailable',
-            assignmentUrl: assignment ? assignment.html_url : 'unavailable',
-            score: {
-              score: r.score,
-              possible: r.possible,
-              percent: r.percent * 100
-            },
-            lastSubmission: moment(r.submitted_or_assessed_at).calendar(),
-            masteryReached: r.mastery,
-            key: linkedAssignmentId
-          };
-        })
-    };
-  });
+      const results = outcomeResults[courseId][activeUserId][oId];
+      const lastAssignmentResult = results.sort((a, b) =>
+        dateAsc(a.submitted_or_assessed_at, b.submitted_or_assessed_at)
+      )[0];
+      const lastAssignmentId = parseInt(
+        lastAssignmentResult.links.assignment.split('_')[1]
+      );
+      const lastAssignment = lastAssignmentResult
+        ? assignments[courseId].filter(a => a.id === lastAssignmentId)[0]
+        : {};
+
+      // use alignments to figure out things like lastAssignment and timesAssessed
+      return {
+        name: outcome ? outcome.display_name || outcome.title : 'Error',
+        score: +avg.average.toFixed(2),
+        worstScoreDropped: avg.did_drop_worst_score,
+        lastAssignment: lastAssignment ? lastAssignment.name : 'Unavailable',
+        timesAssessed: results.length,
+        key: outcome.id,
+        id: outcome.id,
+        // can be reworked to use the new outcome_alignments
+        assignmentTableData: results
+          .filter(or => parseInt(or.links.learning_outcome) === outcome.id)
+          .map(r => {
+            const linkedAssignmentId = parseInt(
+              r.links.assignment.split('_')[1]
+            );
+            const assignment = assignments[courseId].filter(
+              a => a.id === linkedAssignmentId
+            )[0];
+            return {
+              assignmentName: assignment ? assignment.name : 'unavailable',
+              assignmentUrl: assignment ? assignment.html_url : 'unavailable',
+              score: {
+                score: r.score,
+                possible: r.possible,
+                percent: r.percent * 100
+              },
+              lastSubmission: moment(r.submitted_or_assessed_at).calendar(),
+              masteryReached: r.mastery,
+              key: linkedAssignmentId
+            };
+          })
+      };
+    })
+    .filter(otd => !!otd.key);
 
   const assignmentsByOutcome =
     outcomeAlignments &&
