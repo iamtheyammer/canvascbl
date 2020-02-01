@@ -31,7 +31,7 @@ func GetAverageOutcomeScoreHandler(w http.ResponseWriter, req *http.Request, ps 
 		return
 	}
 
-	session := middlewares.Session(w, req)
+	session := middlewares.Session(w, req, true)
 	if session == nil {
 		return
 	}

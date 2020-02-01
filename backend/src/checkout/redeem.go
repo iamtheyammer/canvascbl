@@ -28,7 +28,7 @@ type redeemHandlerResponse struct {
 }
 
 func RedeemHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	session := middlewares.Session(w, r)
+	session := middlewares.Session(w, r, true)
 	if session == nil {
 		return
 	}

@@ -52,7 +52,7 @@ func GenerateGiftCardsHandler(w http.ResponseWriter, r *http.Request, _ httprout
 		return
 	}
 
-	session := middlewares.Session(w, r)
+	session := middlewares.Session(w, r, true)
 	if session == nil {
 		return
 	}

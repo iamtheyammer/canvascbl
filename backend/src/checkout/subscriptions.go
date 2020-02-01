@@ -29,7 +29,7 @@ type subscription struct {
 }
 
 func CancelSubscriptionHandler(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
-	session := middlewares.Session(w, req)
+	session := middlewares.Session(w, req, true)
 	if session == nil {
 		return
 	}
@@ -61,7 +61,7 @@ func CancelSubscriptionHandler(w http.ResponseWriter, req *http.Request, _ httpr
 }
 
 func ListSubscriptionsHandler(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
-	session := middlewares.Session(w, req)
+	session := middlewares.Session(w, req, true)
 	if session == nil {
 		return
 	}

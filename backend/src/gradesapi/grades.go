@@ -7,6 +7,7 @@ import (
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/sessions"
 	"github.com/iamtheyammer/canvascbl/backend/src/env"
 	"github.com/iamtheyammer/canvascbl/backend/src/middlewares"
+	"github.com/iamtheyammer/canvascbl/backend/src/oauth2"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
@@ -39,6 +40,8 @@ const (
 	gradesErrorRefreshedTokenError   = "after refreshing the token, it is invalid"
 	gradesErrorUnknownCanvasError    = "there was an unknown error from canvas"
 	gradesErrorInvalidInclude        = "invalid include"
+	gradesErrorUnauthorizedScope     = "your oauth2 grant doesn't have one or more requested scopes"
+	gradesErrorInvalidAccessToken    = "invalid access token"
 	gradesErrorActionRedirectToOAuth = gradesErrorAction("redirect_to_oauth")
 	gradesErrorActionRetryOnce       = gradesErrorAction("retry_once")
 
@@ -75,54 +78,123 @@ type gradesErrorResponse struct {
 	Action gradesErrorAction `json:"action,omitempty"`
 }
 
+func (r gradesHandlerRequest) toScopes() []oauth2.Scope {
+	var s []oauth2.Scope
+
+	// session not supported
+
+	if r.UserProfile {
+		s = append(s, oauth2.ScopeProfile)
+	}
+
+	if r.Observees {
+		s = append(s, oauth2.ScopeObservees)
+	}
+
+	if r.Courses {
+		s = append(s, oauth2.ScopeCourses)
+	}
+
+	if r.OutcomeResults {
+		s = append(s, oauth2.ScopeOutcomeResults)
+	}
+
+	if r.DetailedGrades {
+		s = append(s, oauth2.ScopeDetailedGrades)
+	} else {
+		s = append(s, oauth2.ScopeGrades)
+	}
+
+	return s
+}
+
 func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	// user (this is where we'll handle the refresh token)
-	// allCourses / observees [Dashboard]
-	// outcome_alignments / outcome_rollups / outcome_results / assignments [Grades/GradeBreakdown]
-	// individual outcomes [GradeBreakdown]
-	session := middlewares.Session(w, r)
-	if session == nil {
+	inc := r.URL.Query()["include[]"]
+	req := gradesHandlerRequest{}
+
+	for _, i := range inc {
+		switch gradesInclude(i) {
+		case gradesIncludeSession:
+			req.Session = true
+		case gradesIncludeUserProfile:
+			req.UserProfile = true
+		case gradesIncludeObservees:
+			req.Observees = true
+		case gradesIncludeCourses:
+			req.Courses = true
+		case gradesIncludeOutcomeResults:
+			req.OutcomeResults = true
+		case gradesIncludeSimpleGrades:
+		case gradesIncludeDetailedGrades:
+			req.DetailedGrades = true
+		default:
+			handleError(w, gradesErrorResponse{
+				Error: gradesErrorInvalidInclude,
+			}, http.StatusBadRequest)
+			return
+		}
+	}
+
+	var (
+		at, tokenIsOK = middlewares.Bearer(w, r, false)
+		session       *sessions.VerifiedSession
+		rd            requestDetails
+		userID        uint64
+	)
+
+	if !tokenIsOK {
+		handleError(w, gradesErrorResponse{
+			Error: gradesErrorInvalidAccessToken,
+		}, http.StatusUnauthorized)
 		return
 	}
 
-	req := gradesHandlerRequest{}
-	if session.Type == sessions.VerifiedSessionTypeSessionString {
-		inc := r.URL.Query()["include[]"]
+	if len(at) < 1 {
+		// session time
+		session = middlewares.Session(w, r, true)
+		if session == nil {
+			return
+		}
 
-		// everything is permitted, what do they want?
-		for _, i := range inc {
-			switch gradesInclude(i) {
-			case gradesIncludeSession:
-				req.Session = true
-			case gradesIncludeUserProfile:
-				req.UserProfile = true
-			case gradesIncludeObservees:
-				req.Observees = true
-			case gradesIncludeCourses:
-				req.Courses = true
-			case gradesIncludeOutcomeResults:
-				req.OutcomeResults = true
-			case gradesIncludeSimpleGrades:
-			case gradesIncludeDetailedGrades:
-				req.DetailedGrades = true
-			default:
+		userID = session.UserID
+	} else {
+		// oauth2
+		if req.Session {
+			// invalid
+			handleError(w, gradesErrorResponse{
+				Error: gradesErrorInvalidInclude,
+			}, http.StatusBadRequest)
+			return
+		}
+		grant, err := oauth2.Authorizer(at, req.toScopes(), &oauth2.AuthorizerAPICall{
+			RoutePath: "grades",
+			Query:     &r.URL.RawQuery,
+		})
+		if err != nil {
+			if errors.Is(err, oauth2.GrantMissingScopeError) {
 				handleError(w, gradesErrorResponse{
-					Error: gradesErrorInvalidInclude,
-				}, http.StatusBadRequest)
+					Error: gradesErrorUnauthorizedScope,
+				}, http.StatusUnauthorized)
 				return
 			}
+
+			if errors.Is(err, oauth2.InvalidAccessTokenError) {
+				handleError(w, gradesErrorResponse{
+					Error: oauth2.InvalidAccessTokenError.Error(),
+				}, http.StatusForbidden)
+				return
+			}
+
+			handleISE(w, fmt.Errorf("error using oauth2.Authorizer in GradesHandler: %w", err))
+			return
 		}
-	} else if session.Type == sessions.VerifiedSessionTypeAPIKey {
-		util.SendUnauthorized(w, "api keys aren't implemented yet")
-		return
-	} else {
-		util.SendUnauthorized(w, "unsupported authentication method")
-		return
+
+		userID = grant.UserID
 	}
 
-	rd, err := rdFromCanvasUserID(session.CanvasUserID)
+	rd, err := rdFromUserID(userID)
 	if err != nil {
-		handleISE(w, fmt.Errorf("error getting rd from canvas user id: %w", err))
+		handleISE(w, fmt.Errorf("error getting rd from user id: %w", err))
 		return
 	}
 

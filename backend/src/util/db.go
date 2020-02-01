@@ -9,8 +9,9 @@ import (
 )
 
 var (
-	DB = ConnectDB()
-	Sq = squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
+	DB                = ConnectDB()
+	PlaceholderFormat = squirrel.Dollar
+	Sq                = squirrel.StatementBuilder.PlaceholderFormat(PlaceholderFormat)
 )
 
 // ConnectDB connects to the database. Should only be called once.

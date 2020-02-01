@@ -21,7 +21,7 @@ type sessionInformation struct {
 }
 
 func GetSessionInformationHandler(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
-	sess := middlewares.Session(w, req)
+	sess := middlewares.Session(w, req, true)
 	if sess == nil {
 		return
 	}

@@ -23,7 +23,7 @@ type CreateCheckoutSessionResponse struct {
 }
 
 func CreateCheckoutSessionHandler(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
-	browserSession := middlewares.Session(w, req)
+	browserSession := middlewares.Session(w, req, true)
 	if browserSession == nil {
 		return
 	}

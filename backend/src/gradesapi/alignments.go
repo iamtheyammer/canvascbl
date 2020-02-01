@@ -24,7 +24,7 @@ func AlignmentsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 		return
 	}
 
-	session := middlewares.Session(w, r)
+	session := middlewares.Session(w, r, true)
 	if session == nil {
 		return
 	}

@@ -30,7 +30,7 @@ func GetAverageGradeForCourseHandler(w http.ResponseWriter, req *http.Request, p
 		return
 	}
 
-	session := middlewares.Session(w, req)
+	session := middlewares.Session(w, req, true)
 	if session == nil {
 		return
 	}

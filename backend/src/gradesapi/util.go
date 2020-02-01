@@ -152,3 +152,27 @@ func rdFromCanvasUserID(cuID uint64) (requestDetails, error) {
 		Subdomain:    env.CanvasOAuth2Subdomain,
 	}, nil
 }
+
+func rdFromUserID(uID uint64) (requestDetails, error) {
+	tokens, err := canvas_tokens.List(db, &canvas_tokens.ListRequest{
+		UserID:  uID,
+		OrderBy: []string{"inserted_at DESC"},
+		Limit:   1,
+	})
+	if err != nil {
+		return requestDetails{}, fmt.Errorf("error listing canvas tokens: %w", err)
+	}
+
+	if len(*tokens) < 1 {
+		return requestDetails{}, nil
+	}
+
+	token := (*tokens)[0]
+
+	return requestDetails{
+		TokenID:      token.ID,
+		Token:        token.Token,
+		RefreshToken: token.RefreshToken,
+		Subdomain:    env.CanvasOAuth2Subdomain,
+	}, nil
+}

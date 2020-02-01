@@ -20,6 +20,7 @@ type CanvasToken struct {
 
 type ListRequest struct {
 	ID           uint64
+	UserID       uint64
 	CanvasUserID uint64
 	Token        string
 	RefreshToken string
@@ -33,17 +34,22 @@ type ListRequest struct {
 func List(db services.DB, req *ListRequest) (*[]CanvasToken, error) {
 	q := util.Sq.
 		Select(
-			"id",
-			"canvas_user_id",
-			"token",
-			"refresh_token",
-			"expires_at",
-			"inserted_at",
+			"canvas_tokens.id",
+			"canvas_tokens.canvas_user_id",
+			"canvas_tokens.token",
+			"canvas_tokens.refresh_token",
+			"canvas_tokens.expires_at",
+			"canvas_tokens.inserted_at",
 		).
 		From("canvas_tokens")
 
 	if req.ID > 0 {
 		q = q.Where(sq.Eq{"id": req.ID})
+	}
+
+	if req.UserID > 0 {
+		q = q.Join("users ON canvas_tokens.canvas_user_id = users.canvas_user_id").
+			Where(sq.Eq{"users.id": req.UserID})
 	}
 
 	if req.CanvasUserID > 0 {
