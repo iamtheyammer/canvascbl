@@ -10,15 +10,15 @@ import (
 )
 
 type Grant struct {
-	ID                 uint64
-	UserID             uint64
-	OAuth2CredentialID uint64
-	RedirectURIID      uint64
-	AccessToken        string
-	RefreshToken       string
-	TokenExpiresAt     time.Time
-	RevokedAt          time.Time
-	InsertedAt         time.Time
+	ID                 uint64    `json:"id"`
+	UserID             uint64    `json:"user_id"`
+	OAuth2CredentialID uint64    `json:"oauth2_credential_id"`
+	RedirectURIID      uint64    `json:"-"`
+	AccessToken        string    `json:"-"`
+	RefreshToken       string    `json:"-"`
+	TokenExpiresAt     time.Time `json:"-"`
+	RevokedAt          time.Time `json:"revoked_at"`
+	InsertedAt         time.Time `json:"inserted_at"`
 }
 
 var (
@@ -27,6 +27,7 @@ var (
 )
 
 type AuthorizerAPICall struct {
+	Method    string
 	RoutePath string
 	Query     *string
 	Body      *string
@@ -38,7 +39,7 @@ or an error if invalid for one reason or another-- use errors.Is(...) to compare
 the errors in this package.
 
 You are welcome to leave call as nil-- fill it only if your authorization includes an API
-call-- it wil be inserted into the oauth2_api_calls table.
+call-- it will be inserted into the oauth2_api_calls table.
 */
 func Authorizer(accessToken string, scopes []Scope, call *AuthorizerAPICall) (*Grant, error) {
 	var (
@@ -140,6 +141,7 @@ func Authorizer(accessToken string, scopes []Scope, call *AuthorizerAPICall) (*G
 			err := oauth2.InsertAPICall(util.DB, &oauth2.InsertAPICallRequest{
 				GrantID:   grant.ID,
 				RoutePath: c.RoutePath,
+				Method:    c.Method,
 				Query:     c.Query,
 				Body:      c.Body,
 			})

@@ -1,4 +1,4 @@
-# Canvas Proxy API
+ # Canvas Proxy API
 
 Written in Golang for maximum speed (and so many other absolutely wonderful things!).
 
@@ -47,7 +47,17 @@ These endpoints require a user's status to be `2` (admin). They're a growing set
 
 ## OAuth2
 
-The backend supports proxying OAuth2 requests and responses to the frontend.
+### CanvasCBL
+
+CanvasCBL supports OAuth2 for other apps.
+
+For endpoints marked with \[P\], see the public CanvasCBL API docs at [https://go.canvascbl.com/docs](https://go.canvascbl.com/docs).
+
+- `POST` `/api/oauth2/auth` \[P\] - Beginning auth for other apps
+- `PUT` `/api/oauth2/consent` - Private endpoint for confirming auth. Returns json with a redirect_to field.
+- `POST` `/api/oauth2/token` \[P\] - Public endpoint for other apps getting a token
+- `DELETE` `/api/oauth2/token` \[P\] - Public (but also takes sessions) endpoint for deleting an auth
+- `GET` `/api/oauth2/tokens` - Private endpoint for listing tokens for the sessioned user
 
 ### ~~Google~~ (deprecated)
 
@@ -95,10 +105,6 @@ See the two below sections about Redirect URI Query String Params for handling t
   - No params.
 - `GET` `/api/canvas/oauth2/response` - Should be the OAuth2 response URI. Handles the error/success Canvas OAuth2 response. A user would be redirected to this URL by Canvas. You should **not** use this endpoint.
   - Params will include those from Canvas, so either `code` or `error`.
-- `GET` `/api/canvas/oauth2/refresh_token` - Retrieves a new token based on a refresh token.
-  - Params:
-    - `refresh_token`: your refresh token
-
 
 #### Normal (successful) Redirect URI Query String Params
 

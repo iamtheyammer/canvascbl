@@ -29,6 +29,7 @@ type Grant struct {
 	RedirectURIID      uint64
 	AccessToken        string
 	RefreshToken       string
+	Purpose            string
 	TokenExpiresAt     time.Time
 	RevokedAt          time.Time
 	InsertedAt         time.Time
@@ -50,6 +51,7 @@ type RedirectURI struct {
 
 type Credential struct {
 	ID           uint64
+	Name         string
 	OwnerUserID  uint64
 	ClientID     string
 	ClientSecret string
@@ -91,6 +93,7 @@ type ListRedirectURIsRequest struct {
 
 type ListCredentialsRequest struct {
 	ID           uint64
+	IDs          []uint64
 	OwnerUserID  uint64
 	ClientID     string
 	ClientSecret string
@@ -318,10 +321,11 @@ func GetRedirectURI(db services.DB, req *ListRedirectURIsRequest) (*RedirectURI,
 	return &r, nil
 }
 
-func GetCredential(db services.DB, req *ListCredentialsRequest) (*Credential, error) {
+func ListCredentials(db services.DB, req *ListCredentialsRequest) (*[]Credential, error) {
 	q := util.Sq.
 		Select(
 			"id",
+			"name",
 			"owner_user_id",
 			"client_id",
 			"client_secret",
@@ -332,6 +336,10 @@ func GetCredential(db services.DB, req *ListCredentialsRequest) (*Credential, er
 
 	if req.ID > 0 {
 		q = q.Where(sq.Eq{"id": req.ID})
+	}
+
+	if len(req.IDs) > 0 {
+		q = q.Where(sq.Eq{"id": req.IDs})
 	}
 
 	if req.OwnerUserID > 0 {
@@ -352,35 +360,55 @@ func GetCredential(db services.DB, req *ListCredentialsRequest) (*Credential, er
 
 	query, args, err := q.ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("error building list credential request sql: %w", err)
+		return nil, fmt.Errorf("error building list credentials sql: %w", err)
 	}
 
-	row := db.QueryRow(query, args...)
-
-	var c Credential
-	err = row.Scan(
-		&c.ID,
-		&c.OwnerUserID,
-		&c.ClientID,
-		&c.ClientSecret,
-		&c.IsActive,
-		&c.InsertedAt,
-	)
+	rows, err := db.Query(query, args...)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, fmt.Errorf("error exexuting list credential request sql: %w", err)
+		return nil, fmt.Errorf("error executing list credentials sql: %w", err)
 	}
 
-	return &c, nil
+	var cs []Credential
+	for rows.Next() {
+		var c Credential
+		err = rows.Scan(
+			&c.ID,
+			&c.Name,
+			&c.OwnerUserID,
+			&c.ClientID,
+			&c.ClientSecret,
+			&c.IsActive,
+			&c.InsertedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning credentials from list credential sql: %w", err)
+		}
+
+		cs = append(cs, c)
+	}
+
+	return &cs, nil
 }
 
-func GetGrant(db services.DB, req *ListGrantsRequest) (*Grant, error) {
+func GetCredential(db services.DB, req *ListCredentialsRequest) (*Credential, error) {
+	cs, err := ListCredentials(db, req)
+	if err != nil {
+		return nil, fmt.Errorf("error listing credntials in get credential: %w", err)
+	}
+
+	if len(*cs) < 1 {
+		return nil, nil
+	}
+
+	return &(*cs)[0], nil
+}
+
+func ListGrants(db services.DB, req *ListGrantsRequest) (*[]Grant, error) {
 	q := util.Sq.
 		Select(
 			"oauth2_grants.id",
 			"oauth2_grants.user_id",
+			"oauth2_grants.purpose",
 			"oauth2_grants.oauth2_credential_id",
 			"oauth2_grants.redirect_uri_id",
 			"oauth2_grants.access_token",
@@ -428,38 +456,65 @@ func GetGrant(db services.DB, req *ListGrantsRequest) (*Grant, error) {
 
 	query, args, err := q.ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("error building get grant sql: %w", err)
+		return nil, fmt.Errorf("error building list grants sql: %w", err)
 	}
 
-	row := db.QueryRow(query, args...)
-
-	var (
-		g         Grant
-		revokedAt sql.NullTime
-	)
-	err = row.Scan(
-		&g.ID,
-		&g.UserID,
-		&g.OAuth2CredentialID,
-		&g.RedirectURIID,
-		&g.AccessToken,
-		&g.RefreshToken,
-		&g.TokenExpiresAt,
-		&revokedAt,
-		&g.InsertedAt,
-	)
+	rows, err := db.Query(query, args...)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
+		return nil, fmt.Errorf("error executing list grants sql: %w", err)
+	}
+
+	var gs []Grant
+	for rows.Next() {
+		var (
+			g         Grant
+			purpose   sql.NullString
+			revokedAt sql.NullTime
+		)
+		err = rows.Scan(
+			&g.ID,
+			&g.UserID,
+			&purpose,
+			&g.OAuth2CredentialID,
+			&g.RedirectURIID,
+			&g.AccessToken,
+			&g.RefreshToken,
+			&g.TokenExpiresAt,
+			&revokedAt,
+			&g.InsertedAt,
+		)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, nil
+			}
+			return nil, fmt.Errorf("error scanning list grants sql: %w", err)
 		}
-		return nil, fmt.Errorf("error scanning get grant sql: %w", err)
+
+		if purpose.Valid {
+			g.Purpose = purpose.String
+		}
+
+		if revokedAt.Valid {
+			g.RevokedAt = revokedAt.Time
+		}
+
+		gs = append(gs, g)
 	}
 
-	if revokedAt.Valid {
-		g.RevokedAt = revokedAt.Time
+	return &gs, nil
+}
+
+func GetGrant(db services.DB, req *ListGrantsRequest) (*Grant, error) {
+	gs, err := ListGrants(db, req)
+	if err != nil {
+		return nil, fmt.Errorf("error listing grants in get grant: %w", err)
 	}
 
-	return &g, nil
+	if len(*gs) < 1 {
+		return nil, nil
+	}
+
+	return &(*gs)[0], nil
 }
 
 func ListGrantScopes(db services.DB, req *ListGrantScopesRequest) (*[]Scope, error) {

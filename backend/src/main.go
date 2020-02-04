@@ -23,6 +23,16 @@ type MiddlewareRouter struct{}
 
 var router = getRouter()
 
+type notFound struct {
+	Message []byte
+}
+
+func (nf notFound) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
+	w.WriteHeader(http.StatusNotFound)
+	_, _ = w.Write(nf.Message)
+	return
+}
+
 func getRouter() *httprouter.Router {
 	// init http server
 
@@ -30,6 +40,9 @@ func getRouter() *httprouter.Router {
 		RedirectTrailingSlash:  true,
 		HandleMethodNotAllowed: true,
 		HandleOPTIONS:          true,
+		NotFound: notFound{
+			Message: []byte("404 not found - go.canvascbl.com/docs"),
+		},
 	}
 
 	router.GET("/api/canvas/oauth2/request", canvasapis.OAuth2RequestHandler)
@@ -52,9 +65,12 @@ func getRouter() *httprouter.Router {
 	// Fairly public
 	router.GET("/api/oauth2/auth", oauth2.AuthHandler)
 	// Session only, will carefully watch calls
-	router.POST("/api/oauth2/consent", oauth2.ConsentHandler)
+	router.PUT("/api/oauth2/consent", oauth2.ConsentHandler)
 	// Fairly public
 	router.POST("/api/oauth2/token", oauth2.TokenHandler)
+	router.DELETE("/api/oauth2/token", oauth2.DeleteTokenHandler)
+	// Session only
+	router.GET("/api/oauth2/tokens", oauth2.TokensHandler)
 
 	// no google needed for now but we could bring it back later.
 	//router.GET("/api/google/oauth2/request", googleapis.OAuth2RequestHandler)
@@ -74,7 +90,7 @@ func getRouter() *httprouter.Router {
 func (_ MiddlewareRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// apply CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", env.ProxyAllowedCORSOrigins)
-	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, "+
 		"X-Canvas-Token, "+
 		"X-Canvas-Subdomain, "+

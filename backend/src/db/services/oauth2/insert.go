@@ -25,6 +25,7 @@ type InsertOAuth2GrantRequest struct {
 type InsertAPICallRequest struct {
 	GrantID   uint64
 	RouteID   uint64
+	Method    string
 	RoutePath string
 	Query     *string
 	Body      *string
@@ -146,8 +147,7 @@ func InsertAPICall(db services.DB, req *InsertAPICallRequest) error {
 	if req.RouteID > 0 {
 		routeID = req.RouteID
 	} else if len(req.RoutePath) > 0 {
-		//q = q.Prefix("WITH rid AS (SELECT id FROM api_routes WHERE path = ?)", req.RoutePath)
-		routeID = sq.Expr("(SELECT id FROM api_routes WHERE path = ?)", req.RoutePath)
+		routeID = sq.Expr("(SELECT id FROM api_routes WHERE path = ? AND method = ?)", req.RoutePath, req.Method)
 	}
 
 	q = q.Values(req.GrantID, routeID, req.Query, req.Body)

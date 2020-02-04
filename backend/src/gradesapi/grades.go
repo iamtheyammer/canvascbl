@@ -168,6 +168,7 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 		}
 		grant, err := oauth2.Authorizer(at, req.toScopes(), &oauth2.AuthorizerAPICall{
 			RoutePath: "grades",
+			Method:    "GET",
 			Query:     &r.URL.RawQuery,
 		})
 		if err != nil {

@@ -2,11 +2,14 @@ package oauth2
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/oauth2"
+	"github.com/iamtheyammer/canvascbl/backend/src/middlewares"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -279,7 +282,7 @@ func TokenHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 			User: struct {
 				UserID uint64 `json:"id,omitempty"`
 			}{
-				UserID: grant.UserID,
+				UserID: g.UserID,
 			},
 			ExpiresAt: g.TokenExpiresAt.Format(time.RFC3339),
 		})
@@ -335,5 +338,66 @@ func TokenHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	// something went wrong.
 	util.SendInternalServerError(w)
+	return
+}
+
+func DeleteTokenHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	var revokeReq *oauth2.RevokeGrantRequest
+
+	sess := middlewares.Session(w, r, false)
+	if sess == nil {
+		at, tokenIsOK := middlewares.Bearer(w, r, true)
+		if !tokenIsOK {
+			util.SendUnauthorized(w, "invalid access token")
+			return
+		}
+		g, err := Authorizer(at, []Scope{}, nil)
+		if err != nil {
+			if errors.Is(err, InvalidAccessTokenError) {
+				util.SendUnauthorized(w, "invalid access token")
+				return
+			}
+
+			util.HandleError(fmt.Errorf("error in delete token handler Authorizer: %w", err))
+			util.SendInternalServerError(w)
+			return
+		}
+
+		revokeReq = &oauth2.RevokeGrantRequest{
+			ID:                 g.ID,
+			UserID:             g.UserID,
+			OAuth2CredentialID: g.OAuth2CredentialID,
+			RedirectURIID:      g.RedirectURIID,
+			AccessToken:        g.AccessToken,
+			RefreshToken:       g.RefreshToken,
+		}
+	} else {
+		revID := r.URL.Query().Get("token_id")
+		if len(revID) < 1 || !util.ValidateIntegerString(revID) {
+			util.SendBadRequest(w, "missing token_id as query param")
+			return
+		}
+
+		iRevID, err := strconv.Atoi(revID)
+		if err != nil {
+			util.HandleError(fmt.Errorf("error converting to revoke id to an int: %w", err))
+			util.SendInternalServerError(w)
+			return
+		}
+
+		revokeReq = &oauth2.RevokeGrantRequest{
+			ID:     uint64(iRevID),
+			UserID: sess.UserID,
+		}
+	}
+
+	err := oauth2.RevokeGrant(util.DB, revokeReq)
+	if err != nil {
+		util.HandleError(fmt.Errorf("error revoking oauth2 grant: %w", err))
+		util.SendInternalServerError(w)
+		return
+	}
+
+	util.SendNoContent(w)
 	return
 }
