@@ -242,12 +242,19 @@ func TokenHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 			return
 		}
 
-		g, err := oauth2.InsertOAuth2Grant(trx, &oauth2.InsertOAuth2GrantRequest{
+		gReq := oauth2.InsertOAuth2GrantRequest{
 			UserID:             code.UserID,
 			OAuth2CredentialID: credential.ID,
 			RedirectURIID:      *rURIID,
 			OAuth2CodeID:       code.ID,
-		})
+		}
+
+		purpose := q.Get("purpose")
+		if len(purpose) > 0 {
+			gReq.Purpose = &purpose
+		}
+
+		g, err := oauth2.InsertOAuth2Grant(trx, &gReq)
 		if err != nil {
 			util.HandleError(fmt.Errorf("error inserting oauth2 grant: %w", err))
 

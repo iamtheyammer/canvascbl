@@ -17,6 +17,7 @@ type InsertOAuth2CodeRequest struct {
 
 type InsertOAuth2GrantRequest struct {
 	UserID             uint64
+	Purpose            *string
 	OAuth2CredentialID uint64
 	RedirectURIID      uint64
 	OAuth2CodeID       uint64
@@ -96,6 +97,7 @@ func InsertOAuth2Grant(db services.DB, req *InsertOAuth2GrantRequest) (*Grant, e
 		Insert("oauth2_grants").
 		SetMap(map[string]interface{}{
 			"user_id":              req.UserID,
+			"purpose":              req.Purpose,
 			"oauth2_credential_id": req.OAuth2CredentialID,
 			"redirect_uri_id":      req.RedirectURIID,
 		}).
@@ -111,6 +113,11 @@ func InsertOAuth2Grant(db services.DB, req *InsertOAuth2GrantRequest) (*Grant, e
 		UserID:             req.UserID,
 		OAuth2CredentialID: req.OAuth2CredentialID,
 	}
+
+	if req.Purpose != nil {
+		g.Purpose = *req.Purpose
+	}
+
 	err = row.Scan(&g.ID, &g.AccessToken, &g.RefreshToken, &g.TokenExpiresAt)
 	if err != nil {
 		return nil, fmt.Errorf("error executing insert oauth2 grant sql: %w", err)

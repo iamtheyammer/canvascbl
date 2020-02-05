@@ -42,6 +42,7 @@ func TokensHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 		gs = append(gs, Grant{
 			ID:                 g.ID,
 			UserID:             g.UserID,
+			Purpose:            g.Purpose,
 			OAuth2CredentialID: g.OAuth2CredentialID,
 			RedirectURIID:      g.RedirectURIID,
 			AccessToken:        g.AccessToken,

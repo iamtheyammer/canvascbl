@@ -12,6 +12,7 @@ import (
 type Grant struct {
 	ID                 uint64    `json:"id"`
 	UserID             uint64    `json:"user_id"`
+	Purpose            string    `json:"purpose,omitempty"`
 	OAuth2CredentialID uint64    `json:"oauth2_credential_id"`
 	RedirectURIID      uint64    `json:"-"`
 	AccessToken        string    `json:"-"`

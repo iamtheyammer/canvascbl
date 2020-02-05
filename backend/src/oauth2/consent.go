@@ -26,6 +26,15 @@ func ConsentHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params)
 		return
 	}
 
+	action := r.URL.Query().Get("action")
+	if len(action) < 1 {
+		util.SendBadRequest(w, "missing action as query param")
+		return
+	} else if action != "authorize" && action != "deny" {
+		util.SendBadRequest(w, "invalid action as query param")
+		return
+	}
+
 	sess := middlewares.Session(w, r, true)
 	if sess == nil {
 		return
@@ -56,7 +65,12 @@ func ConsentHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params)
 	}
 
 	q := url.Values{}
-	q.Add("code", code.Code)
+
+	if action == "authorize" {
+		q.Add("code", code.Code)
+	} else {
+		q.Add("error", "access_denied")
+	}
 
 	rURL := redirectURI.RedirectURI + "?" + q.Encode()
 
