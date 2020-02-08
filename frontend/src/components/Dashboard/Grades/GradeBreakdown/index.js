@@ -461,7 +461,7 @@ function GradeBreakdown(props) {
                 </MobileList.Item>
                 <MobileList.Item extra={d.score}>Score</MobileList.Item>
                 <MobileList.Item extra={d.worstScoreDropped ? 'Yes' : 'No'}>
-                  Worst Score Dropped
+                  Lowest Score Dropped
                 </MobileList.Item>
                 <MobileList.Item extra={d.timesAssessed}>
                   Times Assessed
