@@ -66,6 +66,7 @@ func getRouter() *httprouter.Router {
 	router.GET("/api/oauth2/auth", oauth2.AuthHandler)
 	// Session only, will carefully watch calls
 	router.PUT("/api/oauth2/consent", oauth2.ConsentHandler)
+	router.GET("/api/oauth2/consent", oauth2.ConsentInfoHandler)
 	// Fairly public
 	router.POST("/api/oauth2/token", oauth2.TokenHandler)
 	router.DELETE("/api/oauth2/token", oauth2.DeleteTokenHandler)

@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+// Code is the first step to a Grant.
 type Code struct {
 	ID                 uint64
 	UserID             uint64
@@ -22,6 +23,7 @@ type Code struct {
 	InsertedAt         time.Time
 }
 
+// Grant represents an OAuth2 grant.
 type Grant struct {
 	ID                 uint64
 	UserID             uint64
@@ -35,13 +37,16 @@ type Grant struct {
 	InsertedAt         time.Time
 }
 
+// Scope represents an OAuth2 requestable scope.
 type Scope struct {
 	ID          uint64
+	Name        string
 	ShortName   string
 	Description string
 	//InsertedAt string
 }
 
+// RedirectURI represents an OAuth2 redirect URI.
 type RedirectURI struct {
 	ID                 uint64
 	OAuth2CredentialID uint64
@@ -49,6 +54,7 @@ type RedirectURI struct {
 	InsertedAt         time.Time
 }
 
+// Credential represents an OAuth2 credential.
 type Credential struct {
 	ID           uint64
 	Name         string
@@ -113,7 +119,8 @@ type ListGrantsRequest struct {
 }
 
 type ListGrantScopesRequest struct {
-	ID                 uint64
+	ScopeGrantID       uint64
+	CodeID             uint64
 	UserID             uint64
 	OAuth2CredentialID uint64
 	RedirectURIID      uint64
@@ -521,6 +528,7 @@ func ListGrantScopes(db services.DB, req *ListGrantScopesRequest) (*[]Scope, err
 	q := util.Sq.
 		Select(
 			"oauth2_scopes.id",
+			"oauth2_scopes.name",
 			"oauth2_scopes.short_name",
 			"oauth2_scopes.description",
 		).
@@ -528,8 +536,13 @@ func ListGrantScopes(db services.DB, req *ListGrantScopesRequest) (*[]Scope, err
 		Join("oauth2_scope_grants ON oauth2_scopes.id = oauth2_scope_grants.scope_id").
 		LeftJoin("oauth2_grants ON oauth2_scope_grants.oauth2_grant_id = oauth2_grants.id")
 
-	if req.ID > 0 {
-		q = q.Where(sq.Eq{"id": req.ID})
+	if req.ScopeGrantID > 0 {
+		q = q.Where(sq.Eq{"oauth2_scope_grants.id": req.ScopeGrantID})
+	}
+
+	if req.CodeID > 0 {
+		q = q.Join("oauth2_codes ON oauth2_scope_grants.oauth2_code_id = oauth2_codes.id").
+			Where(sq.Eq{"oauth2_codes.id": req.CodeID})
 	}
 
 	if req.UserID > 0 {
@@ -584,6 +597,7 @@ func ListGrantScopes(db services.DB, req *ListGrantScopesRequest) (*[]Scope, err
 		var s Scope
 		err = rows.Scan(
 			&s.ID,
+			&s.Name,
 			&s.ShortName,
 			&s.Description,
 		)
