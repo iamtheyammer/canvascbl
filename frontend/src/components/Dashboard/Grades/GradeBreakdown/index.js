@@ -66,7 +66,7 @@ const outcomeTableColumns = [
     sorter: (a, b) => a.score - b.score
   },
   {
-    title: 'Worst Score Dropped',
+    title: 'Lowest Score Dropped',
     dataIndex: 'worstScoreDropped',
     key: 'worstScoreDropped',
     render: didDrop => (
