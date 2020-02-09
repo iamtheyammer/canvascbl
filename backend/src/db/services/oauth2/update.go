@@ -132,7 +132,7 @@ func UpdateCode(db services.DB, req *UpdateCodeRequest) error {
 		q = q.Where(sq.Eq{"consent_code": req.Where.ConsentCode})
 	}
 
-	if req.Set.UserID > 0 {
+	if req.Set.UserID != nil {
 		q = q.Set("user_id", req.Set.UserID)
 	}
 

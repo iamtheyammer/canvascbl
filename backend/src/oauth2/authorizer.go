@@ -10,16 +10,16 @@ import (
 )
 
 type Grant struct {
-	ID                 uint64    `json:"id"`
-	UserID             uint64    `json:"user_id"`
-	Purpose            string    `json:"purpose,omitempty"`
-	OAuth2CredentialID uint64    `json:"oauth2_credential_id"`
-	RedirectURIID      uint64    `json:"-"`
-	AccessToken        string    `json:"-"`
-	RefreshToken       string    `json:"-"`
-	TokenExpiresAt     time.Time `json:"-"`
-	RevokedAt          time.Time `json:"revoked_at"`
-	InsertedAt         time.Time `json:"inserted_at"`
+	ID                 uint64     `json:"id"`
+	UserID             uint64     `json:"user_id"`
+	Purpose            string     `json:"purpose,omitempty"`
+	OAuth2CredentialID uint64     `json:"oauth2_credential_id"`
+	RedirectURIID      uint64     `json:"-"`
+	AccessToken        string     `json:"-"`
+	RefreshToken       string     `json:"-"`
+	TokenExpiresAt     time.Time  `json:"-"`
+	RevokedAt          *time.Time `json:"revoked_at,omitempty"`
+	InsertedAt         time.Time  `json:"inserted_at"`
 }
 
 var (
@@ -162,7 +162,7 @@ func Authorizer(accessToken string, scopes []Scope, call *AuthorizerAPICall) (*G
 		AccessToken:        g.AccessToken,
 		RefreshToken:       g.RefreshToken,
 		TokenExpiresAt:     g.TokenExpiresAt,
-		RevokedAt:          g.RevokedAt,
+		RevokedAt:          &g.RevokedAt,
 		InsertedAt:         g.InsertedAt,
 	}, nil
 }

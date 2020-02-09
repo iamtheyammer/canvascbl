@@ -4,6 +4,7 @@ import { Switch, Route, Redirect, Link } from 'react-router-dom';
 import * as ReactGA from 'react-ga';
 import v4 from 'uuid/v4';
 import { isMobile } from 'react-device-detect';
+import * as loginReturnTo from '../../util/loginReturnTo';
 
 import { Layout, Breadcrumb, Popover, Typography, notification } from 'antd';
 
@@ -21,6 +22,7 @@ import './index.css';
 import ConnectedRedeem from './Upgrades/Redeem';
 import Loading from './Loading';
 import getUrlPrefix from '../../util/getUrlPrefix';
+import OAuth2Consent from './OAuth2Consent';
 
 const { Content, Footer } = Layout;
 
@@ -30,7 +32,8 @@ const getBreadcrumbNameMap = (courses = []) => {
     '/dashboard/profile': 'Profile',
     '/dashboard/grades': 'Grades',
     '/dashboard/upgrades': 'Upgrades',
-    '/dashboard/upgrades/redeem': 'Redeem'
+    '/dashboard/upgrades/redeem': 'Redeem',
+    '/dashboard/authorize': 'Authorize an App'
   };
 
   courses.forEach(
@@ -90,6 +93,8 @@ function Dashboard(props) {
     const data = err.res.data;
     switch (data.action) {
       case 'redirect_to_oauth':
+        // we'll be reauthing
+        loginReturnTo.set(location);
         window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request`;
         return null;
       case 'retry':
@@ -98,6 +103,7 @@ function Dashboard(props) {
         setGetInitialDataId(id);
         return null;
       default:
+        loginReturnTo.set(location);
         if (data.error.includes('no session string')) {
           return <Redirect to={'/'} />;
         } else if (data.error === 'expired session') {
@@ -112,6 +118,14 @@ function Dashboard(props) {
 
   if (session && session.status === 1) {
     return <Redirect to={'/dashboard/logout'} />;
+  }
+
+  const ready = user && !loading.includes(getInitialDataId);
+
+  const lrt = loginReturnTo.get();
+  if (lrt && ready) {
+    loginReturnTo.clear();
+    return <Redirect to={lrt} />;
   }
 
   const routes = (
@@ -134,6 +148,7 @@ function Dashboard(props) {
         path="/dashboard/upgrades/redeem"
         component={ConnectedRedeem}
       />
+      <Route exact path="/dashboard/authorize" component={OAuth2Consent} />
       <Route exact path="/dashboard/logout" component={ConnectedLogout} />
       <Route render={() => <Redirect to="/" />} />
     </Switch>
@@ -141,7 +156,7 @@ function Dashboard(props) {
 
   if (isMobile) {
     function displayContent() {
-      if (user && !loading.includes(getInitialDataId)) {
+      if (ready) {
         return routes;
       } else {
         return <Loading text="CanvasCBL" />;
@@ -178,11 +193,7 @@ function Dashboard(props) {
               minHeight: 280
             }}
           >
-            {user && !loading.includes(getInitialDataId) ? (
-              routes
-            ) : (
-              <Loading text="CanvasCBL" />
-            )}
+            {ready ? routes : <Loading text="CanvasCBL" />}
           </div>
         </Content>
         <UpdateHandler />

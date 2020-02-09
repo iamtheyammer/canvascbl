@@ -8,7 +8,7 @@ import (
 )
 
 type InsertOAuth2CodeRequest struct {
-	UserID             uint64
+	UserID             *uint64
 	OAuth2CredentialID uint64
 	RedirectURIID      uint64
 	Used               bool

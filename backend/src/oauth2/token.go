@@ -242,8 +242,13 @@ func TokenHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 			return
 		}
 
+		if code.UserID == nil {
+			util.SendUnauthorized(w, "code hasn't been consented")
+			return
+		}
+
 		gReq := oauth2.InsertOAuth2GrantRequest{
-			UserID:             code.UserID,
+			UserID:             *code.UserID,
 			OAuth2CredentialID: credential.ID,
 			RedirectURIID:      *rURIID,
 			OAuth2CodeID:       code.ID,

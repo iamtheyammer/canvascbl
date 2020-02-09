@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/oauth2"
 	"github.com/iamtheyammer/canvascbl/backend/src/env"
-	"github.com/iamtheyammer/canvascbl/backend/src/middlewares"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
@@ -44,18 +43,6 @@ func AuthHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		return
 	} else if ok, invScope := ValidateScopes(scopes); !ok {
 		util.SendBadRequest(w, "unknown scope: "+*invScope)
-		return
-	}
-
-	session := middlewares.Session(w, r, false)
-	if session == nil {
-		// this user may not be logged in.
-		rq := url.Values{}
-		rq.Add("type", "oauth2")
-		rq.Add("error", "invalid session")
-		rq.Add("redirect_to", r.URL.String())
-
-		util.SendRedirect(w, env.CanvasOAuth2SuccessURI+"?"+rq.Encode())
 		return
 	}
 
@@ -162,7 +149,6 @@ func AuthHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	}
 
 	c, err := oauth2.InsertOAuth2Code(trx, &oauth2.InsertOAuth2CodeRequest{
-		UserID:             session.UserID,
 		OAuth2CredentialID: credentialID,
 		RedirectURIID:      redirectURIID,
 		ScopeIDs:           scopeIDs,
@@ -196,6 +182,6 @@ func AuthHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	rq.Add("scope", qScopes)
 	rq.Add("consent_code", c.ConsentCode)
 
-	util.SendRedirect(w, env.CanvasOAuth2SuccessURI+"?"+rq.Encode())
+	util.SendRedirect(w, env.OAuth2ConsentURL+"?"+rq.Encode())
 	return
 }

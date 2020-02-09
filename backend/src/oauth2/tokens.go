@@ -48,8 +48,9 @@ func TokensHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 			AccessToken:        g.AccessToken,
 			RefreshToken:       g.RefreshToken,
 			TokenExpiresAt:     g.TokenExpiresAt,
-			RevokedAt:          g.RevokedAt,
-			InsertedAt:         g.InsertedAt,
+			// we said not to allow revoked grants
+			//RevokedAt:          g.RevokedAt,
+			InsertedAt: g.InsertedAt,
 		})
 		mCIDs[g.OAuth2CredentialID] = struct{}{}
 	}

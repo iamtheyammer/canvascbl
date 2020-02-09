@@ -5,6 +5,7 @@ import error from './error';
 import loading from './loading';
 import checkout from './checkout';
 import plus from './plus';
+import oauth2 from './oauth2';
 import components from './components';
 
 export default combineReducers({
@@ -13,5 +14,6 @@ export default combineReducers({
   loading,
   checkout,
   plus,
+  oauth2,
   components
 });
