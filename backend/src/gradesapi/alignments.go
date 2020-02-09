@@ -3,8 +3,7 @@ package gradesapi
 import (
 	"errors"
 	"fmt"
-	"github.com/iamtheyammer/canvascbl/backend/src/db/services/sessions"
-	"github.com/iamtheyammer/canvascbl/backend/src/middlewares"
+	"github.com/iamtheyammer/canvascbl/backend/src/oauth2"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
 	"io"
@@ -24,37 +23,16 @@ func AlignmentsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 		return
 	}
 
-	session := middlewares.Session(w, r, true)
-	if session == nil {
-		return
-	}
-
-	if session.Type == sessions.VerifiedSessionTypeSessionString {
-		// sick
-	} else if session.Type == sessions.VerifiedSessionTypeAPIKey {
-		util.SendUnauthorized(w, "api keys aren't implemented yet")
-		return
-	} else {
-		util.SendUnauthorized(w, "unsupported authentication method")
-		return
-	}
-
-	rd, err := rdFromCanvasUserID(session.CanvasUserID)
-	if err != nil {
-		handleISE(w, fmt.Errorf("error getting rd from canvas user id: %w", err))
-		return
-	}
-
-	if rd.TokenID < 1 {
-		handleError(w, gradesErrorResponse{
-			Error:  gradesErrorNoTokens,
-			Action: gradesErrorActionRedirectToOAuth,
-		}, http.StatusForbidden)
+	userID, rdP, sess := authorizer(w, r, []oauth2.Scope{oauth2.ScopeAlignments}, &oauth2.AuthorizerAPICall{
+		Method:    "GET",
+		RoutePath: "/courses/:courseID/outcome_alignments",
+	})
+	if (userID == nil || rdP == nil) && sess == nil {
 		return
 	}
 
 	var alignments *http.Response
-	rd, err = handleRequestWithTokenRefresh(func(reqD *requestDetails) error {
+	_, err := handleRequestWithTokenRefresh(func(reqD *requestDetails) error {
 		resp, alErr := proxyCanvasOutcomeAlignments(*reqD, cID, sID)
 		if alErr != nil {
 			return fmt.Errorf("error getting outcome alignments for course %s: %w", cID, alErr)
@@ -62,7 +40,7 @@ func AlignmentsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 
 		alignments = resp
 		return nil
-	}, &rd, session.CanvasUserID)
+	}, rdP, *userID)
 	if errors.Is(err, canvasErrorInvalidAccessTokenError) {
 		handleError(w, gradesErrorResponse{
 			Error:  gradesErrorRevokedToken,

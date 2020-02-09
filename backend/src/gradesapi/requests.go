@@ -51,7 +51,7 @@ should be from fmt.Errorf using the %w verb. For things like requestDetails and 
 they should be scoped in from your function.
 
 */
-func handleRequestWithTokenRefresh(task func(rd *requestDetails) error, rd *requestDetails, canvasUserID uint64) (requestDetails, error) {
+func handleRequestWithTokenRefresh(task func(rd *requestDetails) error, rd *requestDetails, userID uint64) (requestDetails, error) {
 	err := task(rd)
 	if err != nil {
 		if errors.Is(err, canvasErrorInvalidAccessTokenError) {
@@ -60,7 +60,7 @@ func handleRequestWithTokenRefresh(task func(rd *requestDetails) error, rd *requ
 			shouldRefresh := false
 
 			handleRequestWithTokenRefreshMutex.Lock()
-			// if the token isn't being refreshed
+			// if the token isn, nil't being refreshed
 			if _, ok := lockedTokens[rd.TokenID]; !ok {
 				// mark that it is
 				lockedTokens[rd.TokenID] = struct{}{}
@@ -91,7 +91,7 @@ func handleRequestWithTokenRefresh(task func(rd *requestDetails) error, rd *requ
 						handleRequestWithTokenRefreshMutex.RUnlock()
 
 						// get new token from db
-						newRd, err := rdFromCanvasUserID(canvasUserID)
+						newRd, err := rdFromUserID(userID)
 						if err != nil {
 							return requestDetails{}, fmt.Errorf("error getting rd from canvas user id: %w", err)
 						}

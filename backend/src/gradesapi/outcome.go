@@ -4,8 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/iamtheyammer/canvascbl/backend/src/db/services/sessions"
-	"github.com/iamtheyammer/canvascbl/backend/src/middlewares"
+	"github.com/iamtheyammer/canvascbl/backend/src/oauth2"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
@@ -18,28 +17,15 @@ func OutcomeHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 		return
 	}
 
-	session := middlewares.Session(w, r, true)
-	if session == nil {
+	userID, rdP, sess := authorizer(w, r, []oauth2.Scope{oauth2.ScopeOutcomes}, &oauth2.AuthorizerAPICall{
+		Method:    "GET",
+		RoutePath: "/outcomes/:outcomeID",
+	})
+	if (userID == nil || rdP == nil) && sess == nil {
 		return
 	}
 
-	if session.Type == sessions.VerifiedSessionTypeSessionString {
-		// sick
-	} else if session.Type == sessions.VerifiedSessionTypeAPIKey {
-		util.SendUnauthorized(w, "api keys aren't implemented yet")
-		return
-	} else {
-		util.SendUnauthorized(w, "unsupported authentication method")
-		return
-	}
-
-	rd, err := rdFromCanvasUserID(session.CanvasUserID)
-	if err != nil {
-		handleISE(w, fmt.Errorf("error getting rd from canvas user id: %w", err))
-		return
-	}
-
-	if rd.TokenID < 1 {
+	if rdP.TokenID < 1 {
 		handleError(w, gradesErrorResponse{
 			Error:  gradesErrorNoTokens,
 			Action: gradesErrorActionRedirectToOAuth,
@@ -48,7 +34,7 @@ func OutcomeHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 	}
 
 	var o *canvasOutcomeResponse
-	rd, err = handleRequestWithTokenRefresh(func(reqD *requestDetails) error {
+	_, err := handleRequestWithTokenRefresh(func(reqD *requestDetails) error {
 		out, outErr := getCanvasOutcome(*reqD, oID)
 		if outErr != nil {
 			return fmt.Errorf("error getting canvas outcome %s: %w", oID, outErr)
@@ -56,7 +42,7 @@ func OutcomeHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 
 		o = out
 		return nil
-	}, &rd, session.CanvasUserID)
+	}, rdP, *userID)
 	if errors.Is(err, canvasErrorInvalidAccessTokenError) {
 		handleError(w, gradesErrorResponse{
 			Error:  gradesErrorRevokedToken,
