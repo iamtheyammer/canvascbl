@@ -33,6 +33,11 @@ func TokensHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 		return
 	}
 
+	if len(*grants) < 1 {
+		util.SendJSONResponse(w, []byte("{\"credentials\":[],\"grants\":null}"))
+		return
+	}
+
 	var (
 		gs    []Grant
 		mCIDs = make(map[uint64]struct{})
