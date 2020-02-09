@@ -19,7 +19,7 @@ func OutcomeHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 
 	userID, rdP, sess := authorizer(w, r, []oauth2.Scope{oauth2.ScopeOutcomes}, &oauth2.AuthorizerAPICall{
 		Method:    "GET",
-		RoutePath: "/outcomes/:outcomeID",
+		RoutePath: "outcomes/:outcomeID",
 	})
 	if (userID == nil || rdP == nil) && sess == nil {
 		return

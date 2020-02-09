@@ -19,7 +19,7 @@ func AssignmentsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 
 	userID, rdP, sess := authorizer(w, r, []oauth2.Scope{oauth2.ScopeAlignments}, &oauth2.AuthorizerAPICall{
 		Method:    "GET",
-		RoutePath: "/courses/:courseID/assignments",
+		RoutePath: "courses/:courseID/assignments",
 	})
 	if (userID == nil || rdP == nil) && sess == nil {
 		return

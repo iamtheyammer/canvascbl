@@ -25,7 +25,7 @@ func AlignmentsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 
 	userID, rdP, sess := authorizer(w, r, []oauth2.Scope{oauth2.ScopeAlignments}, &oauth2.AuthorizerAPICall{
 		Method:    "GET",
-		RoutePath: "/courses/:courseID/outcome_alignments",
+		RoutePath: "courses/:courseID/outcome_alignments",
 	})
 	if (userID == nil || rdP == nil) && sess == nil {
 		return
