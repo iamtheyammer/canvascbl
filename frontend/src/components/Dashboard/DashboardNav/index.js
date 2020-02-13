@@ -144,21 +144,17 @@ function DashboardNav(props) {
         {observees && observees.length > 0 && <ObserveeHandler />}
         <Menu.SubMenu key="moreActions" title="More Actions">
           <Menu.Item key="installExtension">
-            <PopoutLink url="https://chrome.google.com/webstore/detail/canvascbl-add-in-for-canv/odmbdioejfbelhcknliaihbjckggmmak">
+            <PopoutLink url="https://go.canvascbl.com/extension">
               Install the Extension
             </PopoutLink>
           </Menu.Item>
           <Menu.Item key="contactSupport">
-            <PopoutLink
-              url={
-                'mailto:sam@canvascbl.com?subject=CanvasCBL%20Question%20or%20Comment'
-              }
-            >
+            <PopoutLink url={'https://go.canvascbl.com/support'}>
               Contact Support
             </PopoutLink>
           </Menu.Item>
           <Menu.Item key="viewSystemStatus">
-            <PopoutLink url="https://status.canvascbl.com">
+            <PopoutLink url="https://go.canvascbl.com/status">
               View System Status
             </PopoutLink>
           </Menu.Item>
