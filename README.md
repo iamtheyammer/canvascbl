@@ -6,7 +6,7 @@ Closed-source fork of [iamtheyammer/canvas-grade-calculator](https://github.com/
 
 See the [Backend README](backend/README.md) and [Frontend README](frontend/README.md) for more information.
 
-You can also check out [img/](img/) for some screenshots, which are wildly out of date.
+All images and assets have been moved to [Google Drive](https://drive.google.com/drive/u/0/folders/168p3X_pzMrbTXgtWjJJ5VQbeJ2_t1zOE).
 
 ## Current Stack
 
