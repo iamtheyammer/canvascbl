@@ -261,12 +261,12 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 
 // GradesForAllHandler gets grades for all users with a specified key.
 func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	key := r.URL.Query().Get("key")
+	key := r.Header.Get("X-CanvasCBL-Script-Key")
 	if len(key) < 1 {
-		util.SendBadRequest(w, "missing key as query param")
+		util.SendBadRequest(w, "missing X-CanvasCBL-Script-Key as header")
 		return
 	} else if key != env.ScriptKey {
-		util.SendUnauthorized(w, "invalid key as query param")
+		util.SendUnauthorized(w, "invalid X-CanvasCBL-Script-Key as header")
 		return
 	}
 
