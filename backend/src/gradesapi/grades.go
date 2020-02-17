@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/iamtheyammer/canvascbl/backend/src/db/services/canvas_tokens"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/sessions"
 	"github.com/iamtheyammer/canvascbl/backend/src/env"
 	"github.com/iamtheyammer/canvascbl/backend/src/middlewares"
@@ -61,6 +62,13 @@ type gradesHandlerRequest struct {
 	Observees      bool
 	Courses        bool
 	OutcomeResults bool
+	DetailedGrades bool
+}
+
+// UserGradesRequest represents a request for GradesForUser.
+type UserGradesRequest struct {
+	UserID         uint64
+	CanvasUserID   uint64
 	DetailedGrades bool
 }
 
@@ -200,7 +208,10 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 		userID = grant.UserID
 	}
 
-	g, gep := GradesForUser(userID, req.DetailedGrades)
+	g, gep := GradesForUser(&UserGradesRequest{
+		UserID:         userID,
+		DetailedGrades: req.DetailedGrades,
+	})
 	if gep != nil {
 		if gep.InternalError != nil {
 			handleISE(w, gep.InternalError)
@@ -248,8 +259,89 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 	return
 }
 
-func GradesForUser(userID uint64, returnDetailedGrades bool) (*UserGradesResponse, *GradesErrorResponse) {
-	rd, err := rdFromUserID(userID)
+// GradesForAllHandler gets grades for all users with a specified key.
+func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	key := r.URL.Query().Get("key")
+	if len(key) < 1 {
+		util.SendBadRequest(w, "missing key as query param")
+		return
+	} else if key != env.ScriptKey {
+		util.SendUnauthorized(w, "invalid key as query param")
+		return
+	}
+
+	// get all users with tokens
+	toks, err := canvas_tokens.List(util.DB, &canvas_tokens.ListRequest{
+		OrderBys:   []string{"canvas_tokens.canvas_user_id", "canvas_tokens.inserted_at DESC"},
+		DistinctOn: "canvas_tokens.canvas_user_id",
+	})
+	if err != nil {
+		handleISE(w, fmt.Errorf("error listing all unique canvas tokens for grades for all: %w", err))
+		return
+	}
+
+	var (
+		mutex = sync.Mutex{}
+		wg    = sync.WaitGroup{}
+		// error mapped by canvas user id
+		errs = make(map[uint64]*GradesErrorResponse)
+		// whether we had a success for the specified canvas user id
+		// if 123 worked, statuses[123] = true.
+		statuses = make(map[uint64]bool)
+	)
+	for _, tok := range *toks {
+		wg.Add(1)
+		go func(cuID uint64) {
+			defer wg.Done()
+
+			_, err := GradesForUser(&UserGradesRequest{
+				CanvasUserID: tok.CanvasUserID,
+				// using DetailedGrades because it's computationally easier
+				DetailedGrades: true,
+			})
+			mutex.Lock()
+			if err != nil {
+				errs[cuID] = err
+				statuses[cuID] = false
+			} else {
+				statuses[cuID] = true
+			}
+			mutex.Unlock()
+
+			return
+		}(tok.CanvasUserID)
+	}
+
+	wg.Wait()
+
+	jRet, err := json.Marshal(&struct {
+		Errors   map[uint64]*GradesErrorResponse `json:"errors"`
+		Statuses map[uint64]bool                 `json:"statuses"`
+	}{
+		Errors:   errs,
+		Statuses: statuses,
+	})
+	if err != nil {
+		handleISE(w, fmt.Errorf("error marshaling errors and statuses from fetch all grades: %w", err))
+		return
+	}
+
+	util.SendJSONResponse(w, jRet)
+	return
+}
+
+func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *GradesErrorResponse) {
+	var (
+		rd  requestDetails
+		err error
+	)
+
+	if req.UserID > 0 {
+		rd, err = rdFromUserID(req.UserID)
+	} else {
+		rd, err = rdFromCanvasUserID(req.CanvasUserID)
+	}
+
 	if err != nil {
 		return nil, &GradesErrorResponse{InternalError: fmt.Errorf("error getting rd from user id: %w", err)}
 	}
@@ -476,7 +568,7 @@ func GradesForUser(userID uint64, returnDetailedGrades bool) (*UserGradesRespons
 
 				// we'll now save the grade
 				mutex.Lock()
-				if !returnDetailedGrades {
+				if !req.DetailedGrades {
 					var c canvasCourse
 					for _, co := range *courses {
 						if co.ID == courseID {

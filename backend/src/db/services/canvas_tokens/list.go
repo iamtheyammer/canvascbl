@@ -25,16 +25,22 @@ type ListRequest struct {
 	Token        string
 	RefreshToken string
 
-	Limit   uint64
-	Offset  uint64
-	OrderBy []string
+	Limit      uint64
+	Offset     uint64
+	OrderBys   []string
+	DistinctOn string
 }
 
 // List lists Canvas tokens. Default order is insertion descending.
 func List(db services.DB, req *ListRequest) (*[]CanvasToken, error) {
+	firstCol := "canvas_tokens.id"
+	if len(req.DistinctOn) > 0 {
+		firstCol = "DISTINCT ON (" + req.DistinctOn + ") " + firstCol
+	}
+
 	q := util.Sq.
 		Select(
-			"canvas_tokens.id",
+			firstCol,
 			"canvas_tokens.canvas_user_id",
 			"canvas_tokens.token",
 			"canvas_tokens.refresh_token",
@@ -74,8 +80,8 @@ func List(db services.DB, req *ListRequest) (*[]CanvasToken, error) {
 		q = q.Limit(req.Offset)
 	}
 
-	if len(req.OrderBy) > 0 {
-		q = q.OrderBy(req.OrderBy...)
+	if len(req.OrderBys) > 0 {
+		q = q.OrderBy(req.OrderBys...)
 	} else {
 		q = q.OrderBy("inserted_at DESC")
 	}

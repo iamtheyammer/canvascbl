@@ -132,7 +132,7 @@ func processOutcomeResults(results *[]canvasOutcomeResult) (
 func rdFromCanvasUserID(cuID uint64) (requestDetails, error) {
 	tokens, err := canvas_tokens.List(db, &canvas_tokens.ListRequest{
 		CanvasUserID: cuID,
-		OrderBy:      []string{"inserted_at DESC"},
+		OrderBys:     []string{"inserted_at DESC"},
 		Limit:        1,
 	})
 	if err != nil {
@@ -155,9 +155,9 @@ func rdFromCanvasUserID(cuID uint64) (requestDetails, error) {
 
 func rdFromUserID(uID uint64) (requestDetails, error) {
 	tokens, err := canvas_tokens.List(db, &canvas_tokens.ListRequest{
-		UserID:  uID,
-		OrderBy: []string{"inserted_at DESC"},
-		Limit:   1,
+		UserID:   uID,
+		OrderBys: []string{"inserted_at DESC"},
+		Limit:    1,
 	})
 	if err != nil {
 		return requestDetails{}, fmt.Errorf("error listing canvas tokens: %w", err)

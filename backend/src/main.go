@@ -81,6 +81,7 @@ func getRouter() *httprouter.Router {
 
 	// API
 	router.GET("/api/v1/grades", gradesapi.GradesHandler)
+	router.GET("/api/v1/grades/fetch_all", gradesapi.GradesForAllHandler)
 	router.GET("/api/v1/courses/:courseID/assignments", gradesapi.AssignmentsHandler)
 	router.GET("/api/v1/courses/:courseID/outcome_alignments", gradesapi.AlignmentsHandler)
 	router.GET("/api/v1/outcomes/:outcomeID", gradesapi.OutcomeHandler)
