@@ -9,10 +9,10 @@ import (
 
 // handleError handles an error and returns a response to the client.
 // For Internal Server Errors, try handleISE(...)
-func handleError(w http.ResponseWriter, gep gradesErrorResponse, httpStatusCode int) {
+func handleError(w http.ResponseWriter, gep GradesErrorResponse, httpStatusCode int) {
 	resp, err := json.Marshal(&gep)
 	if err != nil {
-		util.HandleError(fmt.Errorf("error marshaling gradesErrorResponse: %w", err))
+		util.HandleError(fmt.Errorf("error marshaling GradesErrorResponse: %w", err))
 		util.SendInternalServerError(w)
 		return
 	}

@@ -26,7 +26,7 @@ func OutcomeHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 	}
 
 	if rdP.TokenID < 1 {
-		handleError(w, gradesErrorResponse{
+		handleError(w, GradesErrorResponse{
 			Error:  gradesErrorNoTokens,
 			Action: gradesErrorActionRedirectToOAuth,
 		}, http.StatusForbidden)
@@ -44,13 +44,13 @@ func OutcomeHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 		return nil
 	}, rdP, *userID)
 	if errors.Is(err, canvasErrorInvalidAccessTokenError) {
-		handleError(w, gradesErrorResponse{
+		handleError(w, GradesErrorResponse{
 			Error:  gradesErrorRevokedToken,
 			Action: gradesErrorActionRedirectToOAuth,
 		}, http.StatusForbidden)
 		return
 	} else if errors.Is(err, canvasErrorInvalidAccessTokenError) {
-		handleError(w, gradesErrorResponse{
+		handleError(w, GradesErrorResponse{
 			Error:  gradesErrorRefreshedTokenError,
 			Action: gradesErrorActionRedirectToOAuth,
 		}, http.StatusForbidden)

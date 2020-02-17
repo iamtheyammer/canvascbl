@@ -17,8 +17,9 @@ import (
 
 var (
 	db                                    = util.DB
-	gradesErrorUnknownCanvasErrorResponse = gradesErrorResponse{
-		Error: gradesErrorUnknownCanvasError,
+	gradesErrorUnknownCanvasErrorResponse = GradesErrorResponse{
+		Error:      gradesErrorUnknownCanvasError,
+		StatusCode: util.CanvasProxyErrorCode,
 	}
 )
 
@@ -63,7 +64,9 @@ type gradesHandlerRequest struct {
 	DetailedGrades bool
 }
 
-type gradesHandlerResponse struct {
+// UserGradesResponse is all possible info from a GradesForUser call.
+// It is JSON-serializable.
+type UserGradesResponse struct {
 	Session        *sessions.VerifiedSession `json:"session,omitempty"`
 	UserProfile    *canvasUserProfile        `json:"user_profile,omitempty"`
 	Observees      *[]canvasObservee         `json:"observees,omitempty"`
@@ -73,9 +76,14 @@ type gradesHandlerResponse struct {
 	DetailedGrades detailedGrades            `json:"detailed_grades,omitempty"`
 }
 
-type gradesErrorResponse struct {
-	Error  string            `json:"error"`
-	Action gradesErrorAction `json:"action,omitempty"`
+// GradesErrorResponse represents an error from GradesForUser.
+// InternalError will be populated when there is a server error.
+// It is JSON-serializable.
+type GradesErrorResponse struct {
+	Error         string            `json:"error"`
+	Action        gradesErrorAction `json:"action,omitempty"`
+	StatusCode    int               `json:"status_code,omitempty"`
+	InternalError error             `json:"-"`
 }
 
 func (r gradesHandlerRequest) toScopes() []oauth2.Scope {
@@ -128,7 +136,7 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 		case gradesIncludeDetailedGrades:
 			req.DetailedGrades = true
 		default:
-			handleError(w, gradesErrorResponse{
+			handleError(w, GradesErrorResponse{
 				Error: gradesErrorInvalidInclude,
 			}, http.StatusBadRequest)
 			return
@@ -138,12 +146,11 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 	var (
 		at, tokenIsOK = middlewares.Bearer(w, r, false)
 		session       *sessions.VerifiedSession
-		rd            requestDetails
 		userID        uint64
 	)
 
 	if !tokenIsOK {
-		handleError(w, gradesErrorResponse{
+		handleError(w, GradesErrorResponse{
 			Error: gradesErrorInvalidAccessToken,
 		}, http.StatusUnauthorized)
 		return
@@ -161,7 +168,7 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 		// oauth2
 		if req.Session {
 			// invalid
-			handleError(w, gradesErrorResponse{
+			handleError(w, GradesErrorResponse{
 				Error: gradesErrorInvalidInclude,
 			}, http.StatusBadRequest)
 			return
@@ -173,14 +180,14 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 		})
 		if err != nil {
 			if errors.Is(err, oauth2.GrantMissingScopeError) {
-				handleError(w, gradesErrorResponse{
+				handleError(w, GradesErrorResponse{
 					Error: gradesErrorUnauthorizedScope,
 				}, http.StatusUnauthorized)
 				return
 			}
 
 			if errors.Is(err, oauth2.InvalidAccessTokenError) {
-				handleError(w, gradesErrorResponse{
+				handleError(w, GradesErrorResponse{
 					Error: oauth2.InvalidAccessTokenError.Error(),
 				}, http.StatusForbidden)
 				return
@@ -193,18 +200,66 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 		userID = grant.UserID
 	}
 
-	rd, err := rdFromUserID(userID)
-	if err != nil {
-		handleISE(w, fmt.Errorf("error getting rd from user id: %w", err))
+	g, gep := GradesForUser(userID, req.DetailedGrades)
+	if gep != nil {
+		if gep.InternalError != nil {
+			handleISE(w, gep.InternalError)
+			return
+		}
+		handleError(w, *gep, gep.StatusCode)
 		return
 	}
 
-	if rd.TokenID < 1 {
-		handleError(w, gradesErrorResponse{
-			Error:  gradesErrorNoTokens,
-			Action: gradesErrorActionRedirectToOAuth,
-		}, http.StatusForbidden)
+	resp := UserGradesResponse{}
+
+	if req.Session {
+		resp.Session = session
+	}
+
+	if req.UserProfile {
+		resp.UserProfile = g.UserProfile
+	}
+
+	if req.Observees {
+		resp.Observees = g.Observees
+	}
+
+	if req.Courses {
+		resp.Courses = g.Courses
+	}
+
+	if req.OutcomeResults {
+		resp.OutcomeResults = g.OutcomeResults
+	}
+
+	if req.DetailedGrades {
+		resp.DetailedGrades = g.DetailedGrades
+	} else {
+		resp.SimpleGrades = g.SimpleGrades
+	}
+
+	jResp, err := json.Marshal(&resp)
+	if err != nil {
+		handleISE(w, fmt.Errorf("error marshaling grades handler response into JSON: %w", err))
 		return
+	}
+	util.SendJSONResponse(w, jResp)
+
+	return
+}
+
+func GradesForUser(userID uint64, returnDetailedGrades bool) (*UserGradesResponse, *GradesErrorResponse) {
+	rd, err := rdFromUserID(userID)
+	if err != nil {
+		return nil, &GradesErrorResponse{InternalError: fmt.Errorf("error getting rd from user id: %w", err)}
+	}
+
+	if rd.TokenID < 1 {
+		return nil, &GradesErrorResponse{
+			Error:      gradesErrorNoTokens,
+			Action:     gradesErrorActionRedirectToOAuth,
+			StatusCode: http.StatusForbidden,
+		}
 	}
 
 	profile, err := getCanvasProfile(rd, "self")
@@ -215,47 +270,44 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 			if refreshErr != nil {
 				if errors.Is(refreshErr, canvasErrorInvalidAccessTokenError) ||
 					errors.Is(refreshErr, canvasOAuth2ErrorRefreshTokenNotFound) {
-					handleError(w, gradesErrorResponse{
-						Error:  gradesErrorRevokedToken,
-						Action: gradesErrorActionRedirectToOAuth,
-					}, http.StatusForbidden)
-					return
+					return nil, &GradesErrorResponse{
+						Error:      gradesErrorRevokedToken,
+						Action:     gradesErrorActionRedirectToOAuth,
+						StatusCode: http.StatusForbidden,
+					}
 				}
 
-				handleISE(w, fmt.Errorf("error refreshing a token for a newProfile: %w", refreshErr))
-				return
+				return nil, &GradesErrorResponse{
+					InternalError: fmt.Errorf("error refreshing a token for a newProfile: %w", refreshErr),
+				}
 			}
 
 			newProfile, newProfileErr := getCanvasProfile(rd, "self")
 			if newProfileErr != nil {
 				if errors.Is(newProfileErr, canvasErrorInvalidAccessTokenError) {
-					handleError(w, gradesErrorResponse{
-						Error:  gradesErrorRefreshedTokenError,
-						Action: gradesErrorActionRedirectToOAuth,
-					}, http.StatusForbidden)
-					return
+					return nil, &GradesErrorResponse{
+						Error:      gradesErrorRefreshedTokenError,
+						Action:     gradesErrorActionRedirectToOAuth,
+						StatusCode: http.StatusForbidden,
+					}
 				} else if errors.Is(err, canvasErrorUnknownError) {
-					handleError(w, gradesErrorUnknownCanvasErrorResponse, util.CanvasProxyErrorCode)
-					return
+					return nil, &gradesErrorUnknownCanvasErrorResponse
 				}
 
-				handleISE(w, fmt.Errorf("error getting a newProfile: %w", newProfileErr))
-				return
+				return nil, &GradesErrorResponse{InternalError: fmt.Errorf("error getting a newProfile: %w", newProfileErr)}
 			}
 
 			profile = newProfile
 		} else if errors.Is(err, canvasErrorInvalidAccessTokenError) {
-			handleError(w, gradesErrorResponse{
-				Error:  gradesErrorRefreshedTokenError,
-				Action: gradesErrorActionRedirectToOAuth,
-			}, http.StatusForbidden)
-			return
+			return nil, &GradesErrorResponse{
+				Error:      gradesErrorRefreshedTokenError,
+				Action:     gradesErrorActionRedirectToOAuth,
+				StatusCode: http.StatusForbidden,
+			}
 		} else if errors.Is(err, canvasErrorUnknownError) {
-			handleError(w, gradesErrorUnknownCanvasErrorResponse, util.CanvasProxyErrorCode)
-			return
+			return nil, &gradesErrorUnknownCanvasErrorResponse
 		} else {
-			handleISE(w, fmt.Errorf("error getting a canvas profile: %w", err))
-			return
+			return nil, &GradesErrorResponse{InternalError: fmt.Errorf("error getting a canvas profile: %w", err)}
 		}
 
 		// reset err, this succeeded
@@ -319,25 +371,23 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 
 	if err != nil {
 		if errors.Is(err, canvasErrorInvalidAccessTokenError) {
-			handleError(w, gradesErrorResponse{
-				Error:  gradesErrorRevokedToken,
-				Action: gradesErrorActionRetryOnce,
-			}, http.StatusForbidden)
-			return
+			return nil, &GradesErrorResponse{
+				Error:      gradesErrorRevokedToken,
+				Action:     gradesErrorActionRetryOnce,
+				StatusCode: http.StatusForbidden,
+			}
 		} else if errors.Is(err, canvasErrorUnknownError) {
-			handleError(w, gradesErrorUnknownCanvasErrorResponse, util.CanvasProxyErrorCode)
-			return
+			return nil, &gradesErrorUnknownCanvasErrorResponse
 		}
 
-		handleISE(w, fmt.Errorf("error getting canvas courses: %w", err))
-		return
+		return nil, &GradesErrorResponse{InternalError: fmt.Errorf("error getting canvas courses: %w", err)}
 	}
 
-	go saveCoursesToDB((*[]canvasCourse)(allCourses))
+	go saveCoursesToDB(allCourses)
 	go saveObserveesToDB((*[]canvasObservee)(observees), profile.ID)
 
 	// we now have both allCourses and observees.
-	gradedUsers, courses := getGradedUsersAndValidCourses((*[]canvasCourse)(allCourses))
+	gradedUsers, courses := getGradedUsersAndValidCourses(allCourses)
 
 	// outcome_alignments / outcome_rollups / assignments [Grades/GradeBreakdown]
 
@@ -391,18 +441,17 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 
 	if err != nil {
 		if errors.Is(err, canvasErrorInvalidAccessTokenError) {
-			handleError(w, gradesErrorResponse{
-				Error:  gradesErrorRevokedToken,
-				Action: gradesErrorActionRetryOnce,
-			}, http.StatusForbidden)
-			return
+			return nil, &GradesErrorResponse{
+				Error:         gradesErrorRevokedToken,
+				Action:        gradesErrorActionRetryOnce,
+				StatusCode:    http.StatusForbidden,
+				InternalError: nil,
+			}
 		} else if errors.Is(err, canvasErrorUnknownError) {
-			handleError(w, gradesErrorUnknownCanvasErrorResponse, util.CanvasProxyErrorCode)
-			return
+			return nil, &gradesErrorUnknownCanvasErrorResponse
 		}
 
-		handleISE(w, fmt.Errorf("error getting alignments/results/assignments: %w", err))
-		return
+		return nil, &GradesErrorResponse{InternalError: fmt.Errorf("error getting alignments/results/assignments: %w", err)}
 	}
 
 	go saveOutcomeResultsToDB(results)
@@ -427,7 +476,7 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 
 				// we'll now save the grade
 				mutex.Lock()
-				if !req.DetailedGrades {
+				if !returnDetailedGrades {
 					var c canvasCourse
 					for _, co := range *courses {
 						if co.ID == courseID {
@@ -456,40 +505,13 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 
 	go saveGradesToDB(grades)
 
-	resp := gradesHandlerResponse{}
-
-	if req.Session {
-		resp.Session = session
-	}
-
-	if req.UserProfile {
-		resp.UserProfile = (*canvasUserProfile)(profile)
-	}
-
-	if req.Observees {
-		resp.Observees = (*[]canvasObservee)(observees)
-	}
-
-	if req.Courses {
-		resp.Courses = courses
-	}
-
-	if req.OutcomeResults {
-		resp.OutcomeResults = results
-	}
-
-	if req.DetailedGrades {
-		resp.DetailedGrades = grades
-	} else {
-		resp.SimpleGrades = sGrades
-	}
-
-	jResp, err := json.Marshal(&resp)
-	if err != nil {
-		handleISE(w, fmt.Errorf("error marshaling grades handler response into JSON: %w", err))
-		return
-	}
-	util.SendJSONResponse(w, jResp)
-
-	return
+	return &UserGradesResponse{
+		Session:        nil,
+		UserProfile:    (*canvasUserProfile)(profile),
+		Observees:      (*[]canvasObservee)(observees),
+		Courses:        courses,
+		OutcomeResults: results,
+		SimpleGrades:   sGrades,
+		DetailedGrades: grades,
+	}, nil
 }

@@ -34,7 +34,7 @@ func authorizer(
 	)
 
 	if !tokenIsOK {
-		handleError(w, gradesErrorResponse{
+		handleError(w, GradesErrorResponse{
 			Error: gradesErrorInvalidAccessToken,
 		}, http.StatusUnauthorized)
 		return nil, nil, nil
@@ -53,14 +53,14 @@ func authorizer(
 		grant, err := oauth2.Authorizer(at, scopes, call)
 		if err != nil {
 			if errors.Is(err, oauth2.GrantMissingScopeError) {
-				handleError(w, gradesErrorResponse{
+				handleError(w, GradesErrorResponse{
 					Error: gradesErrorUnauthorizedScope,
 				}, http.StatusUnauthorized)
 				return nil, nil, nil
 			}
 
 			if errors.Is(err, oauth2.InvalidAccessTokenError) {
-				handleError(w, gradesErrorResponse{
+				handleError(w, GradesErrorResponse{
 					Error: oauth2.InvalidAccessTokenError.Error(),
 				}, http.StatusForbidden)
 				return nil, nil, nil
@@ -80,7 +80,7 @@ func authorizer(
 	}
 
 	if rd.TokenID < 1 {
-		handleError(w, gradesErrorResponse{
+		handleError(w, GradesErrorResponse{
 			Error:  gradesErrorNoTokens,
 			Action: gradesErrorActionRedirectToOAuth,
 		}, http.StatusForbidden)
