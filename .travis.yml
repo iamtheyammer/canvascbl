@@ -30,7 +30,7 @@ deploy:
     cleanup: false
     github_token: $GITHUB_TOKEN
     keep_history: false
-    local_dir: bin/build
+    local_dir: frontend/build
     committer_from_gh: true
     target_branch: gh-pages
     repo: iamtheyammer/canvascbl-stg
@@ -41,7 +41,7 @@ deploy:
     cleanup: false
     github_token: $GITHUB_TOKEN
     keep_history: false
-    local_dir: bin/build
+    local_dir: frontend/build
     committer_from_gh: true
     target_branch: gh-pages
     edge: true
