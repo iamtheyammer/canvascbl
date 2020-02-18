@@ -22,12 +22,12 @@ before_deploy:
 
 deploy:
   - provider: script
-    script: ./backend/ci.sh deploy $HEROKU_API_KEY $HEROKU_PROCESS_NAME $HEROKU_APP_NAME && ./lambda_grades_fetcher/ci.sh deploy
+    script: ./backend/ci.sh deploy $HEROKU_API_KEY $HEROKU_APP_NAME $HEROKU_PROCESS_NAME && ./lambda_grades_fetcher/ci.sh deploy
     edge: true
     on:
       branch: staging
   - provider: script
-    script: ./backend/ci.sh deploy $HEROKU_API_KEY $HEROKU_PROCESS_NAME $HEROKU_APP_NAME && ./lambda_grades_fetcher/ci.sh deploy
+    script: ./backend/ci.sh deploy $HEROKU_API_KEY $HEROKU_APP_NAME $HEROKU_PROCESS_NAME && ./lambda_grades_fetcher/ci.sh deploy
     edge: true
     on:
       branch: master
