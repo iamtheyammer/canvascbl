@@ -19,7 +19,7 @@ case "$1" in
   # pipe output to null
   unzip aws/awscliv2.zip > /dev/null
   ./aws/install -i ./aws/cli -b ./aws/bin
-  newpath="$(pwd)/aws/cli:$PATH"
+  newpath="$(pwd)/aws/bin:$PATH"
   export PATH=$newpath
   aws lambda update-function-code \
     --function-name "$LAMBDA_GRADES_FETCHER_FUNCTION_NAME" \
