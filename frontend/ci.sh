@@ -5,6 +5,8 @@ cd frontend || exit
 case "$1" in
 "install")
   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.2/install.sh | bash
+  export NVM_DIR="$HOME/.nvm"
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
   nvm install "$(cat .nvmrc)"
   nvm use
   yarn install
