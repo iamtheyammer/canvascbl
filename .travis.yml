@@ -25,7 +25,7 @@ deploy:
     script: ./backend/ci.sh deploy && ./lambda_grades_fetcher/ci.sh deploy
     edge: true
     on:
-      condition: $TRAVIS_BRANCH IN (master, staging)
+      condition: $TRAVIS_BRANCH =~ ^(staging|master)$
   - provider: pages
     cleanup: false
     github_token: $GITHUB_TOKEN
