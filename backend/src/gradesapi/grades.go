@@ -71,6 +71,7 @@ type UserGradesRequest struct {
 	UserID         uint64
 	CanvasUserID   uint64
 	DetailedGrades bool
+	ManualFetch    bool
 }
 
 // UserGradesResponse is all possible info from a GradesForUser call.
@@ -209,9 +210,17 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 		userID = grant.UserID
 	}
 
+	// a fetch is considered manual if it's initiated with a session.
+	// it also has to be via this endpoint, so that's already covered.
+	manualFetch := false
+	if session != nil {
+		manualFetch = true
+	}
+
 	g, gep := GradesForUser(&UserGradesRequest{
 		UserID:         userID,
 		DetailedGrades: req.DetailedGrades,
+		ManualFetch:    manualFetch,
 	})
 	if gep != nil {
 		if gep.InternalError != nil {
@@ -299,6 +308,8 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 				CanvasUserID: tok.CanvasUserID,
 				// using DetailedGrades because it's computationally easier
 				DetailedGrades: true,
+				// not manual because this is a fetch for other users
+				ManualFetch: false,
 			})
 			mutex.Lock()
 			if err != nil {
@@ -597,7 +608,7 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *GradesErrorRes
 
 	wg.Wait()
 
-	go saveGradesToDB(grades)
+	go saveGradesToDB(grades, req.ManualFetch)
 
 	return &UserGradesResponse{
 		Session:        nil,

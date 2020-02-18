@@ -70,9 +70,12 @@ func GetMemoizedAverageGradeForCourse(courseID uint64, userIDs []uint64) (*float
 }
 
 func GetGradesForUserBeforeDate(userIDs []uint64, before time.Time) (*[]gradessvc.Grade, error) {
+	mf := true
 	gs, err := gradessvc.List(util.DB, &gradessvc.ListRequest{
 		UserCanvasIDs: &userIDs,
 		Before:        &before,
+		// since this is used for previous grades, we only want grades the user fetched manually
+		ManualFetch: &mf,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting grades")

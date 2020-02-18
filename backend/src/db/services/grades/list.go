@@ -13,6 +13,7 @@ type ListRequest struct {
 	Before        *time.Time
 	After         *time.Time
 	CourseIDs     *[]uint64
+	ManualFetch   *bool
 }
 
 type Grade struct {
@@ -20,6 +21,7 @@ type Grade struct {
 	CourseID     uint64
 	Grade        string
 	UserCanvasID uint64
+	ManualFetch  bool
 	InsertedAt   time.Time
 }
 
@@ -30,6 +32,7 @@ func List(db services.DB, req *ListRequest) (*[]Grade, error) {
 			"user_canvas_id",
 			"course_id",
 			"grade",
+			"manual_fetch",
 			"inserted_at",
 		).
 		From("grades").
@@ -47,6 +50,10 @@ func List(db services.DB, req *ListRequest) (*[]Grade, error) {
 
 	if req.CourseIDs != nil {
 		q = q.Where(sq.Eq{"course_id": req.CourseIDs})
+	}
+
+	if req.ManualFetch != nil {
+		q = q.Where(sq.Eq{"manual_fetch": *req.ManualFetch})
 	}
 
 	query, args, err := q.ToSql()
@@ -71,6 +78,7 @@ func List(db services.DB, req *ListRequest) (*[]Grade, error) {
 			&g.UserCanvasID,
 			&g.CourseID,
 			&g.Grade,
+			&g.ManualFetch,
 			&g.InsertedAt,
 		)
 

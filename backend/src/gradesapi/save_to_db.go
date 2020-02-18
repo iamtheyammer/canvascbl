@@ -205,7 +205,7 @@ func saveOutcomeResultsToDB(results processedOutcomeResults) {
 	}
 }
 
-func saveGradesToDB(grds detailedGrades) {
+func saveGradesToDB(grds detailedGrades, manualFetch bool) {
 	var req []grades.InsertRequest
 	var rs []courses.OutcomeRollupInsertRequest
 	for uID, cs := range grds {
@@ -218,6 +218,7 @@ func saveGradesToDB(grds detailedGrades) {
 				Grade:        grd.Grade.Grade,
 				CourseID:     int(cID),
 				UserCanvasID: int(uID),
+				ManualFetch:  manualFetch,
 			})
 
 			for oID, avg := range grd.Averages {

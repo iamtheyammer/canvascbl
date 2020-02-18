@@ -8,6 +8,7 @@ import (
 
 type InsertRequest struct {
 	Grade        string
+	ManualFetch  bool
 	CourseID     int
 	UserCanvasID int
 }
@@ -15,13 +16,14 @@ type InsertRequest struct {
 func Insert(db services.DB, req *[]InsertRequest) error {
 	q := util.Sq.
 		Insert("grades").
-		Columns("course_id", "grade", "user_canvas_id")
+		Columns("course_id", "grade", "user_canvas_id", "manual_fetch")
 
 	for _, r := range *req {
 		q = q.Values(
 			r.CourseID,
 			r.Grade,
 			r.UserCanvasID,
+			r.ManualFetch,
 		)
 	}
 
