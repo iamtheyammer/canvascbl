@@ -17,8 +17,9 @@ case "$1" in
   mkdir aws
   curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o aws/awscliv2.zip
   # pipe output to null
-  unzip aws/awscliv2.zip -d aws/ > /dev/null
+  unzip aws/awscliv2.zip > /dev/null
   ./aws/install -i ./aws/cli
+  exit 2
   newpath="$(pwd)/aws/cli:$PATH"
   export PATH=$newpath
   aws lambda update-function-code \
