@@ -6,11 +6,11 @@ case "$1" in
 "install")
   nvm install "$(cat .nvmrc)"
   nvm use
-  npm install
+  yarn install
   ;;
 "build")
-  npm run formatcheck
-	npm run build
+  yarn run formatcheck
+	yarn run build
 	echo "Built frontend. Output is in ./build"
   ;;
 "before_deploy")
