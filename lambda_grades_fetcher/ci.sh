@@ -10,9 +10,14 @@ case "$1" in
   zip bin/lambda_grades_fetcher.zip bin/lambda_grades_fetcher
   ;;
 "deploy")
+  export AWS_ACCESS_KEY_ID=$2
+  export AWS_SECRET_ACCESS_KEY=$3
+  LAMBDA_GRADES_FETCHER_FUNCTION_NAME=$4
+
   mkdir aws
   curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o aws/awscliv2.zip
-  unzip aws/awscliv2.zip -d aws/
+  # pipe output to null
+  unzip aws/awscliv2.zip -d aws/ > /dev/null
   ./aws/install -i ./aws/cli
   newpath="$(pwd)/aws/cli:$PATH"
   export PATH=$newpath
