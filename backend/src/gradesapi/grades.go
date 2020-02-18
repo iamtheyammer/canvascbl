@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
+	"time"
 )
 
 var (
@@ -310,6 +311,7 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 
 			return
 		}(tok.CanvasUserID)
+		time.Sleep(150 * time.Millisecond)
 	}
 
 	wg.Wait()
