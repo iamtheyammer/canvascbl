@@ -11,8 +11,7 @@ case "$1" in
   ;;
 "deploy")
   mkdir aws
-  cd aws || exit
-  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "aws/awscliv2.zip"
+  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o aws/awscliv2.zip
   unzip aws/awscliv2.zip -d aws/
   ./aws/install -i ./aws/cli
   newpath="$(pwd)/aws/cli:$PATH"
