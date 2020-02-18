@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/url"
 	"strings"
@@ -50,7 +51,7 @@ func generateFilename() string {
 	return time.Now().Format(time.RFC3339) + "-" + environment + ".json"
 }
 
-func HandleLambdaEvent() {
+func HandleLambdaEvent() error {
 	ul := s3manager.NewUploader(sess)
 	input := &s3manager.UploadInput{
 		Bucket:      aws.String(s3Bucket),
@@ -70,9 +71,10 @@ func HandleLambdaEvent() {
 
 	_, err = ul.Upload(input)
 	if err != nil {
-		// oh well, whatever.
-		return
+		return fmt.Errorf("error uploading to s3: %w", err)
 	}
+
+	return nil
 }
 
 func main() {
