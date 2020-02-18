@@ -23,8 +23,10 @@ case "$1" in
   export PATH=~/bin:$PATH
   aws lambda update-function-code \
     --function-name "$LAMBDA_GRADES_FETCHER_FUNCTION_NAME" \
-    --revision-id "$TRAVIS_COMMIT" \
     --zip-file fileb://bin/lambda_grades_fetcher.zip
+  aws lambda update-function-configuration \
+    --function-name "$LAMBDA_GRADES_FETCHER_FUNCTION_NAME" \
+    --description "Built from commit ${TRAVIS_COMMIT:0:7}"
   ;;
 *)
   echo "Usage: ./ci.sh <command>"
