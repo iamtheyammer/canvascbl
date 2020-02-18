@@ -50,7 +50,7 @@ func generateFilename() string {
 	return time.Now().Format(time.RFC3339) + "-" + environment + ".json"
 }
 
-func HandleLambdaEvent() error {
+func HandleLambdaEvent() (string, error) {
 	ul := s3manager.NewUploader(sess)
 	input := &s3manager.UploadInput{
 		Bucket:      aws.String(s3Bucket),
@@ -68,12 +68,12 @@ func HandleLambdaEvent() error {
 		input.Body = resp.Body
 	}
 
-	_, err = ul.Upload(input)
+	f, err := ul.Upload(input)
 	if err != nil {
-		return fmt.Errorf("error uploading to s3: %w", err)
+		return "", fmt.Errorf("error uploading to s3: %w", err)
 	}
 
-	return nil
+	return f.Location, nil
 }
 
 func main() {

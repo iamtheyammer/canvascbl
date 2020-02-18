@@ -24,14 +24,14 @@ deploy:
   - provider: script
     script: |
       ./backend/ci.sh deploy $HEROKU_API_KEY $HEROKU_APP_NAME $HEROKU_PROCESS_NAME &&
-      ./lambda_grades_fetcher/ci.sh deploy $AWS_ACCESS_KEY_ID $AWS_SECRET_ACCESS_KEY $LAMBDA_GRADES_FETCHER_FUNCTION_NAME
+      ./lambda_grades_fetcher/ci.sh deploy $AWS_ACCESS_KEY_ID $AWS_SECRET_ACCESS_KEY $LAMBDA_GRADES_FETCHER_FUNCTION_NAME $TRAVIS_COMMIT
     edge: true
     on:
       branch: staging
   - provider: script
     script: |
       ./backend/ci.sh deploy $HEROKU_API_KEY $HEROKU_APP_NAME $HEROKU_PROCESS_NAME &&
-      ./lambda_grades_fetcher/ci.sh deploy $AWS_ACCESS_KEY_ID $AWS_SECRET_ACCESS_KEY $LAMBDA_GRADES_FETCHER_FUNCTION_NAME
+      ./lambda_grades_fetcher/ci.sh deploy $AWS_ACCESS_KEY_ID $AWS_SECRET_ACCESS_KEY $LAMBDA_GRADES_FETCHER_FUNCTION_NAME $TRAVIS_COMMIT
     edge: true
     on:
       branch: master
