@@ -1,9 +1,5 @@
 #!/bin/bash
 
-export HEROKU_API_KEY=$1
-HEROKU_APP_NAME=$2
-HEROKU_PROCESS_NAME=$3
-
 # Install heroku if it doesn't exist
 if [ ! -f "$(command -v heroku)" ]; then
     echo "Installing Heroku CLI..."
