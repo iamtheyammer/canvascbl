@@ -24,17 +24,19 @@ deploy:
   - provider: script
     script: |
       ./backend/ci.sh deploy $HEROKU_API_KEY $HEROKU_APP_NAME $HEROKU_PROCESS_NAME &&
-      ./lambda_grades_fetcher/ci.sh deploy $AWS_ACCESS_KEY_ID $AWS_SECRET_ACCESS_KEY $LAMBDA_GRADES_FETCHER_FUNCTION_NAME $TRAVIS_COMMIT
     edge: true
     on:
-      branch: staging
+      condition:
+        - $TRAVIS_BRANCH =~ ^(staging|master)$
+        - $(source scripts/diff.sh && diff_includes backend)
   - provider: script
     script: |
-      ./backend/ci.sh deploy $HEROKU_API_KEY $HEROKU_APP_NAME $HEROKU_PROCESS_NAME &&
       ./lambda_grades_fetcher/ci.sh deploy $AWS_ACCESS_KEY_ID $AWS_SECRET_ACCESS_KEY $LAMBDA_GRADES_FETCHER_FUNCTION_NAME $TRAVIS_COMMIT
     edge: true
     on:
-      branch: master
+      condition:
+      - $TRAVIS_BRANCH =~ ^(staging|master)$
+      - $(source scripts/diff.sh && diff_includes lambda_grades_fetcher)
   - provider: pages
     cleanup: false
     github_token: $GITHUB_TOKEN
@@ -46,6 +48,7 @@ deploy:
     edge: true
     on:
       branch: staging
+      condition: $(source scripts/diff.sh && diff_includes frontend)
   - provider: pages
     cleanup: false
     github_token: $GITHUB_TOKEN
@@ -56,3 +59,4 @@ deploy:
     edge: true
     on:
       branch: master
+      condition: $(source scripts/diff.sh && diff_includes frontend)
