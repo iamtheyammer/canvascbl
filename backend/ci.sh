@@ -1,5 +1,12 @@
 #!/bin/bash
 
+source scripts/diff.sh
+
+if [ ! "$(diff_includes backend)" ]; then
+  echo "Skipping backend step because backend was not changed."
+  exit
+fi
+
 cd backend || exit
 
 case "$1" in

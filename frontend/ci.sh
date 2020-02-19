@@ -1,5 +1,12 @@
 #!/bin/bash
 
+source scripts/diff.sh
+
+if [ ! "$(diff_includes frontend)" ]; then
+  echo "Skipping frontend step because frontend was not changed."
+  exit
+fi
+
 cd frontend || exit
 
 case "$1" in
