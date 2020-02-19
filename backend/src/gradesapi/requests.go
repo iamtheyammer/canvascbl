@@ -30,6 +30,7 @@ var (
 
 //var proxyURL, _ = url.Parse("http://localhost:8888")
 //var httpClient = http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyURL)}}
+
 var httpClient = http.Client{}
 
 type requestDetails struct {
@@ -63,7 +64,7 @@ func handleRequestWithTokenRefresh(task func(rd *requestDetails) error, rd *requ
 			shouldRefresh := false
 
 			handleRequestWithTokenRefreshMutex.Lock()
-			// if the token isn, nil't being refreshed
+			// if the token isn't being refreshed
 			if _, ok := lockedTokens[rd.TokenID]; !ok {
 				// mark that it is
 				lockedTokens[rd.TokenID] = struct{}{}
@@ -119,7 +120,7 @@ func handleRequestWithTokenRefresh(task func(rd *requestDetails) error, rd *requ
 
 func getCanvasProfile(rd requestDetails, userID string) (*canvasUserProfileResponse, error) {
 	var profile canvasUserProfileResponse
-	_, err := makeCanvasGetRequest("users/"+userID+"/profile", rd, &profile)
+	_, err := makeCanvasGetRequest("api/v1/users/"+userID+"/profile", rd, &profile)
 	if err != nil {
 		return nil, fmt.Errorf("error getting canvas user profile: %w", err)
 	}
@@ -129,7 +130,7 @@ func getCanvasProfile(rd requestDetails, userID string) (*canvasUserProfileRespo
 
 func getCanvasCourses(rd requestDetails) (*canvasCoursesResponse, error) {
 	var courses canvasCoursesResponse
-	_, err := makeCanvasGetRequest("courses?per_page=100", rd, &courses)
+	_, err := makeCanvasGetRequest("api/v1/courses?per_page=100", rd, &courses)
 	if err != nil {
 		return nil, fmt.Errorf("error getting canvas courses: %w", err)
 	}
@@ -139,7 +140,7 @@ func getCanvasCourses(rd requestDetails) (*canvasCoursesResponse, error) {
 
 func getCanvasUserObservees(rd requestDetails, userID string) (*canvasUserObserveesResponse, error) {
 	var observees canvasUserObserveesResponse
-	_, err := makeCanvasGetRequest("users/"+userID+"/observees", rd, &observees)
+	_, err := makeCanvasGetRequest("api/v1/users/"+userID+"/observees", rd, &observees)
 	if err != nil {
 		return nil, fmt.Errorf("error getting canvas user observees: %w", err)
 	}
@@ -151,7 +152,7 @@ func getCanvasUserObservees(rd requestDetails, userID string) (*canvasUserObserv
 //func getCanvasOutcomeAlignments(rd requestDetails, courseID string, studentID string) (*canvasOutcomeAlignmentsResponse, error) {
 //	var alignments canvasOutcomeAlignmentsResponse
 //	_, err := makeCanvasGetRequest(
-//		"courses/"+courseID+"/outcome_alignments?student_id="+studentID,
+//		"api/v1/courses/"+courseID+"/outcome_alignments?student_id="+studentID,
 //		rd,
 //		&alignments,
 //	)
@@ -163,7 +164,7 @@ func getCanvasUserObservees(rd requestDetails, userID string) (*canvasUserObserv
 //}
 
 func proxyCanvasOutcomeAlignments(rd requestDetails, courseID string, studentID string) (*http.Response, error) {
-	resp, err := proxyCanvasGetRequest("courses/"+courseID+"/outcome_alignments?per_page=100&student_id="+studentID, rd)
+	resp, err := proxyCanvasGetRequest("api/v1/courses/"+courseID+"/outcome_alignments?per_page=100&student_id="+studentID, rd)
 	if err != nil {
 		return nil, fmt.Errorf("error getting canvas outcome alignments for course %s: %w", courseID, err)
 	}
@@ -181,7 +182,7 @@ func proxyCanvasOutcomeAlignments(rd requestDetails, courseID string, studentID 
 //
 //	var rollups canvasOutcomeRollupsResponse
 //	_, err := makeCanvasGetRequest(
-//		"courses/"+courseID+"/outcome_rollups"+q.Encode(),
+//		"api/v1/courses/"+courseID+"/outcome_rollups"+q.Encode(),
 //		rd,
 //		&rollups,
 //	)
@@ -202,7 +203,7 @@ func getCanvasOutcomeResults(rd requestDetails, courseID string, userIDs []strin
 
 	var (
 		allResults canvasOutcomeResultsResponse
-		u          = "courses/" + courseID + "/outcome_results?" + q.Encode()
+		u          = "api/v1/courses/" + courseID + "/outcome_results?" + q.Encode()
 	)
 
 	for {
@@ -238,7 +239,7 @@ func getCanvasCourseAssignments(rd requestDetails, courseID string, assignmentID
 
 	var (
 		allAssignments canvasAssignmentsResponse
-		u              = "courses/" + courseID + "/assignments?" + q.Encode()
+		u              = "api/v1/courses/" + courseID + "/assignments?" + q.Encode()
 	)
 
 	for {
@@ -262,7 +263,7 @@ func getCanvasCourseAssignments(rd requestDetails, courseID string, assignmentID
 
 func getCanvasOutcome(rd requestDetails, outcomeID string) (*canvasOutcomeResponse, error) {
 	var outcome canvasOutcomeResponse
-	_, err := makeCanvasGetRequest("outcomes/"+outcomeID, rd, &outcome)
+	_, err := makeCanvasGetRequest("api/v1/outcomes/"+outcomeID, rd, &outcome)
 	if err != nil {
 		return nil, fmt.Errorf("error getting canvas outcome %s: %w", outcomeID, err)
 	}
@@ -353,9 +354,9 @@ func makeCanvasRequest(
 	bodyDestination interface{},
 ) (*http.Response, error) {
 	// this system allows for the Link header so full URLs can be passed in
-	fURL := "https://" + rd.Subdomain + ".instructure.com"
+	fURL := "https://" + rd.Subdomain + ".instructure.com/"
 	if !strings.HasPrefix(path, fURL) {
-		fURL += "/api/v1/" + path
+		fURL += path
 	}
 
 	req, err := http.NewRequest(method, fURL, body)
@@ -420,7 +421,7 @@ func proxyCanvasGetRequest(path string, rd requestDetails) (*http.Response, erro
 	// this system allows for the Link header so full URLs can be passed in
 	fURL := "https://" + rd.Subdomain + ".instructure.com/"
 	if !strings.HasPrefix(path, fURL) {
-		fURL += "/api/v1/" + path
+		fURL += path
 	}
 	req, err := http.NewRequest(http.MethodGet, fURL, nil)
 	if err != nil {
