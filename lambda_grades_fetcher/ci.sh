@@ -1,12 +1,5 @@
 #!/bin/bash
 
-source scripts/diff.sh
-
-if [ ! "$(diff_includes lambda_grades_fetcher)" ]; then
-  echo "Skipping lambda_grades_fetcher step because lambda_grades_fetcher was not changed."
-  exit
-fi
-
 cd lambda_grades_fetcher || exit
 
 case "$1" in
