@@ -211,9 +211,12 @@ func getCanvasOutcomeResults(rd requestDetails, courseID string, userIDs []strin
 	return &results, nil
 }
 
-func getCanvasCourseAssignments(rd requestDetails, courseID string) (*canvasAssignmentsResponse, error) {
+func getCanvasCourseAssignments(rd requestDetails, courseID string, assignmentIDs []string) (*canvasAssignmentsResponse, error) {
 	q := url.Values{}
 	q.Add("per_page", canvasPerPage)
+	for _, aID := range assignmentIDs {
+		q.Add("assignment_ids[]", aID)
+	}
 
 	var assignments canvasAssignmentsResponse
 	_, err := makeCanvasGetRequest("courses/"+courseID+"/assignments?"+q.Encode(), rd, &assignments)

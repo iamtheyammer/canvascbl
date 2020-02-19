@@ -7,17 +7,26 @@ import (
 	"github.com/iamtheyammer/canvascbl/backend/src/oauth2"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
+	"html"
 	"net/http"
 )
 
 func AssignmentsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	cID := ps.ByName("courseID")
 	if len(cID) < 1 || !util.ValidateIntegerString(cID) {
-		util.SendBadRequest(w, "missing or invalid courseID ass url param")
+		util.SendBadRequest(w, "missing or invalid courseID as url param")
 		return
 	}
 
-	userID, rdP, sess := authorizer(w, r, []oauth2.Scope{oauth2.ScopeAlignments}, &oauth2.AuthorizerAPICall{
+	aIDs := r.URL.Query()["assignment_ids[]"]
+	for _, aID := range aIDs {
+		if !util.ValidateIntegerString(aID) {
+			util.SendBadRequest(w, "invalid assignment_ids[] as query param: "+html.EscapeString(aID))
+			return
+		}
+	}
+
+	userID, rdP, sess := authorizer(w, r, []oauth2.Scope{oauth2.ScopeAssignments}, &oauth2.AuthorizerAPICall{
 		Method:    "GET",
 		RoutePath: "courses/:courseID/assignments",
 	})
@@ -27,7 +36,7 @@ func AssignmentsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 
 	var ass *canvasAssignmentsResponse
 	_, err := handleRequestWithTokenRefresh(func(reqD *requestDetails) error {
-		tAss, outErr := getCanvasCourseAssignments(*reqD, cID)
+		tAss, outErr := getCanvasCourseAssignments(*reqD, cID, aIDs)
 		if outErr != nil {
 			return fmt.Errorf("error getting assignments for course %s: %w", cID, outErr)
 		}
