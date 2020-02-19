@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/iamtheyammer/canvascbl/backend/src/env"
+	"github.com/tomnomnom/linkheader"
 	"io"
 	"net/http"
 	"net/url"
@@ -27,7 +28,8 @@ var (
 	lockedTokens                       = map[uint64]struct{}{}
 )
 
-var httpClient = http.Client{}
+var proxyURL, _ = url.Parse("http://localhost:8888")
+var httpClient = http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyURL)}}
 
 type requestDetails struct {
 	// TokenID is the database ID of the token
@@ -197,18 +199,33 @@ func getCanvasOutcomeResults(rd requestDetails, courseID string, userIDs []strin
 		q.Add("user_ids[]", id)
 	}
 
-	var results canvasOutcomeResultsResponse
-	_, err := makeCanvasGetRequest(
-		"courses/"+courseID+"/outcome_results?"+q.Encode(),
-		rd,
-		&results,
+	var (
+		allResults canvasOutcomeResultsResponse
+		u          = "courses/" + courseID + "/outcome_results?" + q.Encode()
 	)
-	if err != nil {
-		return nil, fmt.Errorf("error getting canvas outcome results for course "+
-			"%s and for students %v: %w", courseID, userIDs, err)
+
+	for {
+		var results canvasOutcomeResultsResponse
+		resp, err := makeCanvasGetRequest(
+			u,
+			rd,
+			&results,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error getting canvas outcome results for course "+
+				"%s and for students %v: %w", courseID, userIDs, err)
+		}
+
+		allResults.OutcomeResults = append(allResults.OutcomeResults, results.OutcomeResults...)
+
+		nu := nextPageUrl(resp.Header.Get("link"))
+		if nu == nil {
+			return &allResults, nil
+		} else {
+			u = *nu
+		}
 	}
 
-	return &results, nil
 }
 
 func getCanvasCourseAssignments(rd requestDetails, courseID string, assignmentIDs []string) (*canvasAssignmentsResponse, error) {
@@ -218,13 +235,28 @@ func getCanvasCourseAssignments(rd requestDetails, courseID string, assignmentID
 		q.Add("assignment_ids[]", aID)
 	}
 
-	var assignments canvasAssignmentsResponse
-	_, err := makeCanvasGetRequest("courses/"+courseID+"/assignments?"+q.Encode(), rd, &assignments)
-	if err != nil {
-		return nil, fmt.Errorf("error getting canvas assignments for course %s: %w", courseID, err)
+	var (
+		allAssignments canvasAssignmentsResponse
+		u              = "courses/" + courseID + "/assignments?" + q.Encode()
+	)
+
+	for {
+		var assignments canvasAssignmentsResponse
+		resp, err := makeCanvasGetRequest(u, rd, &assignments)
+		if err != nil {
+			return nil, fmt.Errorf("error getting canvas assignments for course %s: %w", courseID, err)
+		}
+
+		allAssignments = append(allAssignments, assignments...)
+
+		nu := nextPageUrl(resp.Header.Get("link"))
+		if nu == nil {
+			return &allAssignments, nil
+		} else {
+			u = *nu
+		}
 	}
 
-	return &assignments, nil
 }
 
 func getCanvasOutcome(rd requestDetails, outcomeID string) (*canvasOutcomeResponse, error) {
@@ -285,12 +317,27 @@ func categorizeCanvasOAuth2Error(err canvasOAuth2ErrorResponse, resp *http.Respo
 
 // Convenience method for makeCanvasRequest with no body and the method set to get
 func makeCanvasGetRequest(path string, rd requestDetails, bodyDestination interface{}) (*http.Response, error) {
-	return makeCanvasRequest("api/v1/"+path, http.MethodGet, nil, rd, bodyDestination)
+	return makeCanvasRequest(path, http.MethodGet, nil, rd, bodyDestination)
 }
 
 // Convenience method for makeCanvasRequest with the method set to post
 func makeCanvasPostRequest(path string, body io.Reader, rd requestDetails, bodyDestination interface{}) (*http.Response, error) {
-	return makeCanvasRequest("api/v1/"+path, http.MethodPost, body, rd, bodyDestination)
+	return makeCanvasRequest(path, http.MethodPost, body, rd, bodyDestination)
+}
+
+func nextPageUrl(link string) *string {
+	if len(link) < 1 {
+		return nil
+	}
+
+	links := linkheader.Parse(link)
+	for _, l := range links {
+		if l.Rel == "next" {
+			return &l.URL
+		}
+	}
+
+	return nil
 }
 
 // makeCanvasGetRequest will WRITE TO YOUR bodyDestination.
@@ -304,7 +351,12 @@ func makeCanvasRequest(
 	rd requestDetails,
 	bodyDestination interface{},
 ) (*http.Response, error) {
-	fURL := "https://" + rd.Subdomain + ".instructure.com/" + path
+	// this system allows for the Link header so full URLs can be passed in
+	fURL := "https://" + rd.Subdomain + ".instructure.com"
+	if !strings.HasPrefix(path, fURL) {
+		fURL += "/api/v1/" + path
+	}
+
 	req, err := http.NewRequest(method, fURL, body)
 	if err != nil {
 		return nil, fmt.Errorf("error creating http request: %w", err)
@@ -364,7 +416,11 @@ func makeCanvasRequest(
 // proxyCanvasGetRequest expects you to read resp.Body. So, it doesn't close the body.
 // REMEMBER TO CLOSE IT!
 func proxyCanvasGetRequest(path string, rd requestDetails) (*http.Response, error) {
-	fURL := "https://" + rd.Subdomain + ".instructure.com/api/v1/" + path
+	// this system allows for the Link header so full URLs can be passed in
+	fURL := "https://" + rd.Subdomain + ".instructure.com/"
+	if !strings.HasPrefix(path, fURL) {
+		fURL += "/api/v1/" + path
+	}
 	req, err := http.NewRequest(http.MethodGet, fURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error creating http request: %w", err)

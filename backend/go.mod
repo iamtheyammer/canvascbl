@@ -16,6 +16,7 @@ require (
 	github.com/sendgrid/sendgrid-go v3.5.0+incompatible
 	github.com/stretchr/testify v1.4.0
 	github.com/stripe/stripe-go v66.0.0+incompatible
+	github.com/tomnomnom/linkheader v0.0.0-20180905144013-02ca5825eb80
 	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553 // indirect
 )
 
