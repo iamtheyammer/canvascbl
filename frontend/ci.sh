@@ -12,8 +12,8 @@ case "$1" in
   yarn install
   ;;
 "build")
-  yarn run formatcheck
-	yarn run build
+  yarn run formatcheck || exit 2
+	yarn run build || exit 2
 	echo "Built frontend. Output is in ./build"
   ;;
 "before_deploy")
