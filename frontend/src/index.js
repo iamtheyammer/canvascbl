@@ -8,9 +8,10 @@ import store from './store/index';
 // import * as serviceWorker from './serviceWorker';
 
 console.log(
-  '---------------\n',
-  'Hey there, curious fellow! While we love inquisitive minds, please note that reverse-engineering any part of CanvasCBL is against our terms of service. Thank you for using CanvasCBL!\n',
-  '---------------'
+  '---------------\n' +
+    'Hey there, curious fellow! While we love inquisitive minds, please note that reverse-engineering any part of CanvasCBL is against our terms of service. Thank you for using CanvasCBL!\n\n' +
+    "If you're a developer, you should totally check out our API at https://go.canvascbl.com/docs!\n" +
+    '---------------'
 );
 
 ReactDOM.render(
