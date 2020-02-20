@@ -3,7 +3,18 @@ import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import v4 from 'uuid/v4';
 
-import { Typography, Table, Icon, Tag, Skeleton, Popover } from 'antd';
+import {
+  Typography,
+  Table,
+  Icon,
+  Tag,
+  Skeleton,
+  Popover,
+  Row,
+  Col,
+  Statistic,
+  Divider
+} from 'antd';
 import { Accordion as MobileAccordion, List as MobileList } from 'antd-mobile';
 
 import { gradeMapByGrade } from '../../../util/canvas/gradeMapByGrade';
@@ -22,6 +33,7 @@ import truncate from 'truncate';
 import Loading from '../Loading';
 import Padding from '../../Padding';
 import ConnectedObserveeHandler from '../DashboardNav/ObserveeHandler';
+import roundNumberToDigits from '../../../util/roundNumberToDigits';
 
 function PreviousGrade(props) {
   const { userHasValidSubscription, grade, previousGrade } = props;
@@ -138,6 +150,7 @@ function Grades(props) {
     error,
     courses,
     users,
+    allGpas,
     activeUserId,
     observees,
     plus
@@ -204,6 +217,13 @@ function Grades(props) {
     </Typography.Title>
   );
 
+  const showGpa = !!(
+    allGpas &&
+    allGpas[activeUserId] &&
+    allGpas[activeUserId].unweighted.default !== 0
+  );
+  const gpa = allGpas && allGpas[activeUserId];
+
   if (isMobile) {
     return (
       <div>
@@ -251,32 +271,106 @@ function Grades(props) {
             </MobileAccordion.Panel>
           ))}
         </MobileAccordion>
+        {showGpa && (
+          <>
+            <Padding all={5} />
+            <Typography.Title level={3}>GPA</Typography.Title>
+            Unweighted GPAs for the current semester. Learn more{' '}
+            <PopoutLink url="https://go.canvascbl.com/help/gpas">
+              here
+            </PopoutLink>
+            .
+            <Padding all={5} />
+            <MobileList>
+              <MobileList.Item
+                extra={roundNumberToDigits(gpa.unweighted.default, 2)}
+              >
+                Report Card GPA{' '}
+                <PopoutLink url="https://go.canvascbl.com/help/gpas">
+                  <Icon type="question-circle" />
+                </PopoutLink>
+              </MobileList.Item>
+              <MobileList.Item
+                extra={roundNumberToDigits(gpa.unweighted.subgrades, 2)}
+              >
+                Traditional GPA{' '}
+                <PopoutLink url="https://go.canvascbl.com/help/gpas">
+                  <Icon type="question-circle" />
+                </PopoutLink>
+              </MobileList.Item>
+            </MobileList>
+          </>
+        )}
         {observees && observees.length > 0 && (
-          <div>
+          <>
             <Padding br />
             <Typography.Title level={3}>Switch Students</Typography.Title>
             <ConnectedObserveeHandler />
-          </div>
+          </>
         )}
       </div>
     );
   }
 
   return (
-    <div>
+    <>
       {gradesTitle}
       <Typography.Text type="secondary">
         If {observees && observees.length ? 'your student has' : 'you have'} a
         grade in a class, click on the name to see a detailed breakdown.
       </Typography.Text>
-      <div style={{ marginBottom: '12px' }} />
+      <Padding bottom="12px" />
       <Table columns={tableColumns} dataSource={data} />
+      {showGpa && (
+        <>
+          <Typography.Title level={3}>GPA</Typography.Title>
+          <Padding all={5} />
+          <Row gutter={16}>
+            <Col span={8}>
+              <Statistic
+                title={
+                  <>
+                    Report Card GPA{' '}
+                    <PopoutLink url="https://go.canvascbl.com/help/gpas">
+                      <Icon type="question-circle" />
+                    </PopoutLink>
+                  </>
+                }
+                value={roundNumberToDigits(gpa.unweighted.default, 2)}
+              />
+            </Col>
+            <Col span={8}>
+              <Statistic
+                title={
+                  <>
+                    Traditional GPA{' '}
+                    <PopoutLink url="https://go.canvascbl.com/help/gpas">
+                      <Icon type="question-circle" />
+                    </PopoutLink>
+                  </>
+                }
+                value={roundNumberToDigits(gpa.unweighted.subgrades, 2)}
+              />
+            </Col>
+          </Row>
+          <Padding all={10} />
+          <Typography.Text type="secondary">
+            These unweighted GPAs only represent the current semester. Learn
+            more{' '}
+            <PopoutLink url="https://go.canvascbl.com/help/gpas">
+              here
+            </PopoutLink>
+            .
+          </Typography.Text>
+        </>
+      )}
+      <Divider />
       <Typography.Text type="secondary">
         Please note that these grades may not be accurate or representative of
         your real grade. For the most accurate and up-to-date information,
         please consult someone from your school.
       </Typography.Text>
-    </div>
+    </>
   );
 }
 
@@ -289,6 +383,7 @@ const ConnectedGrades = connect(state => ({
   activeUserId: state.canvas.activeUserId,
   user: state.canvas.user,
   observees: state.canvas.observees,
+  allGpas: state.canvas.gpa,
   error: state.error,
   loading: state.loading
 }))(Grades);

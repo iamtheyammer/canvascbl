@@ -30,7 +30,8 @@ export default function canvas(state = {}, action) {
         // by default, the active user is the first graded user
         activeUserId: action.gradedUsers[0],
         outcomeResults: action.outcomeResults,
-        grades: action.grades
+        grades: action.grades,
+        gpa: action.gpa
       };
     case CANVAS_GOT_ASSIGNMENTS_FOR_COURSE:
       return {

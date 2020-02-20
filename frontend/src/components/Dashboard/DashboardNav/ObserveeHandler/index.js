@@ -15,8 +15,11 @@ function Index(props) {
 
   if (isMobile) {
     return (
-      <MobileAccordion>
-        <MobileAccordion.Panel header={<b>{users[activeUserId].name}</b>}>
+      <MobileAccordion defaultActiveKey="observees">
+        <MobileAccordion.Panel
+          header={<b>{users[activeUserId].name}</b>}
+          key="observees"
+        >
           <MobileList>
             {observees.map(
               o =>
