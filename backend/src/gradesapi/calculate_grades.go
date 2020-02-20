@@ -14,6 +14,12 @@ type grade struct {
 	MostAbove float64 `json:"most_above"`
 	// aka min
 	AllAbove float64 `json:"all_above"`
+	// GPAVal represents the gpa points this grade is worth, for example, a B-, B, or B+ would be 3.0.
+	// Not included with JSON
+	GPAVal float64 `json:"-"`
+	// SubgradeGPAVal represents the gpa points this grade is worth, traditionally, so an A- would be 3.7.
+	// Not included with JSON
+	SubgradeGPAVal float64 `json:"-"`
 }
 
 type computedAverage struct {
@@ -32,16 +38,16 @@ type computedGrade struct {
 
 // gradeMap is a slice of possible grades
 var gradeMap = []grade{
-	{"A", 6, 3.3, 3},
-	{"A-", 5, 3.3, 2.5},
-	{"B+", 4, 2.6, 2.2},
-	{"B", 3, 2.6, 1.8},
-	{"B-", 2, 2.6, 1.5},
-	{"C", 1, 2.2, 1.5},
-	{"I", 0, 0, 0},
+	{"A", 6, 3.3, 3, 4, 4},
+	{"A-", 5, 3.3, 2.5, 4, 3.7},
+	{"B+", 4, 2.6, 2.2, 3, 3.3},
+	{"B", 3, 2.6, 1.8, 3, 3},
+	{"B-", 2, 2.6, 1.5, 3, 2.7},
+	{"C", 1, 2.2, 1.5, 2, 2},
+	{"I", 0, 0, 0, 0, 0},
 }
 
-var naGrade = grade{"N/A", -1, 0, 0}
+var naGrade = grade{"N/A", -1, 0, 0, 0, 0}
 
 /*
 calculateGradeFromOutcomeResults calculates a grade object from a map of scores.
@@ -179,4 +185,35 @@ func calculateGradeFromOutcomeResults(results map[uint64][]canvasOutcomeResult, 
 		Grade:    finalGrade,
 		Averages: averages,
 	}
+}
+
+/*
+
+calculateGPAFromDetailedGrades returns a gpa object from
+a detailedGrades object.
+*/
+func calculateGPAFromDetailedGrades(g detailedGrades) gpa {
+	finalGPA := gpa{}
+	for uID, cs := range g {
+		var (
+			cGPA calculatedGPA
+			//subgrade sum
+			subSum float64
+			// default sum
+			defSum float64
+		)
+
+		for _, c := range cs {
+			subSum += c.Grade.SubgradeGPAVal
+			defSum += c.Grade.GPAVal
+		}
+
+		numClasses := float64(len(cs))
+		cGPA.Unweighted.Subgrades = subSum / numClasses
+		cGPA.Unweighted.Default = defSum / numClasses
+
+		finalGPA[uID] = cGPA
+	}
+
+	return finalGPA
 }

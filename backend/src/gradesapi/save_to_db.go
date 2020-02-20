@@ -3,6 +3,7 @@ package gradesapi
 import (
 	"fmt"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/courses"
+	"github.com/iamtheyammer/canvascbl/backend/src/db/services/gpas"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/grades"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/outcomes"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/users"
@@ -293,6 +294,26 @@ func saveOutcomeToDB(o *canvasOutcome) {
 	err := outcomes.UpsertOutcome(db, &req)
 	if err != nil {
 		util.HandleError(fmt.Errorf("error saving outcome %d to db: %w", o.ID, err))
+		return
+	}
+}
+
+func saveGPAToDB(g gpa, manualFetch bool) {
+	var req []gpas.InsertRequest
+
+	for cuID, cGPA := range g {
+		req = append(req, gpas.InsertRequest{
+			CanvasUserID:     cuID,
+			Weighted:         false,
+			GPA:              cGPA.Unweighted.Default,
+			GPAWithSubgrades: cGPA.Unweighted.Subgrades,
+			ManualFetch:      manualFetch,
+		})
+	}
+
+	err := gpas.InsertMultiple(db, &req)
+	if err != nil {
+		util.HandleError(fmt.Errorf("error saving gpa to db: %w", err))
 		return
 	}
 }

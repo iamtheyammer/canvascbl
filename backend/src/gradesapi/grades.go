@@ -37,6 +37,17 @@ type detailedGrades map[uint64]map[uint64]computedGrade
 // map[courseID]map[userID]map[outcomeID][]canvasOutcomeResult
 type processedOutcomeResults map[uint64]map[uint64]map[uint64][]canvasOutcomeResult
 
+// calculatedGPA represents a single user's gpa
+type calculatedGPA struct {
+	Unweighted struct {
+		Subgrades float64 `json:"subgrades"`
+		Default   float64 `json:"default"`
+	} `json:"unweighted"`
+}
+
+// gpa represents more than one user's GPA
+type gpa map[uint64]calculatedGPA
+
 const (
 	gradesErrorNoTokens              = "no stored tokens for this user"
 	gradesErrorRevokedToken          = "the token/refresh token has been revoked or no longer works"
@@ -55,6 +66,7 @@ const (
 	gradesIncludeOutcomeResults = gradesInclude("outcome_results")
 	gradesIncludeSimpleGrades   = gradesInclude("simple_grades")
 	gradesIncludeDetailedGrades = gradesInclude("detailed_grades")
+	gradesIncludeGPA            = gradesInclude("gpa")
 )
 
 type gradesHandlerRequest struct {
@@ -64,6 +76,7 @@ type gradesHandlerRequest struct {
 	Courses        bool
 	OutcomeResults bool
 	DetailedGrades bool
+	GPA            bool
 }
 
 // UserGradesRequest represents a request for GradesForUser.
@@ -84,6 +97,7 @@ type UserGradesResponse struct {
 	OutcomeResults processedOutcomeResults   `json:"outcome_results,omitempty"`
 	SimpleGrades   simpleGrades              `json:"simple_grades,omitempty"`
 	DetailedGrades detailedGrades            `json:"detailed_grades,omitempty"`
+	GPA            gpa                       `json:"gpa"`
 }
 
 // GradesErrorResponse represents an error from GradesForUser.
@@ -123,6 +137,10 @@ func (r gradesHandlerRequest) toScopes() []oauth2.Scope {
 		s = append(s, oauth2.ScopeGrades)
 	}
 
+	if r.GPA {
+		s = append(s, oauth2.ScopeGPA)
+	}
+
 	return s
 }
 
@@ -145,6 +163,8 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 		case gradesIncludeSimpleGrades:
 		case gradesIncludeDetailedGrades:
 			req.DetailedGrades = true
+		case gradesIncludeGPA:
+			req.GPA = true
 		default:
 			handleError(w, GradesErrorResponse{
 				Error: gradesErrorInvalidInclude,
@@ -257,6 +277,10 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 		resp.DetailedGrades = g.DetailedGrades
 	} else {
 		resp.SimpleGrades = g.SimpleGrades
+	}
+
+	if req.GPA {
+		resp.GPA = g.GPA
 	}
 
 	jResp, err := json.Marshal(&resp)
@@ -610,6 +634,10 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *GradesErrorRes
 
 	go saveGradesToDB(grades, req.ManualFetch)
 
+	cGPA := calculateGPAFromDetailedGrades(grades)
+
+	go saveGPAToDB(cGPA, req.ManualFetch)
+
 	return &UserGradesResponse{
 		Session:        nil,
 		UserProfile:    (*canvasUserProfile)(profile),
@@ -618,5 +646,6 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *GradesErrorRes
 		OutcomeResults: results,
 		SimpleGrades:   sGrades,
 		DetailedGrades: grades,
+		GPA:            cGPA,
 	}, nil
 }
