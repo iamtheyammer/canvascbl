@@ -23,7 +23,6 @@ import ConnectedRedeem from './Upgrades/Redeem';
 import Loading from './Loading';
 import getUrlPrefix from '../../util/getUrlPrefix';
 import OAuth2Consent from './OAuth2Consent';
-import PopoutLink from '../PopoutLink';
 
 const { Content, Footer } = Layout;
 
