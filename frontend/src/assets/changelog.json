@@ -92,5 +92,11 @@
     "type": 1,
     "title": "Welcome to Semester 2!",
     "content": "We've done a complete reworking of CanvasCBL to make your semester 2 as great as it can be."
+  },
+  {
+    "timestamp": 1582175570016,
+    "type": 1,
+    "title": "Added GPA calculation",
+    "content": "We've added your GPA to the grades page!"
   }
 ]
