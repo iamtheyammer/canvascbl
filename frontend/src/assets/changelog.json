@@ -98,5 +98,11 @@
     "type": 1,
     "title": "Added GPA calculation",
     "content": "We've added your GPA to the grades page!"
+  },
+  {
+    "timestamp": 1582337467015,
+    "type": 0,
+    "title": "Fixed GPA calculation",
+    "content": "Previously, classes without a grade were treated as I's. We've fixed this so your GPAs are correct."
   }
 ]
