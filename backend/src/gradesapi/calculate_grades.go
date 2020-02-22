@@ -201,16 +201,20 @@ func calculateGPAFromDetailedGrades(g detailedGrades) gpa {
 			subSum float64
 			// default sum
 			defSum float64
+			// courses with a valid grade
+			validClasses float64
 		)
 
 		for _, c := range cs {
+			if c.Grade != naGrade {
+				validClasses += 1
+			}
 			subSum += c.Grade.SubgradeGPAVal
 			defSum += c.Grade.GPAVal
 		}
 
-		numClasses := float64(len(cs))
-		cGPA.Unweighted.Subgrades = subSum / numClasses
-		cGPA.Unweighted.Default = defSum / numClasses
+		cGPA.Unweighted.Subgrades = subSum / validClasses
+		cGPA.Unweighted.Default = defSum / validClasses
 
 		finalGPA[uID] = cGPA
 	}
