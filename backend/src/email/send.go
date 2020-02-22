@@ -8,11 +8,11 @@ import (
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
 
-func send(templateID string, templateData map[string]interface{}, email string, name string) {
+func send(t template, templateData map[string]interface{}, email string, name string) {
 	m := mail.NewV3Mail()
-	m.SetFrom(util.SendGridFrom)
-	m.SetTemplateID(templateID)
-	m.ReplyTo = util.SendGridFrom
+	m.SetFrom(t.From)
+	m.SetTemplateID(t.ID)
+	m.ReplyTo = t.ReplyTo
 
 	p := mail.NewPersonalization()
 	p.To = []*mail.Email{

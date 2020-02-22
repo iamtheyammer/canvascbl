@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/iamtheyammer/canvascbl/backend/src/db"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/products"
-	"github.com/iamtheyammer/canvascbl/backend/src/env"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/pkg/errors"
 	"github.com/stripe/stripe-go"
@@ -31,7 +30,7 @@ func SendPurchaseAcknowledgement(sub *stripe.Subscription) {
 	}
 
 	send(
-		env.SendGridPurchaseAcknowledgementTemplateID,
+		purchaseAcknowledgement,
 		map[string]interface{}{
 			"first_name":   strings.Split(user.Name, " ")[0],
 			"product_name": prod.Name,
@@ -50,7 +49,7 @@ func SendCancellationAcknowledgement(sub *stripe.Subscription) {
 	}
 
 	send(
-		env.SendGridCancellationAcknowledgementTemplateID,
+		cancellationAcknowledgement,
 		map[string]interface{}{
 			"first_name": strings.Split(user.Name, " ")[0],
 		},

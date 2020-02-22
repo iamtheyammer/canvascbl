@@ -2,7 +2,6 @@ package email
 
 import (
 	"github.com/iamtheyammer/canvascbl/backend/src/db"
-	"github.com/iamtheyammer/canvascbl/backend/src/env"
 	"strings"
 	"time"
 )
@@ -11,7 +10,7 @@ func SendWelcome(email string, name string) {
 	firstName := strings.Split(name, " ")[0]
 
 	send(
-		env.SendGridWelcomeTemplateID,
+		welcome,
 		map[string]interface{}{"first_name": firstName},
 		email,
 		name,
