@@ -1,9 +1,13 @@
 package gradesapi
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/canvas_tokens"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/sessions"
 	"github.com/iamtheyammer/canvascbl/backend/src/env"
@@ -23,6 +27,16 @@ var (
 		Error:      gradesErrorUnknownCanvasError,
 		StatusCode: util.CanvasProxyErrorCode,
 	}
+	s3Uploader = func() *s3manager.Uploader {
+		s, err := session.NewSession(&aws.Config{Region: aws.String("us-east-2")})
+		if err != nil {
+			panic(fmt.Errorf("error creating aws session: %w", err))
+		}
+
+		ul := s3manager.NewUploader(s)
+
+		return ul
+	}()
 )
 
 type gradesErrorAction string
@@ -304,13 +318,50 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 		return
 	}
 
+	returnData := r.URL.Query().Get("return_data") == "true"
+	if !returnData {
+		util.SendNoContent(w)
+		// NOT returning-- we want to finish our work
+	}
+
+	uploadToS3 := func(isError bool, input interface{}) {
+		key := time.Now().Format(time.RFC3339) + "-" + string(env.Env) + ".json"
+		if isError {
+			key = "error-" + key
+		}
+
+		i := &s3manager.UploadInput{
+			Bucket:      aws.String("canvascbl-fetch-all-grades-logs"),
+			ContentType: aws.String("application/json"),
+			Key:         aws.String(key),
+		}
+
+		jRet, err := json.Marshal(input)
+		if err != nil {
+			util.HandleError(fmt.Errorf("error marshaling upload to s3 input to json: %w", err))
+		}
+
+		i.Body = bytes.NewReader(jRet)
+
+		_, err = s3Uploader.Upload(i)
+		if err != nil {
+			util.HandleError(fmt.Errorf("error uploading to s3: %w", err))
+		}
+	}
+
 	// get all users with tokens
 	toks, err := canvas_tokens.List(util.DB, &canvas_tokens.ListRequest{
 		OrderBys:   []string{"canvas_tokens.canvas_user_id", "canvas_tokens.inserted_at DESC"},
 		DistinctOn: "canvas_tokens.canvas_user_id",
 	})
 	if err != nil {
-		handleISE(w, fmt.Errorf("error listing all unique canvas tokens for grades for all: %w", err))
+		wErr := fmt.Errorf("error listing all unique canvas tokens for grades for all: %w", err)
+		if returnData {
+			handleISE(w, wErr)
+		} else {
+			uploadToS3(true, &wErr)
+		}
+
 		return
 	}
 
@@ -351,19 +402,31 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 
 	wg.Wait()
 
-	jRet, err := json.Marshal(&struct {
-		Errors   map[uint64]*GradesErrorResponse `json:"errors"`
-		Statuses map[uint64]bool                 `json:"statuses"`
-	}{
-		Errors:   errs,
-		Statuses: statuses,
-	})
-	if err != nil {
-		handleISE(w, fmt.Errorf("error marshaling errors and statuses from fetch all grades: %w", err))
+	if returnData {
+		jRet, err := json.Marshal(&struct {
+			Errors   map[uint64]*GradesErrorResponse `json:"errors"`
+			Statuses map[uint64]bool                 `json:"statuses"`
+		}{
+			Errors:   errs,
+			Statuses: statuses,
+		})
+		if err != nil {
+			handleISE(w, fmt.Errorf("error marshaling errors and statuses from fetch all grades: %w", err))
+			return
+		}
+
+		util.SendJSONResponse(w, jRet)
 		return
+	} else {
+		uploadToS3(false, &struct {
+			Errors   map[uint64]*GradesErrorResponse `json:"errors"`
+			Statuses map[uint64]bool                 `json:"statuses"`
+		}{
+			Errors:   errs,
+			Statuses: statuses,
+		})
 	}
 
-	util.SendJSONResponse(w, jRet)
 	return
 }
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
@@ -8,17 +9,15 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 )
 
 const (
-	s3Bucket            = "canvascbl-fetch-all-grades-logs"
-	totalFetchErrorBody = "{\"error\":\"could not connect to host; no response received\"}"
+	s3Bucket = "canvascbl-fetch-all-grades-logs"
 )
 
 var (
-	sess = func() *session.Session {
+	ul = func() *s3manager.Uploader {
 		s, err := session.NewSession(&aws.Config{
 			Region: aws.String(awsRegion),
 		})
@@ -26,7 +25,8 @@ var (
 			panic(fmt.Errorf("error creating aws session: %w", err))
 		}
 
-		return s
+		upl := s3manager.NewUploader(s)
+		return upl
 	}()
 	client = http.Client{}
 	apiURL = func() *url.URL {
@@ -47,33 +47,37 @@ var (
 )
 
 func generateFilename() string {
-	return time.Now().Format(time.RFC3339) + "-" + environment + ".json"
+	return "lgf-error-" + time.Now().Format(time.RFC3339) + "-" + environment + ".json"
 }
 
-func HandleLambdaEvent() (string, error) {
-	ul := s3manager.NewUploader(sess)
-	input := &s3manager.UploadInput{
-		Bucket:      aws.String(s3Bucket),
-		ContentType: aws.String("application/json"),
-		Key:         aws.String(generateFilename()),
-	}
-	resp, err := client.Do(&req)
-	if err != nil {
-		if resp == nil {
-			input.Body = strings.NewReader(totalFetchErrorBody)
-		} else {
-			input.Body = resp.Body
+func HandleLambdaEvent() error {
+	// create a new context
+	ctx := context.Background()
+	// add a 1 second deadline (enough to connect and process the request)
+	ctx, cancel := context.WithDeadline(ctx, time.Now().Add(time.Second*1))
+	// add context to request
+	r := req.WithContext(ctx)
+	// make the request
+	resp, err := client.Do(r)
+	// if an error occurs and resp != nil upload error to s3
+	if err != nil && resp != nil {
+		input := &s3manager.UploadInput{
+			Bucket:      aws.String(s3Bucket),
+			ContentType: aws.String("application/json"),
+			Key:         aws.String(generateFilename()),
+			Body:        resp.Body,
 		}
-	} else {
-		input.Body = resp.Body
+
+		_, err := ul.Upload(input)
+		if err != nil {
+			return fmt.Errorf("error uploading to s3: %w", err)
+		}
 	}
 
-	f, err := ul.Upload(input)
-	if err != nil {
-		return "", fmt.Errorf("error uploading to s3: %w", err)
-	}
+	// you're supposed to always call cancel
+	cancel()
 
-	return f.Location, nil
+	return nil
 }
 
 func main() {
