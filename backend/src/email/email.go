@@ -31,4 +31,9 @@ var (
 		From:    mail.NewEmail("CanvasCBL Grades", "grades@canvascbl.com"),
 		ReplyTo: defaultReplyTo,
 	}
+	parentGradeChange = template{
+		ID:      "d-a3966f137ea54953918c342a2238b804",
+		From:    mail.NewEmail("CanvasCBL Grades", "grades@canvascbl.com"),
+		ReplyTo: defaultReplyTo,
+	}
 )

@@ -25,6 +25,11 @@ type Grade struct {
 	InsertedAt   time.Time
 }
 
+/*
+List lists stored grades.
+
+You will only get one row per course and user together.
+*/
 func List(db services.DB, req *ListRequest) (*[]Grade, error) {
 	q := util.Sq.
 		Select(
