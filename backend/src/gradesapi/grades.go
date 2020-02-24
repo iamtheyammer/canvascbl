@@ -430,9 +430,6 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 			if len(*ns) != 1 {
 				set(true)
 				return
-			} else if !(*ns)[0].Enabled {
-				set(true)
-				return
 			}
 
 			// now, we know that they do want an email.

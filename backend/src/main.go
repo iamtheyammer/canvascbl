@@ -79,13 +79,24 @@ func getRouter() *httprouter.Router {
 
 	router.POST("/api/admin/gift_cards", admin.GenerateGiftCardsHandler)
 
-	// API
+	/*
+		API
+	*/
+
+	// grades
 	router.GET("/api/v1/grades", gradesapi.GradesHandler)
 	router.GET("/api/v1/grades/fetch_all", gradesapi.GradesForAllHandler)
+
+	// canvas
 	router.GET("/api/v1/courses/:courseID/assignments", gradesapi.AssignmentsHandler)
 	router.GET("/api/v1/courses/:courseID/outcome_alignments", gradesapi.AlignmentsHandler)
 	router.GET("/api/v1/outcomes/:outcomeID", gradesapi.OutcomeHandler)
 
+	// notifications
+	router.GET("/api/v1/notifications/types", gradesapi.ListNotificationTypesHandler)
+	router.GET("/api/v1/notifications/settings", gradesapi.ListNotificationSettingsHandler)
+	router.PUT("/api/v1/notifications/types/:notificationTypeID", gradesapi.PutNotificationSettingsHandler)
+	router.DELETE("/api/v1/notifications/types/:notificationTypeID", gradesapi.DeleteNotificationSettingHandler)
 	return router
 }
 

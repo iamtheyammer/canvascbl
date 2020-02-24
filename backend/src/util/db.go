@@ -8,6 +8,11 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	// PgErrorForeignKeyViolation represents the PostgreSQL error code 23503.
+	PgErrorForeignKeyViolation = "23503"
+)
+
 var (
 	DB                = ConnectDB()
 	PlaceholderFormat = squirrel.Dollar

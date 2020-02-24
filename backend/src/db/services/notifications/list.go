@@ -1,6 +1,7 @@
 package notifications
 
 import (
+	"database/sql"
 	"fmt"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services"
@@ -8,17 +9,23 @@ import (
 	"time"
 )
 
-// Type represents a notification type.
-type Type uint64
-
 // Medium represents a notification medium.
 type Medium string
 
+// IsValid determines if a Medium is a valid Medium
+func (m Medium) IsValid() bool {
+	switch m {
+	case MediumEmail:
+	default:
+		return false
+	}
+
+	return true
+}
+
 const (
-	// zeroType is Type's zero value
-	zeroType = Type(0)
 	// GradeChangeNotificationID is the ID for the grade_change notification type.
-	TypeGradeChange = Type(1)
+	TypeGradeChange = 1
 
 	// zeroMedium is Medium's zero value
 	zeroMedium = Medium("")
@@ -30,23 +37,84 @@ const (
 	MediumSMS = Medium("SMS")
 )
 
+// Setting represents a user's setting for one type of notifications on one medium.
+type Setting struct {
+	ID         uint64
+	UserID     uint64
+	Type       uint64
+	Medium     Medium
+	InsertedAt time.Time
+}
+
+// Type represents a notification type.
+type Type struct {
+	ID          uint64
+	Name        string
+	ShortName   string
+	Description string
+	InsertedAt  string
+}
+
+// ListTypesRequest is the request for ListTypes. It's empty, but it can be added to in the future.
+type ListTypesRequest struct{}
+
 // ListSettingsRequest is the request for ListSettings.
 type ListSettingsRequest struct {
 	ID           uint64
 	UserID       uint64
 	CanvasUserID uint64
-	Type         Type
+	Type         uint64
 	Medium       Medium
 }
 
-// Setting represents a user's setting for one type of notifications on one medium.
-type Setting struct {
-	ID         uint64
-	UserID     uint64
-	Type       Type
-	Medium     Medium
-	Enabled    bool
-	InsertedAt time.Time
+// ListTypes lists notification types.
+func ListTypes(db services.DB, req *ListTypesRequest) (*[]Type, error) {
+	query, args, err := util.Sq.
+		Select(
+			"id",
+			"name",
+			"short_name",
+			"description",
+			"inserted_at",
+		).
+		From("notification_types").
+		ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("error building list notification types sql: %w", err)
+	}
+
+	rows, err := db.Query(query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("error executing list notification types sql: %w", err)
+	}
+
+	defer rows.Close()
+
+	var ts []Type
+	for rows.Next() {
+		var (
+			t           Type
+			description sql.NullString
+		)
+		err = rows.Scan(
+			&t.ID,
+			&t.Name,
+			&t.ShortName,
+			&description,
+			&t.InsertedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning list notification types sql: %w", err)
+		}
+
+		if description.Valid {
+			t.Description = description.String
+		}
+
+		ts = append(ts, t)
+	}
+
+	return &ts, nil
 }
 
 // ListSettings lists notification settings.
@@ -57,7 +125,6 @@ func ListSettings(db services.DB, req *ListSettingsRequest) (*[]Setting, error) 
 			"notification_settings.user_id",
 			"notification_settings.notification_type_id",
 			"notification_settings.medium",
-			"notification_settings.enabled",
 			"notification_settings.inserted_at",
 		).
 		From("notification_settings")
@@ -75,7 +142,7 @@ func ListSettings(db services.DB, req *ListSettingsRequest) (*[]Setting, error) 
 			Where(sq.Eq{"users.canvas_user_id": req.CanvasUserID})
 	}
 
-	if req.Type != zeroType {
+	if req.Type > 0 {
 		q = q.Where(sq.Eq{"notification_type_id": req.Type})
 	}
 
@@ -103,7 +170,6 @@ func ListSettings(db services.DB, req *ListSettingsRequest) (*[]Setting, error) 
 			&s.UserID,
 			&s.Type,
 			&s.Medium,
-			&s.Enabled,
 			&s.InsertedAt,
 		)
 		if err != nil {

@@ -131,7 +131,7 @@ Those query params:
 
 ## Environment Variables
 
-Some environment variables are required to start the proxy server.
+Some environment variables are required to start the proxy server. This list is very, very out of date.
 
 ```sh
 # Contains your Canvas OAuth2 Client ID

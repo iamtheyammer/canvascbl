@@ -16,6 +16,7 @@ const (
 	ScopeAverageGrade        = Scope("average_course_grade")
 	ScopeAverageOutcomeScore = Scope("average_outcome_score")
 	ScopeGPA                 = Scope("gpa")
+	ScopeNotifications       = Scope("notifications")
 )
 
 // ValidateScopes ensures that all requested scopes are valid.
@@ -50,6 +51,7 @@ func ValidateScopes(scopes []string) (bool, *string) {
 		case ScopeAverageGrade:
 		case ScopeAverageOutcomeScore:
 		case ScopeGPA:
+		case ScopeNotifications:
 		default:
 			return false, &s
 		}
