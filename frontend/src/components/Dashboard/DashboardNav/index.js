@@ -54,6 +54,9 @@ function DashboardNav(props) {
               <MobileList.Item onClick={toggleMenu} key="/dashboard/upgrades">
                 <Link to="/dashboard/upgrades">Upgrades</Link>
               </MobileList.Item>
+              <MobileList.Item onClick={toggleMenu} key="/dashboard/settings">
+                <Link to="/dashboard/settings">Settings</Link>
+              </MobileList.Item>
               <MobileList.Item />
               {observees && observees.length > 1 && (
                 <div>
@@ -126,6 +129,9 @@ function DashboardNav(props) {
         </Menu.Item>
         <Menu.Item key="/dashboard/upgrades">
           <Link to="/dashboard/upgrades">Upgrades</Link>
+        </Menu.Item>
+        <Menu.Item key="/dashboard/settings">
+          <Link to="/dashboard/settings">Settings</Link>
         </Menu.Item>
       </Menu>
       <Menu

@@ -23,6 +23,7 @@ import ConnectedRedeem from './Upgrades/Redeem';
 import Loading from './Loading';
 import getUrlPrefix from '../../util/getUrlPrefix';
 import OAuth2Consent from './OAuth2Consent';
+import Settings from './Settings';
 
 const { Content, Footer } = Layout;
 
@@ -33,7 +34,8 @@ const getBreadcrumbNameMap = (courses = []) => {
     '/dashboard/grades': 'Grades',
     '/dashboard/upgrades': 'Upgrades',
     '/dashboard/upgrades/redeem': 'Redeem',
-    '/dashboard/authorize': 'Authorize an App'
+    '/dashboard/authorize': 'Authorize an App',
+    '/dashboard/settings': 'Settings'
   };
 
   courses.forEach(
@@ -148,6 +150,7 @@ function Dashboard(props) {
         path="/dashboard/upgrades/redeem"
         component={ConnectedRedeem}
       />
+      <Route exact path="/dashboard/settings" component={Settings} />
       <Route exact path="/dashboard/authorize" component={OAuth2Consent} />
       <Route exact path="/dashboard/logout" component={ConnectedLogout} />
       <Route render={() => <Redirect to="/" />} />

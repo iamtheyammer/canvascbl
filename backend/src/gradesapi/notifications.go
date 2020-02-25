@@ -81,8 +81,8 @@ func ListNotificationSettingsHandler(w http.ResponseWriter, r *http.Request, _ h
 
 	var (
 		wg       = sync.WaitGroup{}
-		settings []notificationSetting
-		types    []notificationType
+		settings = make([]notificationSetting, 0)
+		types    = make([]notificationType, 0)
 		err      error
 	)
 
