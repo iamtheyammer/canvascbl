@@ -43,6 +43,7 @@ function* toggleNotificationType({ id, toggle, typeId }) {
       toggle ? 'put' : 'delete'
     );
     yield put(toggledNotificationType(typeId));
+    yield fetchNotificationSettingsAndTypes(id);
   } catch (e) {
     yield put(
       toggleNotificationTypeError(

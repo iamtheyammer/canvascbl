@@ -40,7 +40,6 @@ function Settings(props) {
     const id = v4();
     dispatch(toggleNotificationType(id, typeId, toggle));
     dispatch(setToggleNotificationStatusId(id, typeId));
-    setTimeout(fetchSettingsAndTypes, 50);
   }
 
   const notificationSettingsStatus = {
