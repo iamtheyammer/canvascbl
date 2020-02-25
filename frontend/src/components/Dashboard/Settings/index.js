@@ -64,10 +64,13 @@ function Settings(props) {
         Currently, all notifications are delivered via email.
       </Typography.Text>
       {!!settingsAndTypesError ? (
-        <Typography.Text type="danger">
-          There was an error fetching notification settings. Please contact
-          support or try again later.
-        </Typography.Text>
+        <>
+          <Padding all={10} />
+          <Typography.Text type="danger">
+            There was an error fetching notification settings. Please contact
+            support or try again later.
+          </Typography.Text>
+        </>
       ) : !notificationSettingsStatus.loading ? (
         notifications.types.map(t => (
           <Fragment key={t.short_name}>
