@@ -25,8 +25,8 @@ function settings(state = {}, action) {
         ...state,
         notifications: {
           ...state.notifications,
-          toggles: {
-            ...state.notifications.toggles,
+          toggleErrors: {
+            ...state.notifications.toggleErrors,
             [action.typeId]: action.e
           }
         }

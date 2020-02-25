@@ -76,6 +76,15 @@ function Settings(props) {
             <Typography.Title level={4}>{t.name}</Typography.Title>
             <Typography.Text>{t.description}</Typography.Text>
             <Padding all={5} />
+            {notifications.toggleErrors && notifications.toggleErrors[t.id] && (
+              <>
+                <Typography.Text type="danger">
+                  There was an error toggling this notification. Please contact
+                  support or try again later.
+                </Typography.Text>
+                <Padding all={5} />
+              </>
+            )}
             <Switch
               onChange={throttle(
                 checked => toggleNotification(t.id, checked),
@@ -93,7 +102,10 @@ function Settings(props) {
                   toggleIds[t.id] &&
                   loading.includes(toggleIds[t.id]))
               }
-              disabled={notificationSettingsStatus.disabled}
+              disabled={
+                notificationSettingsStatus.disabled ||
+                (notifications.toggleErrors && notifications.toggleErrors[t.id])
+              }
             />
           </Fragment>
         ))
