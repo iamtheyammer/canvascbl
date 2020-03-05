@@ -259,17 +259,18 @@ func saveAssignmentsToDB(ass []canvasAssignment, courseID string) {
 		return
 	}
 
-	var req []courses.AssignmentInsertRequest
+	var req []courses.AssignmentUpsertRequest
 	for _, a := range ass {
-		req = append(req, courses.AssignmentInsertRequest{
+		req = append(req, courses.AssignmentUpsertRequest{
 			CourseID: uint64(cID),
 			CanvasID: a.ID,
 			IsQuiz:   a.IsQuizAssignment,
 			Name:     a.Name,
+			DueAt:    a.DueAt,
 		})
 	}
 
-	err = courses.InsertMultipleAssignments(db, &req)
+	err = courses.UpsertMultipleAssignments(db, &req)
 	if err != nil {
 		util.HandleError(fmt.Errorf("error inserting multiple assignments for course %s: %w", courseID, err))
 		return
