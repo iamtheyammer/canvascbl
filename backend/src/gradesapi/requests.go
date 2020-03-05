@@ -355,7 +355,9 @@ func makeCanvasRequest(
 ) (*http.Response, error) {
 	// this system allows for the Link header so full URLs can be passed in
 	fURL := "https://" + rd.Subdomain + ".instructure.com/"
-	if !strings.HasPrefix(path, fURL) {
+	if strings.HasPrefix(path, fURL) {
+		fURL = path
+	} else {
 		fURL += path
 	}
 
