@@ -9,6 +9,7 @@ import (
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/canvas_tokens"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/sessions"
 	userssvc "github.com/iamtheyammer/canvascbl/backend/src/db/services/users"
+	"github.com/iamtheyammer/canvascbl/backend/src/email"
 	"github.com/iamtheyammer/canvascbl/backend/src/env"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
@@ -240,7 +241,7 @@ func OAuth2ResponseHandler(w http.ResponseWriter, r *http.Request, _ httprouter.
 		return
 	}
 
-	ss, err := db.UpsertProfileAndGenerateSession(&pBody)
+	ss, p, uResp, err := db.UpsertProfileAndGenerateSession(&pBody)
 	if err != nil {
 		util.SendInternalServerError(w)
 		return
@@ -257,6 +258,10 @@ func OAuth2ResponseHandler(w http.ResponseWriter, r *http.Request, _ httprouter.
 		util.HandleError(errors.Wrap(err, "error inserting canvas token"))
 		util.SendInternalServerError(w)
 		return
+	}
+
+	if uResp.InsertedAt.Add(time.Second * 30).After(time.Now()) {
+		go email.SendWelcome(p.PrimaryEmail, p.Name)
 	}
 
 	util.AddSessionToResponse(w, *ss)

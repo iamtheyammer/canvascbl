@@ -13,7 +13,7 @@ import (
 )
 
 func saveProfileToDB(p *canvasUserProfile) {
-	err := users.UpsertProfile(db, &users.UpsertRequest{
+	_, err := users.UpsertProfile(db, &users.UpsertRequest{
 		Name:         p.Name,
 		Email:        p.PrimaryEmail,
 		LTIUserID:    p.LtiUserID,

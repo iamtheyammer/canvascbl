@@ -9,20 +9,20 @@ import (
 )
 
 // UpsertProfileAndGenerateSession upserts the user's profile and generates them a session
-func UpsertProfileAndGenerateSession(pj *string) (*string, error) {
+func UpsertProfileAndGenerateSession(pj *string) (*string, *users.CanvasProfileResponse, *userssvc.UpsertResponse, error) {
 	cpr, err := users.ProfileFromJSON(pj)
 	if err != nil {
 		handleError(errors.Wrap(err, "error unmarshaling CanvasProfileResponse"))
-		return nil, errors.New("error reading canvas response")
+		return nil, nil, nil, errors.New("error reading canvas response")
 	}
 
 	trx, err := util.DB.Begin()
 	if err != nil {
 		handleError(errors.Wrap(err, "error beginning upsert profile and generate session trx"))
-		return nil, errors.New("error beginning transaction")
+		return nil, nil, nil, errors.New("error beginning transaction")
 	}
 
-	err = userssvc.UpsertProfile(trx, &userssvc.UpsertRequest{
+	uResp, err := userssvc.UpsertProfile(trx, &userssvc.UpsertRequest{
 		Name:         cpr.Name,
 		Email:        cpr.PrimaryEmail,
 		LTIUserID:    cpr.LtiUserID,
@@ -35,7 +35,7 @@ func UpsertProfileAndGenerateSession(pj *string) (*string, error) {
 				"generate session transaction at upsert profile"))
 		}
 		handleError(errors.Wrap(err, "error upserting profile"))
-		return nil, errors.New("error saving profile")
+		return nil, nil, nil, errors.New("error saving profile")
 	}
 
 	ss, err := sessions.Generate(trx, &sessions.GenerateRequest{CanvasUserID: uint64(cpr.ID)})
@@ -46,16 +46,16 @@ func UpsertProfileAndGenerateSession(pj *string) (*string, error) {
 				"generate session transaction at generate session"))
 		}
 		handleError(errors.Wrap(err, "error generating session"))
-		return nil, errors.New("error generating session")
+		return nil, nil, nil, errors.New("error generating session")
 	}
 
 	err = trx.Commit()
 	if err != nil {
 		handleError(errors.Wrap(err, "error committing upsert profile and generate session transaction"))
-		return nil, errors.New("error saving to database")
+		return nil, nil, nil, errors.New("error saving to database")
 	}
 
-	return ss, nil
+	return ss, cpr, uResp, nil
 }
 
 func GenerateSession(req *sessions.GenerateRequest) (*string, error) {
