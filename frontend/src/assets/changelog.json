@@ -114,5 +114,11 @@
       "url": "https://go.canvascbl.com/settings",
       "text": "here."
     }
+  },
+  {
+    "timestamp": 1583372342425,
+    "type": 0,
+    "title": "Fixed logging out",
+    "content": "We don't log you out all the time anymore. Sorry for the inconvenience!"
   }
 ]
