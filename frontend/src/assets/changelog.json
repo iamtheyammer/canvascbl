@@ -104,5 +104,15 @@
     "type": 0,
     "title": "Fixed GPA calculation",
     "content": "Previously, classes without a grade were treated as I's. We've fixed this so your GPAs are correct."
+  },
+  {
+    "timestamp": 1583370016936,
+    "type": 1,
+    "title": "Added grade change notifications",
+    "content": "Get an email when your grades change. Turn then on ",
+    "link": {
+      "url": "https://go.canvascbl.com/settings",
+      "text": "here."
+    }
   }
 ]
