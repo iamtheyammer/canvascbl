@@ -41,7 +41,7 @@ func Upsert(db services.DB, req *UpsertRequest) (*uint64, error) {
 			"gender":              req.Gender,
 			"hd":                  req.HostedDomain,
 		}).
-		Suffix("ON CONFLICT ON CONSTRAINT google_users_google_id_key DO UPDATE SET " +
+		Suffix("ON CONFLICT (google_id) DO UPDATE SET " +
 			"name = EXCLUDED.name, " +
 			"given_name = EXCLUDED.given_name, " +
 			"family_name = EXCLUDED.family_name, " +

@@ -29,7 +29,7 @@ func UpsertProfile(db services.DB, ur *UpsertRequest) error {
 			"canvas_user_id": ur.CanvasUserID,
 		}).
 		// normally would be ignore, but emails and names can change
-		Suffix("ON CONFLICT ON CONSTRAINT users_lti_user_id_key DO UPDATE SET name = ?, email = ?", ur.Name, ur.Email).
+		Suffix("ON CONFLICT (lti_user_id) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email").
 		ToSql()
 	if err != nil {
 		return errors.Wrap(err, "error building upsert users sql")

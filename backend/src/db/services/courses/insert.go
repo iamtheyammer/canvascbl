@@ -80,7 +80,7 @@ func InsertMultipleOutcomeResults(db services.DB, req *[]OutcomeResultInsertRequ
 			"submission_time",
 		).
 		Suffix(
-			"ON CONFLICT ON CONSTRAINT outcome_results_canvas_id_key DO UPDATE SET " +
+			"ON CONFLICT (canvas_id) DO UPDATE SET " +
 				"achieved_mastery = excluded.achieved_mastery, " +
 				"score = excluded.score, " +
 				"possible = excluded.possible, " +

@@ -19,12 +19,12 @@ func UpsertOutcome(db services.DB, req *InsertRequest) error {
 			"mastery_points":  req.MasteryPoints,
 			"points_possible": req.PointsPossible,
 		}).
-		Suffix("ON CONFLICT ON CONSTRAINT outcomes_canvas_id_key DO UPDATE SET "+
-			"display_name = ?, "+
-			"title = ?, "+
-			"mastery_points = ?, "+
-			"points_possible = ?",
-			req.DisplayName, req.Title, req.MasteryPoints, req.PointsPossible).
+		Suffix("ON CONFLICT (canvas_id) DO UPDATE SET " +
+			"display_name = EXCLUDED.display_name, " +
+			"title = EXCLUDED.title, " +
+			"mastery_points = EXCLUDED.mastery_points, " +
+			"points_possible = EXCLUDED.points_possible",
+		).
 		ToSql()
 	if err != nil {
 		return errors.Wrap(err, "error building upsert outcome sql")
