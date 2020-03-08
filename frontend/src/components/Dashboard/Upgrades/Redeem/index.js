@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { Redirect } from 'react-router-dom';
 import v4 from 'uuid/v4';
@@ -15,6 +15,7 @@ import {
 } from '../../../../actions/components/redeem';
 import Padding from '../../../Padding';
 import moment from 'moment';
+import { pageNames, trackPageView } from '../../../../util/tracking';
 
 const giftCardRegex = /[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}/;
 
@@ -32,6 +33,30 @@ function Redeem(props) {
     redeemGiftCardsResponse,
     dispatch
   } = props;
+
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    /*
+    This system is to prevent sending tons of Page View events to Mixpanel.
+    Those tons of events are sent because, every time the state changes,
+    this component is rerendered. The most common state change is when
+    a grade average loads in for plus users.
+
+    It works with two hooks: state and effect.
+
+    There's a loaded state hook set to false just above.
+
+    The effect hook is used here to run whenever loaded changes--
+    if it's true, we'll track a page view. If not, whatever.
+
+    The reason that this works is because state is reset on unmount.
+    So we only get one page view per actual page view.
+     */
+
+    if (loaded) {
+      trackPageView(pageNames.redeem);
+    }
+  }, [loaded]);
 
   if (session && session.has_valid_subscription === true) {
     return <Redirect to="/dashboard/upgrades" />;
@@ -58,6 +83,10 @@ function Redeem(props) {
     }
 
     dispatch(addGiftCard(card.toUpperCase()));
+  }
+
+  if (!loaded) {
+    setLoaded(true);
   }
 
   if (redeemGiftCardsResponse && redeemGiftCardsResponse.success === true) {

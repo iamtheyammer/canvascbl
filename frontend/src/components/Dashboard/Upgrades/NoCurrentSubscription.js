@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { isMobile } from 'react-device-detect';
-import { Link } from 'react-router-dom';
 
 import { Typography, Col, Row, Card, Icon, Modal, Button } from 'antd';
 import {
@@ -23,6 +22,7 @@ import previousGradeImg from './previous-grade.png';
 import futureAssignmentsImg from './future-assignments.png';
 import logoNavbarImg from './logo-navbar.png';
 import Padding from '../../Padding';
+import { pageNames, TrackingLink, vias } from '../../../util/tracking';
 
 const stripe = window.Stripe(env.stripeApiKeyPub);
 
@@ -152,9 +152,13 @@ function NoCurrentSubscription(props) {
           Purchase
         </MobileButton>
         <Padding top={10} />
-        <Link to="/dashboard/upgrades/redeem">
+        <TrackingLink
+          to="/dashboard/upgrades/redeem"
+          pageName={pageNames.redeem}
+          via={vias.noCurrentSubscriptionRedeem}
+        >
           Have a gift card or promotion code?
-        </Link>
+        </TrackingLink>
       </div>
     );
   }
@@ -203,9 +207,13 @@ function NoCurrentSubscription(props) {
         Purchase {product.name} for ${product.price}/month
       </Button>
       <Padding br />
-      <Link to="/dashboard/upgrades/redeem">
+      <TrackingLink
+        to="/dashboard/upgrades/redeem"
+        pageName={pageNames.redeem}
+        via={vias.noCurrentSubscriptionRedeem}
+      >
         Have a gift card or promotion code?
-      </Link>
+      </TrackingLink>
     </div>
   );
 }

@@ -10,5 +10,6 @@ export default {
     process.env.REACT_APP_UPGRADES_PURCHASABLE_PRODUCT_ID
   ),
   defaultSubdomain: process.env.REACT_APP_DEFAULT_SUBDOMAIN,
+  mixpanelToken: process.env.REACT_APP_MIXPANEL_TOKEN,
   nodeEnv: process.env.NODE_ENV
 };

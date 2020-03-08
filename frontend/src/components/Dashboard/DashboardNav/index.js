@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, withRouter } from 'react-router-dom';
+import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 import './index.css';
 import logo from '../../../assets/banner-light.svg';
@@ -16,6 +16,13 @@ import {
 } from 'antd-mobile';
 import PopoutLink from '../../PopoutLink';
 import ObserveeHandler from './ObserveeHandler';
+import {
+  destinationNames,
+  destinationTypes,
+  pageNames,
+  TrackingLink,
+  vias
+} from '../../../util/tracking';
 
 const { Header } = Layout;
 
@@ -35,9 +42,14 @@ function DashboardNav(props) {
           mode="dark"
           onLeftClick={toggleMenu}
         >
-          <Link to="/dashboard" style={{ color: 'white' }}>
+          <TrackingLink
+            to="/dashboard/grades"
+            pageName={pageNames.grades}
+            via={vias.mobileNavBarLogo}
+            style={{ color: 'white' }}
+          >
             CanvasCBL{userHasActiveSubscription && '+'}
-          </Link>
+          </TrackingLink>
         </MobileNavBar>
         <MobileDrawer
           className="mobile-drawer"
@@ -46,50 +58,108 @@ function DashboardNav(props) {
           sidebar={
             <MobileList>
               <MobileList.Item onClick={toggleMenu} key="/dashboard/profile">
-                <Link to="/dashboard/profile">Profile</Link>
+                <TrackingLink
+                  to="/dashboard/profile"
+                  pageName={pageNames.profile}
+                  via={vias.dashboardMenu}
+                >
+                  Profile
+                </TrackingLink>
               </MobileList.Item>
               <MobileList.Item onClick={toggleMenu} key="/dashboard/grades">
-                <Link to="/dashboard/grades">Grades</Link>
+                <TrackingLink
+                  to="/dashboard/grades"
+                  pageName={pageNames.grades}
+                  via={vias.dashboardMenu}
+                >
+                  Grades
+                </TrackingLink>
               </MobileList.Item>
               <MobileList.Item onClick={toggleMenu} key="/dashboard/upgrades">
-                <Link to="/dashboard/upgrades">Upgrades</Link>
+                <TrackingLink
+                  to="/dashboard/upgrades"
+                  pageName={pageNames.upgrades}
+                  via={vias.dashboardMenu}
+                >
+                  Upgrades
+                </TrackingLink>
               </MobileList.Item>
               <MobileList.Item onClick={toggleMenu} key="/dashboard/settings">
-                <Link to="/dashboard/settings">Settings</Link>
+                <TrackingLink
+                  to="/dashboard/settings"
+                  pageName={pageNames.settings}
+                  via={vias.dashboardMenu}
+                >
+                  Settings
+                </TrackingLink>
               </MobileList.Item>
               <MobileList.Item />
               {observees && observees.length > 1 && (
                 <div>
-                  <ObserveeHandler mobileToggleMenu={toggleMenu} />
+                  <ObserveeHandler
+                    mobileToggleMenu={toggleMenu}
+                    via={vias.dashboardMenu}
+                  />
                   <MobileList.Item />
                 </div>
               )}
-              <MobileList.Item onClick={toggleMenu} key="contactSupport">
+              <MobileList.Item onClick={toggleMenu} key="helpAndSupport">
                 <PopoutLink
-                  url={
-                    'mailto:sam@canvascbl.com?subject=CanvasCBL%20Question%20or%20Comment'
-                  }
+                  url="https://go.canvascbl.com/help"
+                  tracking={{
+                    destinationName: destinationNames.helpdesk,
+                    destinationType: destinationTypes.helpdesk.home,
+                    via: vias.dashboardMenu
+                  }}
+                  id="helpAndSupport"
                 >
-                  Contact Support
+                  Help & Support
                 </PopoutLink>
               </MobileList.Item>
               <MobileList.Item onClick={toggleMenu} key="viewPrivacyPolicy">
-                <PopoutLink url={env.privacyPolicyUrl}>
+                <PopoutLink
+                  url={env.privacyPolicyUrl}
+                  tracking={{
+                    destinationName: destinationNames.privacyPolicy,
+                    via: vias.dashboardMenu
+                  }}
+                  id="viewPrivacyPolicy"
+                >
                   View Privacy Policy
                 </PopoutLink>
               </MobileList.Item>
               <MobileList.Item onClick={toggleMenu} key="viewTermsOfService">
-                <PopoutLink url={env.termsOfServiceUrl}>
+                <PopoutLink
+                  url={env.termsOfServiceUrl}
+                  tracking={{
+                    destinationName: destinationNames.termsOfService,
+                    via: vias.dashboardMenu
+                  }}
+                  id="viewTermsOfService"
+                >
                   View Terms of Service
                 </PopoutLink>
               </MobileList.Item>
               <MobileList.Item onClick={toggleMenu} key="viewSystemStatus">
-                <PopoutLink url="https://status.canvascbl.com">
+                <PopoutLink
+                  url="https://status.canvascbl.com"
+                  tracking={{
+                    destinationName: destinationNames.statusPage,
+                    via: vias.dashboardMenu
+                  }}
+                  id="viewSystemStatus"
+                >
                   View System Status
                 </PopoutLink>
               </MobileList.Item>
               <MobileList.Item onClick={toggleMenu} key="/dashboard/logout">
-                <Link to="/dashboard/logout">Logout</Link>
+                <TrackingLink
+                  to="/dashboard/logout"
+                  pageName={pageNames.logout}
+                  via={vias.dashboardMenu}
+                >
+                  Logout
+                </TrackingLink>
               </MobileList.Item>
             </MobileList>
           }
@@ -122,16 +192,40 @@ function DashboardNav(props) {
         style={{ lineHeight: '64px', float: 'left' }}
       >
         <Menu.Item key="/dashboard/profile">
-          <Link to="/dashboard/profile">Profile</Link>
+          <TrackingLink
+            to="/dashboard/profile"
+            pageName={pageNames.profile}
+            via={vias.dashboardMenu}
+          >
+            Profile
+          </TrackingLink>
         </Menu.Item>
         <Menu.Item key="/dashboard/grades">
-          <Link to="/dashboard/grades">Grades</Link>
+          <TrackingLink
+            to="/dashboard/grades"
+            pageName={pageNames.grades}
+            via={vias.dashboardMenu}
+          >
+            Grades
+          </TrackingLink>
         </Menu.Item>
         <Menu.Item key="/dashboard/upgrades">
-          <Link to="/dashboard/upgrades">Upgrades</Link>
+          <TrackingLink
+            to="/dashboard/upgrades"
+            pageName={pageNames.upgrades}
+            via={vias.dashboardMenu}
+          >
+            Upgrades
+          </TrackingLink>
         </Menu.Item>
         <Menu.Item key="/dashboard/settings">
-          <Link to="/dashboard/settings">Settings</Link>
+          <TrackingLink
+            to="/dashboard/settings"
+            pageName={pageNames.settings}
+            via={vias.dashboardMenu}
+          >
+            Settings
+          </TrackingLink>
         </Menu.Item>
       </Menu>
       <Menu
@@ -147,36 +241,75 @@ function DashboardNav(props) {
             </Typography.Text>
           </Menu.Item>
         )}
-        {observees && observees.length > 0 && <ObserveeHandler />}
+        {observees && observees.length > 0 && (
+          <ObserveeHandler via={vias.dashboardMenu} />
+        )}
         <Menu.SubMenu key="moreActions" title="More Actions">
           <Menu.Item key="installExtension">
-            <PopoutLink url="https://go.canvascbl.com/extension">
+            <PopoutLink
+              url="https://go.canvascbl.com/extension"
+              tracking={{
+                destinationName: destinationNames.extension,
+                via: vias.moreActionsSubmenu
+              }}
+            >
               Install the Extension
             </PopoutLink>
           </Menu.Item>
-          <Menu.Item key="contactSupport">
-            <PopoutLink url={'https://go.canvascbl.com/support'}>
-              Contact Support
+          <Menu.Item key="helpAndSupport">
+            <PopoutLink
+              url={'https://go.canvascbl.com/help'}
+              tracking={{
+                destinationType: destinationTypes.helpdesk.home,
+                destinationName: destinationNames.helpdesk,
+                via: vias.moreActionsSubmenu
+              }}
+            >
+              Help & Support
             </PopoutLink>
           </Menu.Item>
           <Menu.Item key="viewSystemStatus">
-            <PopoutLink url="https://go.canvascbl.com/status">
+            <PopoutLink
+              url="https://go.canvascbl.com/status"
+              tracking={{
+                destinationName: destinationNames.statusPage,
+                via: vias.moreActionsSubmenu
+              }}
+            >
               View System Status
             </PopoutLink>
           </Menu.Item>
           <Menu.Item key="viewPrivacyPolicy">
-            <PopoutLink url={env.privacyPolicyUrl}>
+            <PopoutLink
+              url={env.privacyPolicyUrl}
+              tracking={{
+                destinationName: destinationNames.privacyPolicy,
+                via: vias.moreActionsSubmenu
+              }}
+            >
               View Privacy Policy
             </PopoutLink>
           </Menu.Item>
           <Menu.Item key="viewTermsOfService">
-            <PopoutLink url={env.termsOfServiceUrl}>
+            <PopoutLink
+              url={env.termsOfServiceUrl}
+              tracking={{
+                destinationName: destinationNames.termsOfService,
+                via: vias.moreActionsSubmenu
+              }}
+            >
               View Terms of Service
             </PopoutLink>
           </Menu.Item>
         </Menu.SubMenu>
         <Menu.Item key="/dashboard/logout">
-          <Link to={'/dashboard/logout'}>Logout</Link>
+          <TrackingLink
+            to="/dashboard/logout"
+            pageName={pageNames.logout}
+            via={vias.dashboardMenu}
+          >
+            Logout
+          </TrackingLink>
         </Menu.Item>
       </Menu>
     </Header>

@@ -5,6 +5,7 @@ import * as PropTypes from 'prop-types';
 import { isMobile } from 'react-device-detect';
 import { CenteredStatisticWithText } from './CenteredStatisticWithText';
 import { ReactComponent as plusIcon } from '../../../../assets/plus.svg';
+import { tabImplementations, trackTabChange } from '../../../../util/tracking';
 
 const tabList = [
   {
@@ -95,7 +96,16 @@ function GradeCard(props) {
 
   if (isMobile) {
     return (
-      <MobileTabs tabs={mobileTabList} initialPage={activeTabKey}>
+      <MobileTabs
+        tabs={mobileTabList}
+        initialPage={activeTabKey}
+        onChange={data => {
+          trackTabChange(
+            tabImplementations.gradeCard.name,
+            tabImplementations.gradeCard.tabNames[data.sub]
+          );
+        }}
+      >
         {mobileTabList.map(t => (
           <div key={t.sub}>{generateCardContent(t.sub)}</div>
         ))}
@@ -107,7 +117,13 @@ function GradeCard(props) {
     <Card
       tabList={tabList}
       activeTabKey={activeTabKey}
-      onTabChange={setActiveTabKey}
+      onTabChange={newTabKey => {
+        setActiveTabKey(newTabKey);
+        trackTabChange(
+          tabImplementations.gradeCard.name,
+          tabImplementations.gradeCard.tabNames[newTabKey]
+        );
+      }}
     >
       {generateCardContent(activeTabKey)}
     </Card>

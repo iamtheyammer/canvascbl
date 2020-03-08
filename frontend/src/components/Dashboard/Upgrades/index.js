@@ -5,6 +5,7 @@ import { Typography, Spin } from 'antd';
 import { getProducts } from '../../../actions/checkout';
 import ConnectedHasValidSubscription from './HasCurrentSubscription';
 import ConnectedNoCurrentSubscription from './NoCurrentSubscription';
+import { pageNames, trackPageView } from '../../../util/tracking';
 
 function Upgrades(props) {
   const { dispatch, error, loading, checkout, session } = props;
@@ -19,6 +20,30 @@ function Upgrades(props) {
     }
     // eslint-disable-next-line
   }, []);
+
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    /*
+    This system is to prevent sending tons of Page View events to Mixpanel.
+    Those tons of events are sent because, every time the state changes,
+    this component is rerendered. The most common state change is when
+    a grade average loads in for plus users.
+
+    It works with two hooks: state and effect.
+
+    There's a loaded state hook set to false just above.
+
+    The effect hook is used here to run whenever loaded changes--
+    if it's true, we'll track a page view. If not, whatever.
+
+    The reason that this works is because state is reset on unmount.
+    So we only get one page view per actual page view.
+     */
+
+    if (loaded) {
+      trackPageView(pageNames.upgrades);
+    }
+  }, [loaded]);
 
   if (!session || !checkout.products || loading.includes(getProductsId)) {
     return (
@@ -39,6 +64,10 @@ function Upgrades(props) {
         <Typography.Text>Please try again later.</Typography.Text>
       </div>
     );
+  }
+
+  if (!loaded) {
+    setLoaded(true);
   }
 
   return (

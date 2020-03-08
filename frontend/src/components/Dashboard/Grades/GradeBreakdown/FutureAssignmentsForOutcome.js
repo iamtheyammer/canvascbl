@@ -9,6 +9,11 @@ import { dateDesc } from '../../../../util/sort';
 import v4 from 'uuid/v4';
 import * as sort from '../../../../util/sort';
 import { ReactComponent as PopOutIcon } from '../../../../assets/pop_out.svg';
+import {
+  destinationNames,
+  destinationTypes,
+  vias
+} from '../../../../util/tracking';
 
 const tableColumns = [
   {
@@ -53,7 +58,16 @@ function FutureAssignmentsForOutcome(props) {
     dueAt: fa.due_at,
     url: fa.html_url,
     actions: [
-      <PopoutLink url={fa.html_url} addIcon>
+      <PopoutLink
+        url={fa.html_url}
+        addIcon
+        tracking={{
+          destinationName: destinationNames.canvas,
+          destinationType: destinationTypes.assignment,
+          via:
+            vias.gradeBreakdownOutcomesTableFutureAssignmentsTableOpenOnCanvas
+        }}
+      >
         Open on Canvas
       </PopoutLink>
     ],
@@ -75,7 +89,15 @@ function FutureAssignmentsForOutcome(props) {
           <MobileList style={{ paddingLeft: 10 }}>
             <MobileList.Item extra={a.dueDate}>Due Date</MobileList.Item>
             <MobileList.Item>
-              <PopoutLink url={a.url}>
+              <PopoutLink
+                url={a.url}
+                tracking={{
+                  destinationName: destinationNames.canvas,
+                  destinationType: destinationTypes.assignment,
+                  via:
+                    vias.gradeBreakdownOutcomesTableFutureAssignmentsTableOpenOnCanvas
+                }}
+              >
                 Open on Canvas <Icon component={PopOutIcon} />
               </PopoutLink>
             </MobileList.Item>
