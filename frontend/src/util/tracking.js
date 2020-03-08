@@ -319,19 +319,19 @@ export function trackActiveUserChange(activeUserId, via) {
 
 /**
  * Tracks a user's OAuth2 Authorize decision.
- * @param {number} oAuth2CredentialId The ID of the OAuth2 Credential.
+ * @param {string} oAuth2CredentialName The name of the OAuth2 Credential.
  * @param {boolean} didAuthorize Whether the user authorized the app.
  * @param {string} consentCode The consent code for the interaction.
  * @param {string[]} scopes The scopes of the OAuth2 Request.
  */
 export function trackOAuth2Decision(
-  oAuth2CredentialId,
+  oAuth2CredentialName,
   didAuthorize,
   consentCode,
   scopes
 ) {
   mp.track('OAuth2 Decision', {
-    'OAuth2 Credential ID': oAuth2CredentialId,
+    'OAuth2 Credential ID': oAuth2CredentialName,
     'Did Authorize App': bts(didAuthorize),
     'Consent Code': consentCode,
     Scopes: scopes

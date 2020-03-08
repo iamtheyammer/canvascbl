@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { Button, Card, List, Skeleton, Typography } from 'antd';
 import { Redirect } from 'react-router-dom';
@@ -16,6 +16,11 @@ import {
   setSendConsentId
 } from '../../../actions/components/oauth2consent';
 import Padding from '../../Padding';
+import {
+  pageNames,
+  trackOAuth2Decision,
+  trackPageView
+} from '../../../util/tracking';
 
 function OAuth2Consent(props) {
   const {
@@ -30,6 +35,30 @@ function OAuth2Consent(props) {
     sendConsentError,
     dispatch
   } = props;
+
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    /*
+    This system is to prevent sending tons of Page View events to Mixpanel.
+    Those tons of events are sent because, every time the state changes,
+    this component is rerendered. The most common state change is when
+    a grade average loads in for plus users.
+
+    It works with two hooks: state and effect.
+
+    There's a loaded state hook set to false just above.
+
+    The effect hook is used here to run whenever loaded changes--
+    if it's true, we'll track a page view. If not, whatever.
+
+    The reason that this works is because state is reset on unmount.
+    So we only get one page view per actual page view.
+     */
+
+    if (loaded) {
+      trackPageView(pageNames.settings);
+    }
+  }, [loaded]);
 
   if (consentRedirectUrl) {
     window.location = consentRedirectUrl;
@@ -77,6 +106,12 @@ function OAuth2Consent(props) {
     const id = v4();
     dispatch(sendConsent(id, consentCode, allow ? 'authorize' : 'deny'));
     dispatch(setSendConsentId(id));
+    trackOAuth2Decision(
+      consentInfo.credential_name,
+      allow,
+      consentCode,
+      consentInfo.scopes.reduce((acc, val) => acc.concat([val.short_name]), [])
+    );
   }
 
   const cardIsLoading = !consentInfo || loading.includes(getConsentInfoId);
@@ -102,6 +137,10 @@ function OAuth2Consent(props) {
       <Padding all={10} />
     </>
   ) : null;
+
+  if (!cardIsLoading && !loaded) {
+    setLoaded(true);
+  }
 
   return (
     <>
