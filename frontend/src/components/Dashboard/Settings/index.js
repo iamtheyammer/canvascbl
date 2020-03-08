@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import React, { Fragment, useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { Typography, Switch, Skeleton } from 'antd';
 import { throttle } from 'lodash';
@@ -12,6 +12,11 @@ import {
   setGetNotificationSettingsAndTypesId,
   setToggleNotificationStatusId
 } from '../../../actions/components/settings';
+import {
+  pageNames,
+  trackNotificationStatusToggle,
+  trackPageView
+} from '../../../util/tracking';
 
 function Settings(props) {
   const {
@@ -22,6 +27,30 @@ function Settings(props) {
     loading,
     dispatch
   } = props;
+
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    /*
+    This system is to prevent sending tons of Page View events to Mixpanel.
+    Those tons of events are sent because, every time the state changes,
+    this component is rerendered. The most common state change is when
+    a grade average loads in for plus users.
+
+    It works with two hooks: state and effect.
+
+    There's a loaded state hook set to false just above.
+
+    The effect hook is used here to run whenever loaded changes--
+    if it's true, we'll track a page view. If not, whatever.
+
+    The reason that this works is because state is reset on unmount.
+    So we only get one page view per actual page view.
+     */
+
+    if (loaded) {
+      trackPageView(pageNames.settings);
+    }
+  }, [loaded]);
 
   function fetchSettingsAndTypes() {
     const id = v4();
@@ -36,10 +65,12 @@ function Settings(props) {
     fetchSettingsAndTypes();
   }
 
-  function toggleNotification(typeId, toggle) {
+  function toggleNotification(typeId, typeShortName, toggle) {
     const id = v4();
     dispatch(toggleNotificationType(id, typeId, toggle));
     dispatch(setToggleNotificationStatusId(id, typeId));
+
+    trackNotificationStatusToggle(toggle, typeShortName);
   }
 
   const notificationSettingsStatus = {
@@ -52,6 +83,9 @@ function Settings(props) {
     disabled: !!settingsAndTypesError
   };
 
+  if (!loaded) {
+    setLoaded(true);
+  }
   return (
     <>
       <Typography.Title level={2}>Settings</Typography.Title>
@@ -87,7 +121,7 @@ function Settings(props) {
             )}
             <Switch
               onChange={throttle(
-                checked => toggleNotification(t.id, checked),
+                checked => toggleNotification(t.id, t.short_name, checked),
                 2000
               )}
               checked={

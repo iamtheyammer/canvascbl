@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { connect } from 'react-redux';
-import { Redirect, Link } from 'react-router-dom';
+import { Redirect } from 'react-router-dom';
 import v4 from 'uuid/v4';
 import moment from 'moment';
 import { isMobile } from 'react-device-detect';
@@ -45,6 +45,17 @@ import { getAverageGradeForCourse } from '../../../../actions/plus';
 import ConnectedAverageOutcomeScore from './AverageOutcomeScore';
 import FutureAssignmentsForOutcome from './FutureAssignmentsForOutcome';
 import Loading from '../../Loading';
+import {
+  destinationNames,
+  destinationTypes,
+  itemTypes,
+  pageNames,
+  tableNames,
+  TrackingLink,
+  trackPageView,
+  trackTableRowExpansion,
+  vias
+} from '../../../../util/tracking';
 
 const outcomeTableColumns = [
   {
@@ -130,7 +141,14 @@ const assignmentTableOutcomes = [
     key: 'actions',
     render: (text, record) => (
       <div>
-        <PopoutLink url={record.assignmentUrl}>
+        <PopoutLink
+          url={record.assignmentUrl}
+          tracking={{
+            destinationName: destinationNames.canvas,
+            destinationType: destinationTypes.assignment,
+            via: vias.gradeBreakdownOutcomesTableAssignmentsTableOpenOnCanvas
+          }}
+        >
           Open on Canvas <Icon component={PopOutIcon} />
         </PopoutLink>
       </div>
@@ -145,6 +163,11 @@ function GradeBreakdown(props) {
   const [getPlusAverageId, setGetPlusAverageId] = useState('');
 
   const [loadingText, setLoadingText] = useState('');
+
+  const [
+    mobileOutcomesTablePrevOpenKeys,
+    setMobileOutcomesTablePrevOpenKeys
+  ] = useState([]);
 
   const {
     dispatch,
@@ -202,7 +225,7 @@ function GradeBreakdown(props) {
         return;
       }
 
-      // we can display the page without loading alignments
+      // we can't display the page without loading alignments
       if (
         !getOutcomeAlignmentsId &&
         activeUserId &&
@@ -260,6 +283,30 @@ function GradeBreakdown(props) {
     [props]
   );
 
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    /*
+    This system is to prevent sending tons of Page View events to Mixpanel.
+    Those tons of events are sent because, every time the state changes,
+    this component is rerendered. The most common state change is when
+    a grade average loads in for plus users.
+
+    It works with two hooks: state and effect.
+
+    There's a loaded state hook set to false just above.
+
+    The effect hook is used here to run whenever loaded changes--
+    if it's true, we'll track a page view. If not, whatever.
+
+    The reason that this works is because state is reset on unmount.
+    So we only get one page view per actual page view.
+     */
+
+    if (loaded) {
+      trackPageView(pageNames.gradeBreakdown, courseId);
+    }
+  }, [loaded, courseId]);
+
   if (isNaN(courseId)) {
     notification.error({
       message: 'Invalid Course ID',
@@ -315,9 +362,13 @@ function GradeBreakdown(props) {
           Grade Breakdown isn't available for this course
           {observees.length > 1 && ' for this student'}.
         </Typography.Title>
-        <Link to="/dashboard/grades">
+        <TrackingLink
+          to="/dashboard/grades"
+          pageName={pageNames.grades}
+          via={vias.breakdownUnavailableBackToGrades}
+        >
           <Button type="primary">Back to Grades</Button>
-        </Link>
+        </TrackingLink>
       </div>
     );
   }
@@ -431,6 +482,47 @@ function GradeBreakdown(props) {
       return acc;
     }, {});
 
+  function handleMobileOutcomesTableChange(openKeys) {
+    // this function is called once per open/close event
+    if (openKeys.length > mobileOutcomesTablePrevOpenKeys.length) {
+      // they opened one. which?
+      const newKey = openKeys.filter(
+        ok => !mobileOutcomesTablePrevOpenKeys.includes(ok)
+      )[0];
+      if (newKey) {
+        trackTableRowExpansion(
+          tableNames.gradeBreakdown.outcomes,
+          newKey,
+          itemTypes.outcome,
+          true,
+          courseId
+        );
+      }
+    }
+
+    if (mobileOutcomesTablePrevOpenKeys.length > openKeys.length) {
+      // they closed one. which?
+      const closedKey = mobileOutcomesTablePrevOpenKeys.filter(
+        ok => !openKeys.includes(ok)
+      )[0];
+      if (closedKey) {
+        trackTableRowExpansion(
+          tableNames.gradeBreakdown.outcomes,
+          closedKey,
+          itemTypes.outcome,
+          false,
+          courseId
+        );
+      }
+    }
+
+    setMobileOutcomesTablePrevOpenKeys(openKeys);
+  }
+
+  // see a call to useEffect for more info on how this works
+  // and what's going on here
+  if (!loaded) setLoaded(true);
+
   if (isMobile) {
     return (
       <div>
@@ -452,7 +544,7 @@ function GradeBreakdown(props) {
         />
         <MobileWhiteSpace />
         <Typography.Title level={3}>Outcomes</Typography.Title>
-        <MobileAccordion>
+        <MobileAccordion onChange={handleMobileOutcomesTableChange}>
           {outcomeTableData.map(d => (
             <MobileAccordion.Panel header={d.name} key={d.key}>
               <MobileList>
@@ -498,7 +590,15 @@ function GradeBreakdown(props) {
                               Last Submission
                             </MobileList.Item>
                             <MobileList.Item>
-                              <PopoutLink url={atd.assignmentUrl}>
+                              <PopoutLink
+                                url={atd.assignmentUrl}
+                                tracking={{
+                                  destinationName: destinationNames.canvas,
+                                  destinationType: destinationTypes.assignment,
+                                  via:
+                                    vias.gradeBreakdownOutcomesTableAssignmentsTableOpenOnCanvas
+                                }}
+                              >
                                 Open on Canvas <Icon component={PopOutIcon} />
                               </PopoutLink>
                             </MobileList.Item>
@@ -546,6 +646,15 @@ function GradeBreakdown(props) {
       <Table
         columns={outcomeTableColumns}
         dataSource={outcomeTableData}
+        onExpand={(expanded, record) => {
+          trackTableRowExpansion(
+            tableNames.gradeBreakdown.outcomes,
+            record.id,
+            itemTypes.outcome,
+            expanded,
+            courseId
+          );
+        }}
         expandedRowRender={record =>
           record.assignmentTableData.length > 0 ? (
             <div>

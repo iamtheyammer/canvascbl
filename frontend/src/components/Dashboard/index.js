@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { connect } from 'react-redux';
-import { Switch, Route, Redirect, Link } from 'react-router-dom';
+import { Switch, Route, Redirect } from 'react-router-dom';
 import * as ReactGA from 'react-ga';
 import v4 from 'uuid/v4';
 import { isMobile } from 'react-device-detect';
@@ -24,6 +24,12 @@ import Loading from './Loading';
 import getUrlPrefix from '../../util/getUrlPrefix';
 import OAuth2Consent from './OAuth2Consent';
 import Settings from './Settings';
+import {
+  pageNameFromPath,
+  trackDashboardLoad,
+  TrackingLink,
+  vias
+} from '../../util/tracking';
 
 const { Content, Footer } = Layout;
 
@@ -47,15 +53,21 @@ const getBreadcrumbNameMap = (courses = []) => {
 
 function Dashboard(props) {
   const [hasSentUserToGa, setHasSentUserToGa] = useState(false);
+  const [hasInitializedTracking, setHasInitializedTracking] = useState(false);
   const [getInitialDataId, setGetInitialDataId] = useState();
 
-  const { location, user, session, loading, error, dispatch } = props;
+  const {
+    location,
+    user,
+    activeUserId,
+    session,
+    loading,
+    error,
+    dispatch
+  } = props;
 
   useEffect(() => {
-    ReactGA.pageview(
-      props.location.pathname +
-        (props.location.search.includes('~') ? '' : props.location.search)
-    );
+    ReactGA.pageview(props.location.pathname + props.location.search);
   }, [props.location]);
 
   useEffect(() => {
@@ -68,13 +80,39 @@ function Dashboard(props) {
     }
   }, [session]);
 
+  useEffect(() => {
+    if (hasInitializedTracking || !user || !session || !activeUserId) {
+      return;
+    }
+
+    trackDashboardLoad(
+      user.name,
+      session.email,
+      session.has_valid_subscription,
+      session.subscription_status,
+      session.user_id,
+      user.id,
+      activeUserId,
+      env.currentVersion,
+      localStorage.prevVersion
+    );
+
+    setHasInitializedTracking(true);
+  }, [session, user, activeUserId, hasInitializedTracking]);
+
   const pathSnippets = location.pathname.split('/').filter(i => i);
   const breadcrumbNameMap = getBreadcrumbNameMap(props.courses || []);
   const breadcrumbItems = pathSnippets.map((_, index) => {
     const url = `/${pathSnippets.slice(0, index + 1).join('/')}`;
     return (
       <Breadcrumb.Item key={url}>
-        <Link to={url}>{breadcrumbNameMap[url]}</Link>
+        <TrackingLink
+          to={url}
+          pageName={pageNameFromPath(url)}
+          via={vias.breadcrumb}
+        >
+          {breadcrumbNameMap[url]}
+        </TrackingLink>
       </Breadcrumb.Item>
     );
   });
@@ -223,7 +261,7 @@ const ConnectedDashboard = connect(state => ({
   subdomain: state.canvas.subdomain,
   courses: state.canvas.courses,
   user: state.canvas.user,
-  observees: state.canvas.observees,
+  activeUserId: state.canvas.activeUserId,
   session: state.plus.session,
   loading: state.loading,
   error: state.error

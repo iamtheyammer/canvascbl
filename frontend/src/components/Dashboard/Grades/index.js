@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { connect } from 'react-redux';
-import { Link } from 'react-router-dom';
 import v4 from 'uuid/v4';
 
 import {
@@ -29,11 +28,19 @@ import PopoutLink from '../../PopoutLink';
 import { getPreviousGrades } from '../../../actions/plus';
 import moment from 'moment';
 import { isMobile } from 'react-device-detect';
-import truncate from 'truncate';
 import Loading from '../Loading';
 import Padding from '../../Padding';
 import ConnectedObserveeHandler from '../DashboardNav/ObserveeHandler';
 import roundNumberToDigits from '../../../util/roundNumberToDigits';
+import {
+  destinationNames,
+  destinationTypes,
+  pageNames,
+  TrackingLink,
+  trackPageView,
+  vias
+} from '../../../util/tracking';
+import { truncate } from 'lodash';
 
 function PreviousGrade(props) {
   const { userHasValidSubscription, grade, previousGrade } = props;
@@ -88,7 +95,13 @@ const tableColumns = [
       record.grade === 'N/A' || record.grade.toLowerCase().includes('error') ? (
         text
       ) : (
-        <Link to={`/dashboard/grades/${record.id}`}>{text}</Link>
+        <TrackingLink
+          to={`/dashboard/grades/${record.id}`}
+          pageName={pageNames.gradeBreakdown}
+          via={vias.gradesTableCourseName}
+        >
+          {text}
+        </TrackingLink>
       )
   },
   {
@@ -124,13 +137,24 @@ const tableColumns = [
       <div>
         {record.grade !== 'N/A' &&
           !record.grade.toLowerCase().includes('error') && (
-            <span>
-              <Link to={`/dashboard/grades/${record.id}`}>See Breakdown</Link>
+            <>
+              <TrackingLink
+                to={`/dashboard/grades/${record.id}`}
+                pageName={pageNames.gradeBreakdown}
+                via={vias.gradesTableSeeBreakdownLink}
+              >
+                See Breakdown
+              </TrackingLink>
               {' | '}
-            </span>
+            </>
           )}
         <PopoutLink
           url={`https://${env.defaultSubdomain}.instructure.com/courses/${record.id}`}
+          tracking={{
+            destinationName: destinationNames.canvas,
+            destinationType: destinationTypes.course,
+            via: vias.gradesTableOpenOnCanvas
+          }}
         >
           Open on Canvas <Icon component={PopOutIcon} />
         </PopoutLink>
@@ -175,6 +199,30 @@ function Grades(props) {
     // ignoring because we only want this hook to re-run on a prop change
     // eslint-disable-next-line
   }, [props]);
+
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    /*
+    This system is to prevent sending tons of Page View events to Mixpanel.
+    Those tons of events are sent because, every time the state changes,
+    this component is rerendered. The most common state change is when
+    a grade average loads in for plus users.
+
+    It works with two hooks: state and effect.
+
+    There's a loaded state hook set to false just above.
+
+    The effect hook is used here to run whenever loaded changes--
+    if it's true, we'll track a page view. If not, whatever.
+
+    The reason that this works is because state is reset on unmount.
+    So we only get one page view per actual page view.
+     */
+
+    if (loaded) {
+      trackPageView(pageNames.profile);
+    }
+  }, [loaded]);
 
   if (err) {
     return <ErrorModal error={err} />;
@@ -224,6 +272,10 @@ function Grades(props) {
   );
   const gpa = allGpas && allGpas[activeUserId];
 
+  if (!loaded) {
+    setLoaded(true);
+  }
+
   if (isMobile) {
     return (
       <div>
@@ -236,7 +288,7 @@ function Grades(props) {
               header={
                 <div style={{ paddingRight: '6px' }}>
                   <div style={{ float: 'left', overflow: 'hidden' }}>
-                    {truncate(d.name, 20)}
+                    {truncate(d.name, { length: 20 })}
                   </div>
                   <div style={{ float: 'right' }}>{d.grade}</div>
                 </div>
@@ -245,13 +297,24 @@ function Grades(props) {
               <MobileList style={{ paddingLeft: '6px' }}>
                 {d.grade !== 'N/A' && !d.grade.toLowerCase().includes('error') && (
                   <MobileList.Item>
-                    <Link to={`/dashboard/grades/${d.id}`}>See Breakdown</Link>
+                    <TrackingLink
+                      to={`/dashboard/grades/${d.id}`}
+                      pageName={pageNames.gradeBreakdown}
+                      via={vias.gradesTableSeeBreakdownLink}
+                    >
+                      See Breakdown
+                    </TrackingLink>
                   </MobileList.Item>
                 )}
                 <MobileList.Item>
                   <PopoutLink
                     url={`https://${subdomain ||
                       'canvas'}.instructure.com/courses/${d.id}`}
+                    tracking={{
+                      destinationName: destinationNames.canvas,
+                      destinationType: destinationTypes.course,
+                      via: vias.gradesTableOpenOnCanvas
+                    }}
                   >
                     Open on Canvas <Icon component={PopOutIcon} />
                   </PopoutLink>
@@ -276,7 +339,14 @@ function Grades(props) {
             <Padding all={5} />
             <Typography.Title level={3}>GPA</Typography.Title>
             Unweighted GPAs for the current semester. Learn more{' '}
-            <PopoutLink url="https://go.canvascbl.com/help/gpas">
+            <PopoutLink
+              url="https://go.canvascbl.com/help/gpas"
+              tracking={{
+                destinationName: destinationNames.helpdesk,
+                destinationType: destinationTypes.helpdesk.gpas,
+                via: vias.gpaLearnMore
+              }}
+            >
               here
             </PopoutLink>
             .
@@ -286,7 +356,14 @@ function Grades(props) {
                 extra={roundNumberToDigits(gpa.unweighted.default, 2)}
               >
                 Report Card GPA{' '}
-                <PopoutLink url="https://go.canvascbl.com/help/gpas">
+                <PopoutLink
+                  url="https://go.canvascbl.com/help/gpas"
+                  tracking={{
+                    destinationName: destinationNames.helpdesk,
+                    destinationType: destinationTypes.helpdesk.gpas,
+                    via: vias.gpaReportCardQuestionIcon
+                  }}
+                >
                   <Icon type="question-circle" />
                 </PopoutLink>
               </MobileList.Item>
@@ -294,7 +371,14 @@ function Grades(props) {
                 extra={roundNumberToDigits(gpa.unweighted.subgrades, 2)}
               >
                 Traditional GPA{' '}
-                <PopoutLink url="https://go.canvascbl.com/help/gpas">
+                <PopoutLink
+                  url="https://go.canvascbl.com/help/gpas"
+                  tracking={{
+                    destinationName: destinationNames.helpdesk,
+                    destinationType: destinationTypes.helpdesk.gpas,
+                    via: vias.gpaTraditionalQuestionIcon
+                  }}
+                >
                   <Icon type="question-circle" />
                 </PopoutLink>
               </MobileList.Item>
@@ -305,7 +389,7 @@ function Grades(props) {
           <>
             <Padding br />
             <Typography.Title level={3}>Switch Students</Typography.Title>
-            <ConnectedObserveeHandler />
+            <ConnectedObserveeHandler via={vias.mobileGradesObserveeSwitcher} />
           </>
         )}
       </div>
@@ -331,7 +415,14 @@ function Grades(props) {
                 title={
                   <>
                     Report Card GPA{' '}
-                    <PopoutLink url="https://go.canvascbl.com/help/gpas">
+                    <PopoutLink
+                      url="https://go.canvascbl.com/help/gpas"
+                      tracking={{
+                        destinationName: destinationNames.helpdesk,
+                        destinationType: destinationTypes.helpdesk.gpas,
+                        via: vias.gpaReportCardQuestionIcon
+                      }}
+                    >
                       <Icon type="question-circle" />
                     </PopoutLink>
                   </>
@@ -344,7 +435,14 @@ function Grades(props) {
                 title={
                   <>
                     Traditional GPA{' '}
-                    <PopoutLink url="https://go.canvascbl.com/help/gpas">
+                    <PopoutLink
+                      url="https://go.canvascbl.com/help/gpas"
+                      tracking={{
+                        destinationName: destinationNames.helpdesk,
+                        destinationType: destinationTypes.helpdesk.gpas,
+                        via: vias.gpaTraditionalQuestionIcon
+                      }}
+                    >
                       <Icon type="question-circle" />
                     </PopoutLink>
                   </>
@@ -357,7 +455,14 @@ function Grades(props) {
           <Typography.Text type="secondary">
             These unweighted GPAs only represent the current semester. Learn
             more{' '}
-            <PopoutLink url="https://go.canvascbl.com/help/gpas">
+            <PopoutLink
+              url="https://go.canvascbl.com/help/gpas"
+              tracking={{
+                destinationName: destinationNames.helpdesk,
+                destinationType: destinationTypes.helpdesk.gpas,
+                via: vias.gpaLearnMore
+              }}
+            >
               here
             </PopoutLink>
             .

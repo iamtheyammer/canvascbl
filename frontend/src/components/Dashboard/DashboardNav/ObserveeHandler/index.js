@@ -5,9 +5,17 @@ import { isMobile } from 'react-device-detect';
 import { Icon, Menu, Dropdown, Button } from 'antd';
 import { Accordion as MobileAccordion, List as MobileList } from 'antd-mobile';
 import { changeActiveUser } from '../../../../actions/canvas';
+import { trackActiveUserChange } from '../../../../util/tracking';
 
 function Index(props) {
-  const { mobileToggleMenu, observees, activeUserId, users, dispatch } = props;
+  const {
+    mobileToggleMenu,
+    observees,
+    activeUserId,
+    users,
+    via,
+    dispatch
+  } = props;
 
   if (!users || !activeUserId || !observees || observees.length < 1) {
     return null;
@@ -30,6 +38,7 @@ function Index(props) {
                     onClick={() => {
                       dispatch(changeActiveUser(o.id));
                       mobileToggleMenu && mobileToggleMenu();
+                      trackActiveUserChange(o.id, via);
                     }}
                   >
                     {o.name}
@@ -49,7 +58,10 @@ function Index(props) {
           o.id !== activeUserId && (
             <Menu.Item
               key={o.id}
-              onClick={() => dispatch(changeActiveUser(o.id))}
+              onClick={() => {
+                dispatch(changeActiveUser(o.id));
+                trackActiveUserChange(o.id, via);
+              }}
             >
               {o.name}
             </Menu.Item>

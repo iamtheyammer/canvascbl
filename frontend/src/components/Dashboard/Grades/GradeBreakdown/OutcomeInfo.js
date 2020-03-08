@@ -8,6 +8,7 @@ import v4 from 'uuid/v4';
 import { gradeMapByGrade } from '../../../../util/canvas/gradeMapByGrade';
 import { CenteredStatisticWithText } from './CenteredStatisticWithText';
 import { ReactComponent as plusIcon } from '../../../../assets/plus.svg';
+import { tabImplementations, trackTabChange } from '../../../../util/tracking';
 
 const tabList = [
   {
@@ -168,6 +169,12 @@ function OutcomeInfo(props) {
         renderTabBar={props => (
           <MobileTabs.DefaultTabBar {...props} page={1.65} />
         )}
+        onChange={data => {
+          trackTabChange(
+            tabImplementations.outcomeInfo.name,
+            tabImplementations.outcomeInfo.tabNames[data.sub]
+          );
+        }}
       >
         {mobileTabList.map(t => (
           <div key={t.sub}>{generateCardContent(t.sub)}</div>
@@ -180,7 +187,13 @@ function OutcomeInfo(props) {
     <Card
       tabList={tabList}
       activeTabKey={activeTabKey}
-      onTabChange={setActiveTabKey}
+      onTabChange={newTabKey => {
+        setActiveTabKey(newTabKey);
+        trackTabChange(
+          tabImplementations.outcomeInfo.name,
+          tabImplementations.outcomeInfo.tabNames[newTabKey]
+        );
+      }}
     >
       {generateCardContent(activeTabKey)}
     </Card>

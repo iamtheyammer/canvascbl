@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import React, { Fragment, useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { isMobile } from 'react-device-detect';
 import v4 from 'uuid/v4';
@@ -21,6 +21,7 @@ import {
 import Padding from '../../Padding';
 import { getAuthorizedApps, revokeGrant } from '../../../actions/oauth2';
 import { setGetAuthorizedAppsId } from '../../../actions/components/userprofile';
+import { pageNames, trackPageView } from '../../../util/tracking';
 
 function UserProfile(props) {
   const {
@@ -35,6 +36,30 @@ function UserProfile(props) {
     dispatch
   } = props;
 
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    /*
+    This system is to prevent sending tons of Page View events to Mixpanel.
+    Those tons of events are sent because, every time the state changes,
+    this component is rerendered. The most common state change is when
+    a grade average loads in for plus users.
+
+    It works with two hooks: state and effect.
+
+    There's a loaded state hook set to false just above.
+
+    The effect hook is used here to run whenever loaded changes--
+    if it's true, we'll track a page view. If not, whatever.
+
+    The reason that this works is because state is reset on unmount.
+    So we only get one page view per actual page view.
+     */
+
+    if (loaded) {
+      trackPageView(pageNames.profile);
+    }
+  }, [loaded]);
+
   const loadingApps = !authorizedApps || loading.includes(getAuthorizedAppsId);
   if (!getAuthorizedAppsId && !authorizedApps) {
     const id = v4();
@@ -48,6 +73,8 @@ function UserProfile(props) {
       acc[val.id] = val.name;
       return acc;
     }, {});
+
+  if (!loaded) setLoaded(true);
 
   if (isMobile) {
     return (
