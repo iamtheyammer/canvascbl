@@ -15,7 +15,9 @@ func InsertUserObservees(db services.DB, req *UpsertObserveesRequest) error {
 	q := util.Sq.
 		Insert("observees").
 		Columns("observer_canvas_user_id", "observee_canvas_user_id", "observee_name").
-		Suffix("ON CONFLICT DO NOTHING")
+		Suffix("ON CONFLICT (observer_canvas_user_id, observee_canvas_user_id) DO UPDATE SET " +
+			"observee_canvas_user_id = EXCLUDED.observee_canvas_user_id, " +
+			"observee_name = EXCLUDED.observee_name")
 
 	for _, o := range req.Observees {
 		q = q.Values(req.ObserverCanvasUserID, o.CanvasUserID, o.Name)

@@ -82,7 +82,7 @@ func saveObserveesToDB(cObs *[]canvasObservee, requestingUserID uint64) {
 				// if the names don't match, upsert
 				if o.Name != dbO.Name {
 					toUpsert = append(toUpsert, users.Observee{
-						CanvasUserID: o.ID,
+						CanvasUserID: o.CanvasUserID,
 						Name:         o.Name,
 					})
 				}
@@ -99,7 +99,7 @@ func saveObserveesToDB(cObs *[]canvasObservee, requestingUserID uint64) {
 		// if it exists in observees from canvas but not in db, upsert.
 		if !foundIDMatch {
 			toUpsert = append(toUpsert, users.Observee{
-				CanvasUserID: o.ID,
+				CanvasUserID: o.CanvasUserID,
 				Name:         o.Name,
 			})
 		}
