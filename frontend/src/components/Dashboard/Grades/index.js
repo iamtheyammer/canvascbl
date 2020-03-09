@@ -220,7 +220,7 @@ function Grades(props) {
      */
 
     if (loaded) {
-      trackPageView(pageNames.profile);
+      trackPageView(pageNames.grades);
     }
   }, [loaded]);
 
