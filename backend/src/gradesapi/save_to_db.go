@@ -144,7 +144,7 @@ func saveObserveesToDB(cObs *[]canvasObservee, requestingUserID uint64) {
 	}
 
 	if len(toUpsert) > 0 {
-		err := users.InsertUserObservees(trx, &users.UpsertObserveesRequest{
+		err := users.UpsertUserObservees(trx, &users.UpsertObserveesRequest{
 			Observees:            toUpsert,
 			ObserverCanvasUserID: requestingUserID,
 		})

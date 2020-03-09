@@ -54,3 +54,33 @@ func UpsertProfile(db services.DB, ur *UpsertRequest) (*UpsertResponse, error) {
 
 	return &resp, nil
 }
+
+// UpsertUserObservees inserts a user's observees.
+func UpsertUserObservees(db services.DB, req *UpsertObserveesRequest) error {
+	if len(req.Observees) < 1 {
+		return nil
+	}
+
+	q := util.Sq.
+		Insert("observees").
+		Columns("observer_canvas_user_id", "observee_canvas_user_id", "observee_name").
+		Suffix("ON CONFLICT (observer_canvas_user_id, observee_canvas_user_id) DO UPDATE SET " +
+			"observee_canvas_user_id = EXCLUDED.observee_canvas_user_id, " +
+			"observee_name = EXCLUDED.observee_name")
+
+	for _, o := range req.Observees {
+		q = q.Values(req.ObserverCanvasUserID, o.CanvasUserID, o.Name)
+	}
+
+	query, args, err := q.ToSql()
+	if err != nil {
+		return errors.Wrap(err, "error building insert observees sql")
+	}
+
+	_, err = db.Exec(query, args...)
+	if err != nil {
+		return errors.Wrap(err, "error executing insert observees sql")
+	}
+
+	return nil
+}
