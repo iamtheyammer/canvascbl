@@ -25,8 +25,6 @@ function UpdateHandler() {
     const shouldShowChangelog =
       currentVersion > prevVersion && versionsAreValid;
 
-    debugger;
-
     if (!versionsAreValid) {
       localStorage.prevVersion = currentVersion;
       return;
