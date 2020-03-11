@@ -19,10 +19,13 @@ function UpdateHandler() {
 
     const versionsAreValid =
       currentVersion &&
-      prevVersion &&
+      !!localStorage.prevVersion &&
       !isNaN(currentVersion) &&
       !isNaN(prevVersion);
-    const shouldShowChangelog = currentVersion > prevVersion;
+    const shouldShowChangelog =
+      currentVersion > prevVersion && versionsAreValid;
+
+    debugger;
 
     if (!versionsAreValid) {
       localStorage.prevVersion = currentVersion;
