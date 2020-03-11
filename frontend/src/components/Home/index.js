@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import './index.css';
 import banner from '../../assets/banner.svg';
 
-import { Card, Typography, Button, Checkbox } from 'antd';
+import { Card, Typography, Button, Checkbox, Divider, Icon } from 'antd';
 import {
   Checkbox as MobileCheckbox,
   Button as MobileButton
@@ -19,6 +19,7 @@ import {
   setSigninButtonAvailability
 } from '../../actions/components/home';
 import { getSessionInformation } from '../../actions/plus';
+import Padding from '../Padding';
 
 function Home(props) {
   const {
@@ -65,10 +66,9 @@ function Home(props) {
         }}
       >
         <img src={banner} alt={'banner'} />
-        <Typography.Title level={2}>Welcome!</Typography.Title>
+        <Typography.Title level={2}>Log in to CanvasCBL</Typography.Title>
         <Typography.Text>
-          This tool calculates grades based on outcomes in Canvas. To use it,
-          please accept the Terms and Conditions, then log in with Canvas.
+          To use CanvasCBL, please accept the terms and sign in with Canvas.
         </Typography.Text>
         <MobileCheckbox.AgreeItem
           onChange={e =>
@@ -98,10 +98,11 @@ function Home(props) {
   }
 
   return (
-    <div className="background">
+    <>
+      <div className="home" />
       <Card className="card" title={<img src={banner} alt="banner" />}>
         <div className="static-text">
-          <Typography.Title level={2}>Welcome!</Typography.Title>
+          <Typography.Title level={2}>Log in to CanvasCBL</Typography.Title>
           {env.buildBranch !== 'master' && (
             <Typography.Text type="danger">
               CanvasCBL is running in {env.buildBranch}
@@ -109,9 +110,9 @@ function Home(props) {
             </Typography.Text>
           )}
           <Typography.Text>
-            This tool calculates grades based on outcomes in Canvas. To use it,
-            please accept the Terms and Conditions, then log in with Canvas.
+            To use CanvasCBL, please accept the terms and sign in with Canvas.
           </Typography.Text>
+          <Padding all={5} />
         </div>
         <div>
           <Checkbox
@@ -127,7 +128,7 @@ function Home(props) {
               terms of service
             </PopoutLink>
           </Checkbox>
-          <div style={{ marginTop: '15px' }} />
+          <Padding all={8} />
           {getSessionErrText.length ? (
             <Typography.Text type="danger">{getSessionErrText}</Typography.Text>
           ) : (
@@ -145,8 +146,12 @@ function Home(props) {
             </Button>
           )}
         </div>
+        <Divider />
+        <a href="https://canvascbl.com">
+          <Icon type="arrow-left" /> Back home
+        </a>
       </Card>
-    </div>
+    </>
   );
 }
 

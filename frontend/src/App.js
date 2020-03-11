@@ -9,13 +9,15 @@ import ConnectedOAuth2Response from './components/OAuth2Response';
 import Dashboard from './components/Dashboard';
 import env from './util/env';
 
+import './App.css';
+
 function App(props) {
   ReactGA.initialize(env.googleAnalyticsId);
 
   ReactGA.pageview('/');
 
   if (!isMobile) {
-    document.body.classList.add('background');
+    document.body.classList.add('background-desktop');
   }
 
   return (

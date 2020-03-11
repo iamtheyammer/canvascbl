@@ -1,5 +1,29 @@
-.background {
-    background-color: #021527;
+.home {
+    background-image: url("/home-background.jpeg");
+    background-position: center;
+    background-size: cover;
+
+    height: 100%;
+    animation: blur 2s forwards;
+    /*transform: scale(1.1);*/
+
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+@keyframes blur {
+    0% {
+        filter: blur(0px);
+        transform: scale(1);
+    }
+
+    100% {
+        filter: blur(15px);
+        /*transform: scale(1.1);*/
+    }
 }
 
 .center {
@@ -15,10 +39,19 @@
 }
 
 .card {
-    align-content: center;
+    /*align-content: center;*/
     width: 35%;
-    height: 40%;
-    margin: 10% auto auto;
+    /*height: 40%;*/
+    /*margin: 10% auto auto;*/
+    /*align-content: center;*/
+    /*margin: auto;*/
+
+
+    margin: 0;
+    position: fixed;
+    top: 40%;
+    transform: translateY(-50%) translateX(100%);
+    box-shadow: 2px 2px 15px 0 rgba(255,255,255,0.3);
 }
 
 .button {
@@ -28,8 +61,4 @@
 
 .static-text {
     text-align: center;
-}
-
-body {
-    /*background-color: #021527;*/
 }
