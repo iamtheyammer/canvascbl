@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
+	awssession "github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/canvas_tokens"
 	coursessvc "github.com/iamtheyammer/canvascbl/backend/src/db/services/courses"
@@ -34,7 +34,7 @@ var (
 		StatusCode: util.CanvasProxyErrorCode,
 	}
 	s3Uploader = func() *s3manager.Uploader {
-		s, err := session.NewSession(&aws.Config{Region: aws.String("us-east-2")})
+		s, err := awssession.NewSession(&aws.Config{Region: aws.String("us-east-2")})
 		if err != nil {
 			panic(fmt.Errorf("error creating aws session: %w", err))
 		}
@@ -614,10 +614,22 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 			courses    []coursessvc.UpsertRequest
 			// keeps out duplicates
 			outcomeResultsMap = make(map[uint64]struct{})
-			outcomeResults    []coursessvc.OutcomeResultInsertRequest
-			grades            []gradessvc.InsertRequest
-			rollupScores      []coursessvc.OutcomeRollupInsertRequest
-			gpaReqs           []gpas.InsertRequest
+			// chunked in 7281 due to postgres's 65535 parameter limit
+			// 9 params each
+			chunkedOutcomeResults           = [][]coursessvc.OutcomeResultInsertRequest{{}}
+			currentOutcomeResultChunk       = 0
+			currentOutcomeResultChunkLength = 0
+			// chunk in 16383 due to postgres's 65535 parameter limit
+			// 4 params each
+			chunkedGrades            = [][]gradessvc.InsertRequest{{}}
+			currentGradesChunk       = 0
+			currentGradesChunkLength = 0
+			// chunk in 13107 due to postgres's 65535 parameter limit
+			// 5 params each
+			chunkedRollupScores           = [][]coursessvc.OutcomeRollupInsertRequest{{}}
+			currentRollupScoreChunk       = 0
+			currentRollupScoreChunkLength = 0
+			gpaReqs                       []gpas.InsertRequest
 		)
 
 		for _, r := range dbReqs {
@@ -636,21 +648,63 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 			}
 
 			if r.OutcomeResults != nil {
-				// keeps out duplicate outcome results
 				for _, or := range *r.OutcomeResults {
+					// keeps out duplicate outcome results
 					if _, ok := outcomeResultsMap[or.ID]; !ok {
-						outcomeResults = append(outcomeResults, or)
+						// if we are over the max per chunk, move to next chunk
+						if currentOutcomeResultChunkLength >= 7281 {
+							currentOutcomeResultChunk++
+							chunkedOutcomeResults = append(chunkedOutcomeResults, []coursessvc.OutcomeResultInsertRequest{})
+							currentOutcomeResultChunkLength = 0
+						}
+
+						// add to the current chunk
+						chunkedOutcomeResults[currentOutcomeResultChunk] =
+							append(chunkedOutcomeResults[currentOutcomeResultChunk], or)
+
+						// no duplicates
 						outcomeResultsMap[or.ID] = struct{}{}
+
+						// add to the number in the current chunk
+						currentOutcomeResultChunkLength++
 					}
 				}
 			}
 
 			if r.Grades != nil {
-				grades = append(grades, *r.Grades...)
+				for _, g := range *r.Grades {
+					// if we are over the max per chunk, move to next chunk
+					if currentGradesChunkLength >= 16383 {
+						currentGradesChunk++
+						chunkedGrades = append(chunkedGrades, []gradessvc.InsertRequest{})
+						currentGradesChunkLength = 0
+					}
+
+					// add to the current chunk
+					chunkedGrades[currentGradesChunk] =
+						append(chunkedGrades[currentGradesChunk], g)
+
+					// add to the number in the current chunk
+					currentGradesChunkLength++
+				}
 			}
 
 			if r.RollupScores != nil {
-				rollupScores = append(rollupScores, *r.RollupScores...)
+				for _, rs := range *r.RollupScores {
+					// if we are over the max per chunk, move to next chunk
+					if currentRollupScoreChunkLength >= 13107 {
+						currentRollupScoreChunk++
+						chunkedRollupScores = append(chunkedRollupScores, []coursessvc.OutcomeRollupInsertRequest{})
+						currentRollupScoreChunkLength = 0
+					}
+
+					// add to the current chunk
+					chunkedRollupScores[currentRollupScoreChunk] =
+						append(chunkedRollupScores[currentRollupScoreChunk], rs)
+
+					// add to the number in the current chunk
+					currentRollupScoreChunkLength++
+				}
 			}
 
 			if r.GPA != nil {
@@ -688,25 +742,37 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 			return
 		}
 
-		err = coursessvc.InsertMultipleOutcomeResults(trx, &outcomeResults)
-		if err != nil {
-			rb("outcome results")
-			util.HandleError(fmt.Errorf("error inserting multiple outcome results in insert fetch_all data: %w", err))
-			return
+		for i, req := range chunkedOutcomeResults {
+			err = coursessvc.InsertMultipleOutcomeResults(trx, &req)
+			if err != nil {
+				rb("outcome results")
+				util.HandleError(
+					fmt.Errorf("error inserting multiple outcome results in insert fetch_all data (chunk %d): %w", i, err),
+				)
+				return
+			}
 		}
 
-		err = gradessvc.Insert(trx, &grades)
-		if err != nil {
-			rb("grades")
-			util.HandleError(fmt.Errorf("error inserting multiple grades in insert fetch_all data: %w", err))
-			return
+		for i, req := range chunkedGrades {
+			err = gradessvc.Insert(trx, &req)
+			if err != nil {
+				rb("grades")
+				util.HandleError(
+					fmt.Errorf("error inserting multiple grades in insert fetch_all data (chunk %d): %w", i, err),
+				)
+				return
+			}
 		}
 
-		err = coursessvc.InsertMultipleOutcomeRollups(trx, &rollupScores)
-		if err != nil {
-			rb("rollup scores")
-			util.HandleError(fmt.Errorf("error inserting multiple rollup scores in insert fetch_all data: %w", err))
-			return
+		for i, req := range chunkedRollupScores {
+			err = coursessvc.InsertMultipleOutcomeRollups(trx, &req)
+			if err != nil {
+				rb("rollup scores")
+				util.HandleError(
+					fmt.Errorf("error inserting multiple rollup scores in insert fetch_all data (chunk %d): %w", i, err),
+				)
+				return
+			}
 		}
 
 		err = gpas.InsertMultiple(trx, &gpaReqs)
