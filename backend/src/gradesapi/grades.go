@@ -9,9 +9,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/canvas_tokens"
-	"github.com/iamtheyammer/canvascbl/backend/src/db/services/grades"
+	coursessvc "github.com/iamtheyammer/canvascbl/backend/src/db/services/courses"
+	"github.com/iamtheyammer/canvascbl/backend/src/db/services/gpas"
+	gradessvc "github.com/iamtheyammer/canvascbl/backend/src/db/services/grades"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/notifications"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/sessions"
+	"github.com/iamtheyammer/canvascbl/backend/src/db/services/users"
 	"github.com/iamtheyammer/canvascbl/backend/src/email"
 	"github.com/iamtheyammer/canvascbl/backend/src/env"
 	"github.com/iamtheyammer/canvascbl/backend/src/middlewares"
@@ -98,10 +101,12 @@ type gradesHandlerRequest struct {
 
 // UserGradesRequest represents a request for GradesForUser.
 type UserGradesRequest struct {
-	UserID         uint64
-	CanvasUserID   uint64
-	DetailedGrades bool
-	ManualFetch    bool
+	UserID           uint64
+	CanvasUserID     uint64
+	DetailedGrades   bool
+	ManualFetch      bool
+	ReturnDBRequests bool
+	Rd               *requestDetails
 }
 
 // UserGradesResponse is all possible info from a GradesForUser call.
@@ -115,6 +120,23 @@ type UserGradesResponse struct {
 	SimpleGrades   simpleGrades              `json:"simple_grades,omitempty"`
 	DetailedGrades detailedGrades            `json:"detailed_grades,omitempty"`
 	GPA            gpa                       `json:"gpa"`
+}
+
+/*
+UserGradesDBRequests is all of the insert/upsert requests that would be
+performed during the execution of this function.
+
+It is returned from GradesForUser if req.ReturnDBRequests is true.
+
+Note that observees are excluded due to their special upsert nature.
+*/
+type UserGradesDBRequests struct {
+	Profile        *users.UpsertRequest
+	Courses        *[]coursessvc.UpsertRequest
+	OutcomeResults *[]coursessvc.OutcomeResultInsertRequest
+	Grades         *[]gradessvc.InsertRequest
+	RollupScores   *[]coursessvc.OutcomeRollupInsertRequest
+	GPA            *[]gpas.InsertRequest
 }
 
 // GradesErrorResponse represents an error from GradesForUser.
@@ -161,6 +183,7 @@ func (r gradesHandlerRequest) toScopes() []oauth2.Scope {
 	return s
 }
 
+// GradesHandler handles /api/v1/grades
 func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	inc := r.URL.Query()["include[]"]
 	req := gradesHandlerRequest{}
@@ -254,7 +277,7 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 		manualFetch = true
 	}
 
-	g, gep := GradesForUser(&UserGradesRequest{
+	g, _, gep := GradesForUser(&UserGradesRequest{
 		UserID:         userID,
 		DetailedGrades: req.DetailedGrades,
 		ManualFetch:    manualFetch,
@@ -376,18 +399,44 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 		// whether we had a success for the specified canvas user id
 		// if 123 worked, statuses[123] = true.
 		statuses = make(map[uint64]bool)
+
+		dbReqsMutex = sync.Mutex{}
+		dbReqsWg    = sync.WaitGroup{}
+		dbReqs      []*UserGradesDBRequests
 	)
+
+	notificationReqs, err := notifications.ListSettings(db, &notifications.ListSettingsRequest{
+		Type:   notifications.TypeGradeChange,
+		Medium: notifications.MediumEmail,
+	})
+	if err != nil {
+		util.HandleError(fmt.Errorf("error listing notification requests in fetch_all handler: %w", err))
+		return
+	}
+
+	// notification requests, by canvas user id
+	nrs := make(map[uint64]struct{})
+	for _, ns := range *notificationReqs {
+		nrs[ns.CanvasUserID] = struct{}{}
+	}
+
 	for _, tok := range *toks {
 		wg.Add(1)
 		go func(cuID uint64) {
 			defer wg.Done()
 
-			g, gep := GradesForUser(&UserGradesRequest{
+			rd := rdFromToken(tok)
+
+			g, dbReq, gep := GradesForUser(&UserGradesRequest{
 				CanvasUserID: tok.CanvasUserID,
 				// using DetailedGrades because it's computationally easier
 				DetailedGrades: true,
 				// not manual because this is a fetch for other users
 				ManualFetch: false,
+				// we literally already fetched the token
+				Rd: &rd,
+				// batch em!
+				ReturnDBRequests: true,
 			})
 			if gep != nil {
 				mutex.Lock()
@@ -398,6 +447,15 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 				mutex.Unlock()
 				return
 			}
+
+			dbReqsWg.Add(1)
+			go func() {
+				defer dbReqsWg.Done()
+
+				dbReqsMutex.Lock()
+				dbReqs = append(dbReqs, dbReq)
+				dbReqsMutex.Unlock()
+			}()
 
 			/*
 				now, we'll handle a grade change notification
@@ -415,19 +473,7 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 				return
 			}
 
-			// list notification settings
-			ns, err := notifications.ListSettings(db, &notifications.ListSettingsRequest{
-				CanvasUserID: cuID,
-				Type:         notifications.TypeGradeChange,
-				Medium:       notifications.MediumEmail,
-			})
-			if err != nil {
-				util.HandleError(fmt.Errorf("error listing notification settings for user %d: %w", cuID, err))
-				set(false)
-				return
-			}
-
-			if len(*ns) != 1 {
+			if _, ok := nrs[tok.CanvasUserID]; !ok {
 				set(true)
 				return
 			}
@@ -462,8 +508,9 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 				cIDs = append(cIDs, cID)
 			}
 
+			// TODO: remove database call
 			before := time.Now().Add(-(2 * time.Minute))
-			pgsP, err := grades.List(db, &grades.ListRequest{
+			pgsP, err := gradessvc.List(db, &gradessvc.ListRequest{
 				UserCanvasIDs: &userIDs,
 				Before:        &before,
 				CourseIDs:     &cIDs,
@@ -557,6 +604,128 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 	}
 
 	wg.Wait()
+	dbReqsWg.Wait()
+
+	go func() {
+		var (
+			profiles []users.UpsertRequest
+			// keeps out duplicates
+			coursesMap = make(map[int64]struct{})
+			courses    []coursessvc.UpsertRequest
+			// keeps out duplicates
+			outcomeResultsMap = make(map[uint64]struct{})
+			outcomeResults    []coursessvc.OutcomeResultInsertRequest
+			grades            []gradessvc.InsertRequest
+			rollupScores      []coursessvc.OutcomeRollupInsertRequest
+			gpaReqs           []gpas.InsertRequest
+		)
+
+		for _, r := range dbReqs {
+			if r.Profile != nil {
+				profiles = append(profiles, *r.Profile)
+			}
+
+			if r.Courses != nil {
+				// keeps out duplicate courses
+				for _, c := range *r.Courses {
+					if _, ok := coursesMap[c.CourseID]; !ok {
+						courses = append(courses, c)
+						coursesMap[c.CourseID] = struct{}{}
+					}
+				}
+			}
+
+			if r.OutcomeResults != nil {
+				// keeps out duplicate outcome results
+				for _, or := range *r.OutcomeResults {
+					if _, ok := outcomeResultsMap[or.ID]; !ok {
+						outcomeResults = append(outcomeResults, or)
+						outcomeResultsMap[or.ID] = struct{}{}
+					}
+				}
+			}
+
+			if r.Grades != nil {
+				grades = append(grades, *r.Grades...)
+			}
+
+			if r.RollupScores != nil {
+				rollupScores = append(rollupScores, *r.RollupScores...)
+			}
+
+			if r.GPA != nil {
+				gpaReqs = append(gpaReqs, *r.GPA...)
+			}
+		}
+
+		// we'll request one at a time-- these are big, big requests
+		trx, err := db.Begin()
+		if err != nil {
+			util.HandleError(fmt.Errorf("error beginning insert grades fetch_all data transaction: %w", err))
+			return
+		}
+
+		rb := func(at string) {
+			err := trx.Rollback()
+			if err != nil {
+				util.HandleError(
+					fmt.Errorf("error rolling back insert grades fetch_all data transaction at %s: %w", at, err),
+				)
+			}
+		}
+
+		_, err = users.UpsertMultipleProfiles(trx, &profiles, false)
+		if err != nil {
+			rb("profiles")
+			util.HandleError(fmt.Errorf("error upserting multiple profiles in insert fetch_all data: %w", err))
+			return
+		}
+
+		err = coursessvc.UpsertMultiple(trx, &courses)
+		if err != nil {
+			rb("courses")
+			util.HandleError(fmt.Errorf("error upserting multiple courses in insert fetch_all data: %w", err))
+			return
+		}
+
+		err = coursessvc.InsertMultipleOutcomeResults(trx, &outcomeResults)
+		if err != nil {
+			rb("outcome results")
+			util.HandleError(fmt.Errorf("error inserting multiple outcome results in insert fetch_all data: %w", err))
+			return
+		}
+
+		err = gradessvc.Insert(trx, &grades)
+		if err != nil {
+			rb("grades")
+			util.HandleError(fmt.Errorf("error inserting multiple grades in insert fetch_all data: %w", err))
+			return
+		}
+
+		err = coursessvc.InsertMultipleOutcomeRollups(trx, &rollupScores)
+		if err != nil {
+			rb("rollup scores")
+			util.HandleError(fmt.Errorf("error inserting multiple rollup scores in insert fetch_all data: %w", err))
+			return
+		}
+
+		err = gpas.InsertMultiple(trx, &gpaReqs)
+		if err != nil {
+			rb("gpas")
+			util.HandleError(fmt.Errorf("error inserting multiple gpas in insert fetch_all data: %w", err))
+			return
+		}
+
+		err = trx.Commit()
+		if err != nil {
+			rb("commit")
+			util.HandleError(fmt.Errorf("error commiting insert fetch_all data transaction: %w", err))
+			return
+		}
+
+		// success
+		return
+	}()
 
 	if returnData {
 		jRet, err := json.Marshal(&struct {
@@ -586,24 +755,30 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 	return
 }
 
-func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *GradesErrorResponse) {
+func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *UserGradesDBRequests, *GradesErrorResponse) {
 	var (
-		rd  requestDetails
-		err error
+		rd       requestDetails
+		dbReqs   UserGradesDBRequests
+		dbReqsWg = sync.WaitGroup{}
+		err      error
 	)
 
-	if req.UserID > 0 {
-		rd, err = rdFromUserID(req.UserID)
+	if req.Rd == nil {
+		if req.UserID > 0 {
+			rd, err = rdFromUserID(req.UserID)
+		} else {
+			rd, err = rdFromCanvasUserID(req.CanvasUserID)
+		}
 	} else {
-		rd, err = rdFromCanvasUserID(req.CanvasUserID)
+		rd = *req.Rd
 	}
 
 	if err != nil {
-		return nil, &GradesErrorResponse{InternalError: fmt.Errorf("error getting rd from user id: %w", err)}
+		return nil, nil, &GradesErrorResponse{InternalError: fmt.Errorf("error getting rd from user id: %w", err)}
 	}
 
 	if rd.TokenID < 1 {
-		return nil, &GradesErrorResponse{
+		return nil, nil, &GradesErrorResponse{
 			Error:      gradesErrorNoTokens,
 			Action:     gradesErrorActionRedirectToOAuth,
 			StatusCode: http.StatusForbidden,
@@ -618,14 +793,14 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *GradesErrorRes
 			if refreshErr != nil {
 				if errors.Is(refreshErr, canvasErrorInvalidAccessTokenError) ||
 					errors.Is(refreshErr, canvasOAuth2ErrorRefreshTokenNotFound) {
-					return nil, &GradesErrorResponse{
+					return nil, nil, &GradesErrorResponse{
 						Error:      gradesErrorRevokedToken,
 						Action:     gradesErrorActionRedirectToOAuth,
 						StatusCode: http.StatusForbidden,
 					}
 				}
 
-				return nil, &GradesErrorResponse{
+				return nil, nil, &GradesErrorResponse{
 					InternalError: fmt.Errorf("error refreshing a token for a newProfile: %w", refreshErr),
 				}
 			}
@@ -633,36 +808,46 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *GradesErrorRes
 			newProfile, newProfileErr := getCanvasProfile(rd, "self")
 			if newProfileErr != nil {
 				if errors.Is(newProfileErr, canvasErrorInvalidAccessTokenError) {
-					return nil, &GradesErrorResponse{
+					return nil, nil, &GradesErrorResponse{
 						Error:      gradesErrorRefreshedTokenError,
 						Action:     gradesErrorActionRedirectToOAuth,
 						StatusCode: http.StatusForbidden,
 					}
 				} else if errors.Is(err, canvasErrorUnknownError) {
-					return nil, &gradesErrorUnknownCanvasErrorResponse
+					return nil, nil, &gradesErrorUnknownCanvasErrorResponse
 				}
 
-				return nil, &GradesErrorResponse{InternalError: fmt.Errorf("error getting a newProfile: %w", newProfileErr)}
+				return nil, nil, &GradesErrorResponse{InternalError: fmt.Errorf("error getting a newProfile: %w", newProfileErr)}
 			}
 
 			profile = newProfile
 		} else if errors.Is(err, canvasErrorInvalidAccessTokenError) {
-			return nil, &GradesErrorResponse{
+			return nil, nil, &GradesErrorResponse{
 				Error:      gradesErrorRefreshedTokenError,
 				Action:     gradesErrorActionRedirectToOAuth,
 				StatusCode: http.StatusForbidden,
 			}
 		} else if errors.Is(err, canvasErrorUnknownError) {
-			return nil, &gradesErrorUnknownCanvasErrorResponse
+			return nil, nil, &gradesErrorUnknownCanvasErrorResponse
 		} else {
-			return nil, &GradesErrorResponse{InternalError: fmt.Errorf("error getting a canvas profile: %w", err)}
+			return nil, nil, &GradesErrorResponse{InternalError: fmt.Errorf("error getting a canvas profile: %w", err)}
 		}
 
 		// reset err, this succeeded
 		// in the future, err should always be nil
 		err = nil
 	}
-	go saveProfileToDB((*canvasUserProfile)(profile))
+
+	if req.ReturnDBRequests {
+		dbReqsWg.Add(1)
+		go func() {
+			defer dbReqsWg.Done()
+
+			dbReqs.Profile = prepareProfileForDB((*canvasUserProfile)(profile))
+		}()
+	} else {
+		go saveProfileToDB((*canvasUserProfile)(profile))
+	}
 
 	mutex := sync.Mutex{}
 	wg := sync.WaitGroup{}
@@ -719,19 +904,30 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *GradesErrorRes
 
 	if err != nil {
 		if errors.Is(err, canvasErrorInvalidAccessTokenError) {
-			return nil, &GradesErrorResponse{
+			return nil, nil, &GradesErrorResponse{
 				Error:      gradesErrorRevokedToken,
 				Action:     gradesErrorActionRetryOnce,
 				StatusCode: http.StatusForbidden,
 			}
 		} else if errors.Is(err, canvasErrorUnknownError) {
-			return nil, &gradesErrorUnknownCanvasErrorResponse
+			return nil, nil, &gradesErrorUnknownCanvasErrorResponse
 		}
 
-		return nil, &GradesErrorResponse{InternalError: fmt.Errorf("error getting canvas courses: %w", err)}
+		return nil, nil, &GradesErrorResponse{InternalError: fmt.Errorf("error getting canvas courses: %w", err)}
 	}
 
-	go saveCoursesToDB(allCourses)
+	if req.ReturnDBRequests {
+		dbReqsWg.Add(1)
+		go func() {
+			defer dbReqsWg.Done()
+
+			dbReqs.Courses = prepareCoursesForDB(allCourses)
+		}()
+	} else {
+		go saveCoursesToDB(allCourses)
+	}
+
+	// observees are special and don't get added to dbReqs
 	go saveObserveesToDB((*[]canvasObservee)(observees), profile.ID)
 
 	// we now have both allCourses and observees.
@@ -789,20 +985,35 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *GradesErrorRes
 
 	if err != nil {
 		if errors.Is(err, canvasErrorInvalidAccessTokenError) {
-			return nil, &GradesErrorResponse{
+			return nil, nil, &GradesErrorResponse{
 				Error:         gradesErrorRevokedToken,
 				Action:        gradesErrorActionRetryOnce,
 				StatusCode:    http.StatusForbidden,
 				InternalError: nil,
 			}
 		} else if errors.Is(err, canvasErrorUnknownError) {
-			return nil, &gradesErrorUnknownCanvasErrorResponse
+			return nil, nil, &gradesErrorUnknownCanvasErrorResponse
 		}
 
-		return nil, &GradesErrorResponse{InternalError: fmt.Errorf("error getting alignments/results/assignments: %w", err)}
+		return nil, nil, &GradesErrorResponse{InternalError: fmt.Errorf("error getting alignments/results/assignments: %w", err)}
 	}
 
-	go saveOutcomeResultsToDB(results)
+	if req.ReturnDBRequests {
+		dbReqsWg.Add(1)
+		go func() {
+			defer dbReqsWg.Done()
+
+			resReq, prepErr := prepareOutcomeResultsForDB(results)
+			if prepErr != nil {
+				util.HandleError(fmt.Errorf("error preparing outcome results for db: %w", err))
+				return
+			}
+
+			dbReqs.OutcomeResults = resReq
+		}()
+	} else {
+		go saveOutcomeResultsToDB(results)
+	}
 
 	// now, we will calculate grades
 	// map[userID<uint64>]map[courseID<uint64>]grade<computedGrade>
@@ -851,11 +1062,35 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *GradesErrorRes
 
 	wg.Wait()
 
-	go saveGradesToDB(grades, req.ManualFetch)
+	if req.ReturnDBRequests {
+		dbReqsWg.Add(1)
+		go func() {
+			defer dbReqsWg.Done()
+
+			gReqs, rollupReqs := prepareGradesForDB(grades, req.ManualFetch)
+
+			dbReqs.Grades = gReqs
+			dbReqs.RollupScores = rollupReqs
+		}()
+	} else {
+		go saveGradesToDB(grades, req.ManualFetch)
+	}
 
 	cGPA := calculateGPAFromDetailedGrades(grades)
 
-	go saveGPAToDB(cGPA, req.ManualFetch)
+	if req.ReturnDBRequests {
+		dbReqsWg.Add(1)
+		go func() {
+			defer dbReqsWg.Done()
+
+			dbReqs.GPA = prepareGPAForDB(cGPA, req.ManualFetch)
+		}()
+
+		// wait for them all to finish
+		dbReqsWg.Wait()
+	} else {
+		go saveGPAToDB(cGPA, req.ManualFetch)
+	}
 
 	return &UserGradesResponse{
 		Session:        nil,
@@ -866,5 +1101,5 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *GradesErrorRes
 		SimpleGrades:   sGrades,
 		DetailedGrades: grades,
 		GPA:            cGPA,
-	}, nil
+	}, &dbReqs, nil
 }

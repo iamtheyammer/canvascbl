@@ -39,11 +39,12 @@ const (
 
 // Setting represents a user's setting for one type of notifications on one medium.
 type Setting struct {
-	ID         uint64
-	UserID     uint64
-	Type       uint64
-	Medium     Medium
-	InsertedAt time.Time
+	ID           uint64
+	UserID       uint64
+	CanvasUserID uint64
+	Type         uint64
+	Medium       Medium
+	InsertedAt   time.Time
 }
 
 // Type represents a notification type.
@@ -123,11 +124,13 @@ func ListSettings(db services.DB, req *ListSettingsRequest) (*[]Setting, error) 
 		Select(
 			"notification_settings.id",
 			"notification_settings.user_id",
+			"users.canvas_user_id",
 			"notification_settings.notification_type_id",
 			"notification_settings.medium",
 			"notification_settings.inserted_at",
 		).
-		From("notification_settings")
+		From("notification_settings").
+		Join("users ON notification_settings.user_id = users.id")
 
 	if req.ID > 0 {
 		q = q.Where(sq.Eq{"id": req.ID})
@@ -138,8 +141,7 @@ func ListSettings(db services.DB, req *ListSettingsRequest) (*[]Setting, error) 
 	}
 
 	if req.CanvasUserID > 0 {
-		q = q.Join("users ON notification_settings.user_id = users.id").
-			Where(sq.Eq{"users.canvas_user_id": req.CanvasUserID})
+		q = q.Where(sq.Eq{"users.canvas_user_id": req.CanvasUserID})
 	}
 
 	if req.Type > 0 {
@@ -168,6 +170,7 @@ func ListSettings(db services.DB, req *ListSettingsRequest) (*[]Setting, error) 
 		err = rows.Scan(
 			&s.ID,
 			&s.UserID,
+			&s.CanvasUserID,
 			&s.Type,
 			&s.Medium,
 			&s.InsertedAt,

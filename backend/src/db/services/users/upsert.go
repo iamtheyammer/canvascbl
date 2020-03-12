@@ -1,6 +1,7 @@
 package users
 
 import (
+	"fmt"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/pkg/errors"
@@ -16,6 +17,7 @@ type UpsertRequest struct {
 
 // UpsertResponse contains some user data sometimes needed after an upsert.
 type UpsertResponse struct {
+	UserID     uint64
 	InsertedAt time.Time
 }
 
@@ -24,35 +26,73 @@ type UpsertObserveesRequest struct {
 	ObserverCanvasUserID uint64
 }
 
-// UpsertProfile upserts a user profile
-func UpsertProfile(db services.DB, ur *UpsertRequest) (*UpsertResponse, error) {
-	query, args, err := util.Sq.
+// UpsertProfile wraps UpsertMultipleProfiles for one user only
+func UpsertProfile(db services.DB, ur *UpsertRequest, returnInsertedAt bool) (*UpsertResponse, error) {
+	resp, err := UpsertMultipleProfiles(db, &[]UpsertRequest{*ur}, returnInsertedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp != nil && len(*resp) > 0 {
+		return &(*resp)[0], nil
+	} else {
+		return nil, nil
+	}
+}
+
+// UpsertMultipleProfiles upserts multiple user profiles
+func UpsertMultipleProfiles(db services.DB, ur *[]UpsertRequest, returnInsertedAt bool) (*[]UpsertResponse, error) {
+	suffix := "ON CONFLICT (lti_user_id) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email"
+	if returnInsertedAt {
+		suffix += " RETURNING id, inserted_at"
+	}
+
+	q := util.Sq.
 		Insert("users").
-		SetMap(map[string]interface{}{
-			"name":           ur.Name,
-			"email":          ur.Email,
-			"lti_user_id":    ur.LTIUserID,
-			"canvas_user_id": ur.CanvasUserID,
-		}).
-		// normally would be ignore, but emails and names can change
-		Suffix(
-			"ON CONFLICT (lti_user_id) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email " +
-				"RETURNING inserted_at",
+		Columns(
+			"name",
+			"email",
+			"lti_user_id",
+			"canvas_user_id",
 		).
-		ToSql()
-	if err != nil {
-		return nil, errors.Wrap(err, "error building upsert users sql")
+		Suffix(suffix)
+
+	for _, r := range *ur {
+		q = q.Values(r.Name, r.Email, r.LTIUserID, r.CanvasUserID)
 	}
 
-	row := db.QueryRow(query, args...)
-
-	var resp UpsertResponse
-	err = row.Scan(&resp.InsertedAt)
+	query, args, err := q.ToSql()
 	if err != nil {
-		return nil, errors.Wrap(err, "error executing upsert users sql")
+		return nil, fmt.Errorf("error building upsert users sql: %w", err)
 	}
 
-	return &resp, nil
+	if returnInsertedAt {
+		rows, err := db.Query(query, args...)
+		if err != nil {
+			return nil, fmt.Errorf("error executing upsert users (returning) sql: %w", err)
+		}
+
+		var resp []UpsertResponse
+		for rows.Next() {
+			var r UpsertResponse
+
+			err = rows.Scan(&r.UserID, &r.InsertedAt)
+			if err != nil {
+				return nil, fmt.Errorf("error scanning upsert users sql: %w", err)
+			}
+
+			resp = append(resp, r)
+		}
+
+		return &resp, nil
+	} else {
+		_, err = db.Exec(query, args...)
+		if err != nil {
+			return nil, fmt.Errorf("error executing upsert users sql: %w", err)
+		}
+
+		return nil, nil
+	}
 }
 
 // UpsertUserObservees inserts a user's observees.

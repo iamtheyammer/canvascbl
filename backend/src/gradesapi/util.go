@@ -176,3 +176,13 @@ func rdFromUserID(uID uint64) (requestDetails, error) {
 		Subdomain:    env.CanvasOAuth2Subdomain,
 	}, nil
 }
+
+// rdFromToken gets a requestDetails object from a db canvas token
+func rdFromToken(tok canvas_tokens.CanvasToken) requestDetails {
+	return requestDetails{
+		TokenID:      tok.ID,
+		Token:        tok.Token,
+		RefreshToken: tok.RefreshToken,
+		Subdomain:    env.CanvasOAuth2Subdomain,
+	}
+}

@@ -12,20 +12,24 @@ import (
 	"strings"
 )
 
-func saveProfileToDB(p *canvasUserProfile) {
-	_, err := users.UpsertProfile(db, &users.UpsertRequest{
+func prepareProfileForDB(p *canvasUserProfile) *users.UpsertRequest {
+	return &users.UpsertRequest{
 		Name:         p.Name,
 		Email:        p.PrimaryEmail,
 		LTIUserID:    p.LtiUserID,
 		CanvasUserID: int64(p.ID),
-	})
+	}
+}
+
+func saveProfileToDB(p *canvasUserProfile) {
+	_, err := users.UpsertProfile(db, prepareProfileForDB(p), false)
 	if err != nil {
 		util.HandleError(fmt.Errorf("error saving user profile to db: %w", err))
 		return
 	}
 }
 
-func saveCoursesToDB(cs *[]canvasCourse) {
+func prepareCoursesForDB(cs *[]canvasCourse) *[]courses.UpsertRequest {
 	var req []courses.UpsertRequest
 	for _, c := range *cs {
 		req = append(req, courses.UpsertRequest{
@@ -37,7 +41,11 @@ func saveCoursesToDB(cs *[]canvasCourse) {
 		})
 	}
 
-	err := courses.UpsertMultiple(db, &req)
+	return &req
+}
+
+func saveCoursesToDB(cs *[]canvasCourse) {
+	err := courses.UpsertMultiple(db, prepareCoursesForDB(cs))
 	if err != nil {
 		util.HandleError(fmt.Errorf("error saving courses to db: %w", err))
 		return
@@ -171,7 +179,7 @@ func saveObserveesToDB(cObs *[]canvasObservee, requestingUserID uint64) {
 	return
 }
 
-func saveOutcomeResultsToDB(results processedOutcomeResults) {
+func prepareOutcomeResultsForDB(results processedOutcomeResults) (*[]courses.OutcomeResultInsertRequest, error) {
 	var req []courses.OutcomeResultInsertRequest
 	for cID, us := range results {
 		for uID, os := range us {
@@ -179,8 +187,7 @@ func saveOutcomeResultsToDB(results processedOutcomeResults) {
 				for _, r := range res {
 					aID, err := strconv.Atoi(strings.TrimPrefix(r.Links.Assignment, "assignment_"))
 					if err != nil {
-						util.HandleError(fmt.Errorf("failed to strip and convert a linked assignment id in an outcome result: %w", err))
-						return
+						return nil, fmt.Errorf("failed to strip and convert a linked assignment id in an outcome result: %w", err)
 					}
 
 					req = append(req, courses.OutcomeResultInsertRequest{
@@ -199,14 +206,29 @@ func saveOutcomeResultsToDB(results processedOutcomeResults) {
 		}
 	}
 
-	err := courses.InsertMultipleOutcomeResults(db, &req)
+	return &req, nil
+}
+
+func saveOutcomeResultsToDB(results processedOutcomeResults) {
+	req, err := prepareOutcomeResultsForDB(results)
+	if err != nil {
+		util.HandleError(fmt.Errorf("error preparing outcome results for db: %w", err))
+		return
+	}
+
+	err = courses.InsertMultipleOutcomeResults(db, req)
 	if err != nil {
 		util.HandleError(fmt.Errorf("error inserting multiple outcome rollups: %w", err))
 		return
 	}
 }
 
-func saveGradesToDB(grds detailedGrades, manualFetch bool) {
+func prepareGradesForDB(
+	grds detailedGrades,
+	manualFetch bool) (
+	*[]grades.InsertRequest,
+	*[]courses.OutcomeRollupInsertRequest,
+) {
 	var req []grades.InsertRequest
 	var rs []courses.OutcomeRollupInsertRequest
 	for uID, cs := range grds {
@@ -233,13 +255,19 @@ func saveGradesToDB(grds detailedGrades, manualFetch bool) {
 		}
 	}
 
+	return &req, &rs
+}
+
+func saveGradesToDB(grds detailedGrades, manualFetch bool) {
+	req, rs := prepareGradesForDB(grds, manualFetch)
+
 	go func(request *[]grades.InsertRequest) {
 		err := grades.Insert(db, request)
 		if err != nil {
 			util.HandleError(fmt.Errorf("error inserting grades: %w", err))
 			return
 		}
-	}(&req)
+	}(req)
 
 	go func(request *[]courses.OutcomeRollupInsertRequest) {
 		err := courses.InsertMultipleOutcomeRollups(db, request)
@@ -247,16 +275,15 @@ func saveGradesToDB(grds detailedGrades, manualFetch bool) {
 			util.HandleError(fmt.Errorf("error inserting multiple outcome averages (outcome rollups): %w", err))
 			return
 		}
-	}(&rs)
+	}(rs)
 
 	return
 }
 
-func saveAssignmentsToDB(ass []canvasAssignment, courseID string) {
+func prepareAssignmentsForDB(ass []canvasAssignment, courseID string) (*[]courses.AssignmentUpsertRequest, error) {
 	cID, err := strconv.Atoi(courseID)
 	if err != nil {
-		util.HandleError(fmt.Errorf("error converting course ID %s into an int: %w", courseID, err))
-		return
+		return nil, fmt.Errorf("error converting course ID %s into an int: %w", courseID, err)
 	}
 
 	var req []courses.AssignmentUpsertRequest
@@ -270,15 +297,25 @@ func saveAssignmentsToDB(ass []canvasAssignment, courseID string) {
 		})
 	}
 
-	err = courses.UpsertMultipleAssignments(db, &req)
+	return &req, nil
+}
+
+func saveAssignmentsToDB(ass []canvasAssignment, courseID string) {
+	req, err := prepareAssignmentsForDB(ass, courseID)
+	if err != nil {
+		util.HandleError(fmt.Errorf("error preparing assignments for db: %w", err))
+		return
+	}
+
+	err = courses.UpsertMultipleAssignments(db, req)
 	if err != nil {
 		util.HandleError(fmt.Errorf("error inserting multiple assignments for course %s: %w", courseID, err))
 		return
 	}
 }
 
-func saveOutcomeToDB(o *canvasOutcome) {
-	req := outcomes.InsertRequest{
+func prepareOutcomeForDB(o *canvasOutcome) *outcomes.InsertRequest {
+	return &outcomes.InsertRequest{
 		CanvasID:       o.ID,
 		CourseID:       &o.ContextID,
 		ContextID:      o.ContextID,
@@ -287,19 +324,23 @@ func saveOutcomeToDB(o *canvasOutcome) {
 		MasteryPoints:  o.MasteryPoints,
 		PointsPossible: o.PointsPossible,
 	}
+}
+
+func saveOutcomeToDB(o *canvasOutcome) {
+	req := prepareOutcomeForDB(o)
 
 	if o.ContextType != "Course" {
 		req.CourseID = nil
 	}
 
-	err := outcomes.UpsertOutcome(db, &req)
+	err := outcomes.UpsertOutcome(db, req)
 	if err != nil {
 		util.HandleError(fmt.Errorf("error saving outcome %d to db: %w", o.ID, err))
 		return
 	}
 }
 
-func saveGPAToDB(g gpa, manualFetch bool) {
+func prepareGPAForDB(g gpa, manualFetch bool) *[]gpas.InsertRequest {
 	var req []gpas.InsertRequest
 
 	for cuID, cGPA := range g {
@@ -312,7 +353,11 @@ func saveGPAToDB(g gpa, manualFetch bool) {
 		})
 	}
 
-	err := gpas.InsertMultiple(db, &req)
+	return &req
+}
+
+func saveGPAToDB(g gpa, manualFetch bool) {
+	err := gpas.InsertMultiple(db, prepareGPAForDB(g, manualFetch))
 	if err != nil {
 		util.HandleError(fmt.Errorf("error saving gpa to db: %w", err))
 		return

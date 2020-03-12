@@ -27,7 +27,7 @@ func UpsertProfileAndGenerateSession(pj *string) (*string, *users.CanvasProfileR
 		Email:        cpr.PrimaryEmail,
 		LTIUserID:    cpr.LtiUserID,
 		CanvasUserID: cpr.ID,
-	})
+	}, true)
 	if err != nil {
 		rollbackErr := trx.Rollback()
 		if rollbackErr != nil {
