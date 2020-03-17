@@ -45,6 +45,18 @@ function Upgrades(props) {
     }
   }, [loaded]);
 
+  return (
+    <>
+      <Typography.Title level={2}>Upgrades</Typography.Title>
+      <Typography.Text strong>
+        CanvasCBL+ is on us while we're doing distance learning.
+      </Typography.Text>
+      <br />
+      <br />
+      <Typography.Text>Stay safe out there!</Typography.Text>
+    </>
+  );
+
   if (!session || !checkout.products || loading.includes(getProductsId)) {
     return (
       <div align="center">
