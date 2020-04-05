@@ -13,7 +13,7 @@ func AddSessionToResponse(w http.ResponseWriter, ss string) {
 
 	if env.Env == env.EnvironmentDevelopment {
 		secure = false
-		sameSite = http.SameSiteNoneMode
+		sameSite = http.SameSiteLaxMode
 	}
 
 	c := http.Cookie{
