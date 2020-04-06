@@ -80,6 +80,7 @@ export const vias = {
   moreActionsSubmenu: 'More Actions Submenu',
   breadcrumb: 'Breadcrumb',
   gradesTableOpenOnCanvas: 'Grades Table Open On Canvas',
+  gradesTableBreakdownOnCanvas: 'Grades Table Breakdown On Canvas',
   gradesTableSeeBreakdownLink: 'Grades Table See Breakdown Link',
   gradesTableCourseName: 'Grades Table Course Name',
   gpaReportCardQuestionIcon: 'GPA Question Mark Icon (Report Card)',
@@ -108,6 +109,7 @@ export const destinationNames = {
 export const destinationTypes = {
   outcome: 'Outcome',
   course: 'Course',
+  courseGrades: 'Course Grades',
   assignment: 'Assignment',
   helpdesk: {
     home: 'CanvasCBL Helpdesk Home',

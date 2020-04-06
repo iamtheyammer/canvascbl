@@ -12,7 +12,8 @@ import {
   Row,
   Col,
   Statistic,
-  Divider
+  Divider,
+  Tooltip
 } from 'antd';
 import { Accordion as MobileAccordion, List as MobileList } from 'antd-mobile';
 
@@ -101,7 +102,24 @@ const tableColumns = [
           {text}
         </TrackingLink>
       ) : (
-        text
+        <>
+          {text}{' '}
+          {record.isDistanceLearning && (
+            <Popover
+              title={'Distance Learning Course'}
+              content={
+                <>
+                  This is a distance learning course.
+                  <br />
+                  Learn more about your grade in the Canvas Breakdown.
+                </>
+              }
+              placement="topLeft"
+            >
+              <Icon type="exclamation-circle" />
+            </Popover>
+          )}
+        </>
       )
   },
   {
@@ -144,7 +162,22 @@ const tableColumns = [
             >
               See Breakdown
             </TrackingLink>
-            {' | '}
+            <Divider type="vertical" />
+          </>
+        )}
+        {record.isDistanceLearning && (
+          <>
+            <PopoutLink
+              url={`https://${env.defaultSubdomain}.instructure.com/courses/${record.id}/grades`}
+              tracking={{
+                destinationName: destinationNames.canvas,
+                destinationType: destinationTypes.courseGrades,
+                via: vias.gradesTableBreakdownOnCanvas
+              }}
+            >
+              Breakdown on Canvas <Icon component={PopOutIcon} />
+            </PopoutLink>
+            <Divider type="vertical" />
           </>
         )}
         <PopoutLink
@@ -250,6 +283,7 @@ function Grades(props) {
       grade: detailedGrade.grade.grade,
       id: c.id,
       userHasValidSubscription: plus.session.has_valid_subscription,
+      isDistanceLearning: c.enrollment_term_id === 18,
       breakdownIsAvailable:
         detailedGrade.grade.grade !== 'N/A' &&
         !detailedGrade.grade.grade.toLowerCase().includes('error') &&
@@ -295,13 +329,23 @@ function Grades(props) {
               header={
                 <div style={{ paddingRight: '6px' }}>
                   <div style={{ float: 'left', overflow: 'hidden' }}>
-                    {truncate(d.name, { length: 20 })}
+                    {<>{truncate(d.name, { length: 25 })}</>}
                   </div>
                   <div style={{ float: 'right' }}>{d.grade}</div>
                 </div>
               }
             >
               <MobileList style={{ paddingLeft: '6px' }}>
+                {d.isDistanceLearning && (
+                  <MobileList.Item multipleLine={true}>
+                    Distance Learning Course
+                    <MobileList.Item.Brief>
+                      This is a distance learning course.
+                      <br /> Learn more about your grade in the <br />
+                      Canvas Breakdown.
+                    </MobileList.Item.Brief>
+                  </MobileList.Item>
+                )}
                 {d.breakdownIsAvailable && (
                   <MobileList.Item>
                     <TrackingLink
@@ -311,6 +355,20 @@ function Grades(props) {
                     >
                       See Breakdown
                     </TrackingLink>
+                  </MobileList.Item>
+                )}
+                {d.isDistanceLearning && (
+                  <MobileList.Item>
+                    <PopoutLink
+                      url={`https://${env.defaultSubdomain}.instructure.com/courses/${d.id}/grades`}
+                      tracking={{
+                        destinationName: destinationNames.canvas,
+                        destinationType: destinationTypes.courseGrades,
+                        via: vias.gradesTableBreakdownOnCanvas
+                      }}
+                    >
+                      Breakdown on Canvas <Icon component={PopOutIcon} />
+                    </PopoutLink>
                   </MobileList.Item>
                 )}
                 <MobileList.Item>
