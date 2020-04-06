@@ -203,8 +203,6 @@ func OAuth2ResponseHandler(w http.ResponseWriter, r *http.Request, _ httprouter.
 		return
 	}
 
-	fmt.Println(body, tokenResp)
-
 	if state.Intent == "reauth" {
 		// make sure that they're already a user
 		u, err := db.ListUsers(&userssvc.ListRequest{CanvasUserID: uint64(tokenResp.User.ID)})
