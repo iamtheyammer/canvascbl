@@ -92,9 +92,7 @@ const tableColumns = [
     key: 'name',
     sorter: (a, b) => desc(a.name, b.name),
     render: (text, record) =>
-      record.grade === 'N/A' || record.grade.toLowerCase().includes('error') ? (
-        text
-      ) : (
+      record.breakdownIsAvailable ? (
         <TrackingLink
           to={`/dashboard/grades/${record.id}`}
           pageName={pageNames.gradeBreakdown}
@@ -102,6 +100,8 @@ const tableColumns = [
         >
           {text}
         </TrackingLink>
+      ) : (
+        text
       )
   },
   {
@@ -134,20 +134,19 @@ const tableColumns = [
     title: 'Actions',
     key: 'actions',
     render: (text, record) => (
-      <div>
-        {record.grade !== 'N/A' &&
-          !record.grade.toLowerCase().includes('error') && (
-            <>
-              <TrackingLink
-                to={`/dashboard/grades/${record.id}`}
-                pageName={pageNames.gradeBreakdown}
-                via={vias.gradesTableSeeBreakdownLink}
-              >
-                See Breakdown
-              </TrackingLink>
-              {' | '}
-            </>
-          )}
+      <>
+        {record.breakdownIsAvailable && (
+          <>
+            <TrackingLink
+              to={`/dashboard/grades/${record.id}`}
+              pageName={pageNames.gradeBreakdown}
+              via={vias.gradesTableSeeBreakdownLink}
+            >
+              See Breakdown
+            </TrackingLink>
+            {' | '}
+          </>
+        )}
         <PopoutLink
           url={`https://${env.defaultSubdomain}.instructure.com/courses/${record.id}`}
           tracking={{
@@ -158,7 +157,7 @@ const tableColumns = [
         >
           Open on Canvas <Icon component={PopOutIcon} />
         </PopoutLink>
-      </div>
+      </>
     )
   }
 ];
@@ -240,22 +239,30 @@ function Grades(props) {
     plus.previousGrades &&
     plus.previousGrades.filter(pg => pg.canvasUserId === activeUserId);
 
-  const data = activeCourses.map(c => ({
-    key: c.id,
-    name: c.name,
-    grade: grades[activeUserId][c.id]
-      ? grades[activeUserId][c.id].grade.grade
-      : 'Error, try reloading',
-    id: c.id,
-    userHasValidSubscription: plus.session.has_valid_subscription,
-    previousGrade: loading.includes(getPrevGradeId)
-      ? 'loading'
-      : plus &&
-        plus.previousGrades &&
-        !error[getPrevGradeId] &&
-        previousGrades.filter(pg => pg.courseId === c.id)[0] &&
-        previousGrades.filter(pg => pg.courseId === c.id)[0]
-  }));
+  const data = activeCourses.map(c => {
+    const detailedGrade = grades[activeUserId][c.id]
+      ? grades[activeUserId][c.id]
+      : 'Error, try reloading';
+
+    return {
+      key: c.id,
+      name: c.name,
+      grade: detailedGrade.grade.grade,
+      id: c.id,
+      userHasValidSubscription: plus.session.has_valid_subscription,
+      breakdownIsAvailable:
+        detailedGrade.grade.grade !== 'N/A' &&
+        !detailedGrade.grade.grade.toLowerCase().includes('error') &&
+        !!detailedGrade.averages,
+      previousGrade: loading.includes(getPrevGradeId)
+        ? 'loading'
+        : plus &&
+          plus.previousGrades &&
+          !error[getPrevGradeId] &&
+          previousGrades.filter(pg => pg.courseId === c.id)[0] &&
+          previousGrades.filter(pg => pg.courseId === c.id)[0]
+    };
+  });
 
   const gradesTitle = (
     <Typography.Title level={2}>
@@ -295,7 +302,7 @@ function Grades(props) {
               }
             >
               <MobileList style={{ paddingLeft: '6px' }}>
-                {d.grade !== 'N/A' && !d.grade.toLowerCase().includes('error') && (
+                {d.breakdownIsAvailable && (
                   <MobileList.Item>
                     <TrackingLink
                       to={`/dashboard/grades/${d.id}`}

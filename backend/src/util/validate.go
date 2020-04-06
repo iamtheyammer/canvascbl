@@ -14,23 +14,6 @@ var (
 	giftCardClaimCodeRegex = regexp.MustCompile("[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}")
 )
 
-// ValidateSubdomain takes a subdomain and ensures it's allowed per the environment variable.
-func ValidateSubdomain(req string) bool {
-	allowed := env.ProxyAllowedSubdomains
-
-	if allowed[0] == "*" {
-		return true
-	}
-
-	for _, sd := range allowed {
-		if sd == req {
-			return true
-		}
-	}
-
-	return false
-}
-
 // ValidateLowercaseString validates that the string contains 1 to 64 lowercase english letters.
 func ValidateLowercaseString(req string) bool {
 	// the req must be 1-64 lowercase letters

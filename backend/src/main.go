@@ -138,11 +138,6 @@ func main() {
 
 	mw := MiddlewareRouter{}
 
-	if env.ProxyAllowedSubdomains[0] == "*" {
-		fmt.Println("WARN: Your CANVAS_PROXY_ALLOW_SUBDOMAINS env var is currently set to \"*\", " +
-			"which will allow anyone to use this server as a proxy server.")
-	}
-
 	if env.ProxyAllowedCORSOrigins == "*" {
 		fmt.Println("WARN: Your CANVAS_PROXY_ALLOWED_CORS_ORIGINS env var is currently set to \"*\", " +
 			"which will allow any site to make requests to this server.")

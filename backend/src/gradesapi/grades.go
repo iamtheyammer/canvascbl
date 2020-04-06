@@ -204,7 +204,8 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 		case gradesIncludeDetailedGrades:
 			req.DetailedGrades = true
 		case gradesIncludeGPA:
-			req.GPA = true
+			// Distance Learning
+			//req.GPA = true
 		default:
 			handleError(w, GradesErrorResponse{
 				Error: gradesErrorInvalidInclude,
@@ -775,12 +776,12 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 			}
 		}
 
-		err = gpas.InsertMultiple(trx, &gpaReqs)
-		if err != nil {
-			rb("gpas")
-			util.HandleError(fmt.Errorf("error inserting multiple gpas in insert fetch_all data: %w", err))
-			return
-		}
+		//err = gpas.InsertMultiple(trx, &gpaReqs)
+		//if err != nil {
+		//	rb("gpas")
+		//	util.HandleError(fmt.Errorf("error inserting multiple gpas in insert fetch_all data: %w", err))
+		//	return
+		//}
 
 		err = trx.Commit()
 		if err != nil {
@@ -1005,45 +1006,47 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *UserGradesDBRe
 	results := processedOutcomeResults{}
 
 	for _, c := range *courses {
-		// cID is a string of the course ID
-		cID := strconv.Itoa(int(c.ID))
+		if c.EnrollmentTermID != spring20DLEnrollmentTermID {
+			// cID is a string of the course ID
+			cID := strconv.Itoa(int(c.ID))
 
-		// uIDs is a string slice of all graded users in the course
-		var uIDs []string
-		for _, uID := range gradedUsers[c.ID] {
-			uIDs = append(uIDs, strconv.Itoa(int(uID)))
+			// uIDs is a string slice of all graded users in the course
+			var uIDs []string
+			for _, uID := range gradedUsers[c.ID] {
+				uIDs = append(uIDs, strconv.Itoa(int(uID)))
+			}
+
+			// results
+			wg.Add(1)
+			go func(courseIDS string, courseID uint64) {
+				defer wg.Done()
+
+				rs, rErr := getCanvasOutcomeResults(
+					rd,
+					courseIDS,
+					uIDs,
+				)
+				if rErr != nil {
+					mutex.Lock()
+					err = rErr
+					mutex.Unlock()
+					return
+				}
+
+				processedResults, processErr := processOutcomeResults(&rs.OutcomeResults)
+				if processErr != nil {
+					mutex.Lock()
+					err = processErr
+					mutex.Unlock()
+					return
+				}
+
+				mutex.Lock()
+				results[courseID] = *processedResults
+				mutex.Unlock()
+				return
+			}(cID, c.ID)
 		}
-
-		// results
-		wg.Add(1)
-		go func(courseIDS string, courseID uint64) {
-			defer wg.Done()
-
-			rs, rErr := getCanvasOutcomeResults(
-				rd,
-				courseIDS,
-				uIDs,
-			)
-			if rErr != nil {
-				mutex.Lock()
-				err = rErr
-				mutex.Unlock()
-				return
-			}
-
-			processedResults, processErr := processOutcomeResults(&rs.OutcomeResults)
-			if processErr != nil {
-				mutex.Lock()
-				err = processErr
-				mutex.Unlock()
-				return
-			}
-
-			mutex.Lock()
-			results[courseID] = *processedResults
-			mutex.Unlock()
-			return
-		}(cID, c.ID)
 	}
 
 	// wait for data
@@ -1087,7 +1090,68 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *UserGradesDBRe
 	sGrades := simpleGrades{}
 
 	for cID, uIDs := range gradedUsers {
+		// course object
+		var c canvasCourse
+		for _, cc := range *allCourses {
+			if cc.ID == cID {
+				c = cc
+				break
+			}
+		}
+
 		for _, uID := range uIDs {
+			if c.EnrollmentTermID == spring20DLEnrollmentTermID {
+				// we will be using Canvas's grade, found in the enrollment object.
+				var e canvasEnrollment
+				for _, en := range c.Enrollments {
+					if en.UserID == uID {
+						e = en
+						break
+					}
+				}
+
+				// if a computed current grade exists
+				if len(e.ComputedCurrentGrade) > 0 {
+					if !req.DetailedGrades {
+						if sGrades[c.Name] == nil {
+							sGrades[c.Name] = make(map[uint64]string)
+						}
+
+						// drop it into simple grades (easy!)
+						sGrades[c.Name][uID] = e.ComputedCurrentGrade
+					} else {
+						if grades[uID] == nil {
+							grades[uID] = make(map[uint64]computedGrade)
+						}
+
+						grades[uID][cID] = computedGrade{
+							// just make a new grade object.
+							Grade: grade{Grade: e.ComputedCurrentGrade},
+							// so we get [] instead of null
+							//Averages: make(map[uint64]computedAverage),
+						}
+					}
+				} else {
+					if !req.DetailedGrades {
+						if sGrades[c.Name] == nil {
+							sGrades[c.Name] = make(map[uint64]string)
+						}
+						sGrades[c.Name][uID] = naGrade.Grade
+					} else {
+						if grades[uID] == nil {
+							grades[uID] = make(map[uint64]computedGrade)
+						}
+
+						grades[uID][cID] = computedGrade{
+							Grade: naGrade,
+							// so we get [] instead of null
+							Averages: make(map[uint64]computedAverage),
+						}
+					}
+				}
+
+				continue
+			}
 			wg.Add(1)
 			go func(courseID uint64, userID uint64) {
 				defer wg.Done()
@@ -1102,13 +1166,6 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *UserGradesDBRe
 				// we'll now save the grade
 				mutex.Lock()
 				if !req.DetailedGrades {
-					var c canvasCourse
-					for _, co := range *courses {
-						if co.ID == courseID {
-							c = co
-							break
-						}
-					}
 					if sGrades[c.Name] == nil {
 						sGrades[c.Name] = make(map[uint64]string)
 					}
@@ -1142,21 +1199,21 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *UserGradesDBRe
 		go saveGradesToDB(grades, req.ManualFetch)
 	}
 
-	cGPA := calculateGPAFromDetailedGrades(grades)
-
-	if req.ReturnDBRequests {
-		dbReqsWg.Add(1)
-		go func() {
-			defer dbReqsWg.Done()
-
-			dbReqs.GPA = prepareGPAForDB(cGPA, req.ManualFetch)
-		}()
-
-		// wait for them all to finish
-		dbReqsWg.Wait()
-	} else {
-		go saveGPAToDB(cGPA, req.ManualFetch)
-	}
+	//cGPA := calculateGPAFromDetailedGrades(grades)
+	//
+	//if req.ReturnDBRequests {
+	//	dbReqsWg.Add(1)
+	//	go func() {
+	//		defer dbReqsWg.Done()
+	//
+	//		dbReqs.GPA = prepareGPAForDB(cGPA, req.ManualFetch)
+	//	}()
+	//
+	//	// wait for them all to finish
+	//	dbReqsWg.Wait()
+	//} else {
+	//	go saveGPAToDB(cGPA, req.ManualFetch)
+	//}
 
 	return &UserGradesResponse{
 		Session:        nil,
@@ -1166,6 +1223,6 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *UserGradesDBRe
 		OutcomeResults: results,
 		SimpleGrades:   sGrades,
 		DetailedGrades: grades,
-		GPA:            cGPA,
+		//GPA:            cGPA,
 	}, &dbReqs, nil
 }

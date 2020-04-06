@@ -49,7 +49,7 @@ func ClearSessionHandler(w http.ResponseWriter, _ *http.Request, _ httprouter.Pa
 
 	if env.Env == env.EnvironmentDevelopment {
 		secure = false
-		sameSite = http.SameSiteNoneMode
+		sameSite = http.SameSiteLaxMode
 	}
 
 	c := http.Cookie{

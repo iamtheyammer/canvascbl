@@ -354,7 +354,8 @@ function GradeBreakdown(props) {
 
   if (
     !grades[activeUserId][courseId] ||
-    grades[activeUserId][courseId].grade.grade === 'N/A'
+    grades[activeUserId][courseId].grade.grade === 'N/A' ||
+    !grades[activeUserId][courseId].averages
   ) {
     return (
       <div align="center">

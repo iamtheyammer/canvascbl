@@ -4,10 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/canvas_tokens"
-	"github.com/iamtheyammer/canvascbl/backend/src/env"
 	"strconv"
 	"time"
 )
+
+const spring20EnrollmentTermID = 4
+const spring20DLEnrollmentTermID = 3
 
 type processedCourses struct {
 	// Current is all classes that are "in session"
@@ -149,7 +151,6 @@ func rdFromCanvasUserID(cuID uint64) (requestDetails, error) {
 		TokenID:      token.ID,
 		Token:        token.Token,
 		RefreshToken: token.RefreshToken,
-		Subdomain:    env.CanvasOAuth2Subdomain,
 	}, nil
 }
 
@@ -173,7 +174,6 @@ func rdFromUserID(uID uint64) (requestDetails, error) {
 		TokenID:      token.ID,
 		Token:        token.Token,
 		RefreshToken: token.RefreshToken,
-		Subdomain:    env.CanvasOAuth2Subdomain,
 	}, nil
 }
 
@@ -183,6 +183,5 @@ func rdFromToken(tok canvas_tokens.CanvasToken) requestDetails {
 		TokenID:      tok.ID,
 		Token:        tok.Token,
 		RefreshToken: tok.RefreshToken,
-		Subdomain:    env.CanvasOAuth2Subdomain,
 	}
 }

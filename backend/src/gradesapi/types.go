@@ -59,39 +59,45 @@ type canvasCourse struct {
 	Calendar                    struct {
 		Ics string `json:"ics"`
 	} `json:"calendar"`
-	CourseCode       string `json:"course_code"`
-	CreatedAt        string `json:"created_at"`
-	DefaultView      string `json:"default_view"`
-	EndAt            string `json:"end_at"`
-	EnrollmentTermID int64  `json:"enrollment_term_id"`
-	Enrollments      []struct {
-		AssociatedUserID               uint64               `json:"associated_user_id"`
-		EnrollmentState                string               `json:"enrollment_state"`
-		LimitPrivilegesToCourseSection bool                 `json:"limit_privileges_to_course_section"`
-		Role                           string               `json:"role"`
-		RoleID                         int64                `json:"role_id"`
-		Type                           canvasEnrollmentType `json:"type"`
-		UserID                         uint64               `json:"user_id"`
-	} `json:"enrollments"`
-	GradePassbackSetting             interface{} `json:"grade_passback_setting"`
-	GradingStandardID                int64       `json:"grading_standard_id"`
-	HideFinalGrades                  bool        `json:"hide_final_grades"`
-	ID                               uint64      `json:"id"`
-	IsPublic                         bool        `json:"is_public"`
-	IsPublicToAuthUsers              bool        `json:"is_public_to_auth_users"`
-	License                          string      `json:"license"`
-	Locale                           string      `json:"locale"`
-	Name                             string      `json:"name"`
-	OverriddenCourseVisibility       string      `json:"overridden_course_visibility"`
-	PublicSyllabus                   bool        `json:"public_syllabus"`
-	PublicSyllabusToAuth             bool        `json:"public_syllabus_to_auth"`
-	RestrictEnrollmentsToCourseDates bool        `json:"restrict_enrollments_to_course_dates"`
-	RootAccountID                    int64       `json:"root_account_id"`
-	StartAt                          string      `json:"start_at"`
-	StorageQuotaMb                   int64       `json:"storage_quota_mb"`
-	TimeZone                         string      `json:"time_zone"`
-	UUID                             string      `json:"uuid"`
-	WorkflowState                    string      `json:"workflow_state"`
+	CourseCode                       string             `json:"course_code"`
+	CreatedAt                        string             `json:"created_at"`
+	DefaultView                      string             `json:"default_view"`
+	EndAt                            string             `json:"end_at"`
+	EnrollmentTermID                 int64              `json:"enrollment_term_id"`
+	Enrollments                      []canvasEnrollment `json:"enrollments"`
+	GradePassbackSetting             interface{}        `json:"grade_passback_setting"`
+	GradingStandardID                int64              `json:"grading_standard_id"`
+	HideFinalGrades                  bool               `json:"hide_final_grades"`
+	ID                               uint64             `json:"id"`
+	IsPublic                         bool               `json:"is_public"`
+	IsPublicToAuthUsers              bool               `json:"is_public_to_auth_users"`
+	License                          string             `json:"license"`
+	Locale                           string             `json:"locale"`
+	Name                             string             `json:"name"`
+	OverriddenCourseVisibility       string             `json:"overridden_course_visibility"`
+	PublicSyllabus                   bool               `json:"public_syllabus"`
+	PublicSyllabusToAuth             bool               `json:"public_syllabus_to_auth"`
+	RestrictEnrollmentsToCourseDates bool               `json:"restrict_enrollments_to_course_dates"`
+	RootAccountID                    int64              `json:"root_account_id"`
+	StartAt                          string             `json:"start_at"`
+	StorageQuotaMb                   int64              `json:"storage_quota_mb"`
+	TimeZone                         string             `json:"time_zone"`
+	UUID                             string             `json:"uuid"`
+	WorkflowState                    string             `json:"workflow_state"`
+}
+
+// canvasEnrollment represents a user's enrollment in a course.
+// https://canvas.instructure.com/doc/api/enrollments.html#Enrollment
+type canvasEnrollment struct {
+	AssociatedUserID               uint64               `json:"associated_user_id"`
+	EnrollmentState                string               `json:"enrollment_state"`
+	LimitPrivilegesToCourseSection bool                 `json:"limit_privileges_to_course_section"`
+	Role                           string               `json:"role"`
+	RoleID                         int64                `json:"role_id"`
+	Type                           canvasEnrollmentType `json:"type"`
+	UserID                         uint64               `json:"user_id"`
+	ComputedCurrentScore           float64              `json:"computed_current_score"`
+	ComputedCurrentGrade           string               `json:"computed_current_grade"`
 }
 
 // /api/v1/courses/:courseID/outcome_rollups

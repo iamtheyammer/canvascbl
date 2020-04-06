@@ -51,7 +51,7 @@ type canvasState struct {
 
 func getOAuth2AuthURI() string {
 	redirectURL := url.URL{
-		Host:   fmt.Sprintf("%s.instructure.com", env.CanvasOAuth2Subdomain),
+		Host:   env.CanvasDomain,
 		Path:   "/login/oauth2/auth",
 		Scheme: "https",
 	}
@@ -83,7 +83,7 @@ func getOAuth2AuthURI() string {
 
 func getOAuth2ReauthURI() string {
 	redirectURL := url.URL{
-		Host:   fmt.Sprintf("%s.instructure.com", env.CanvasOAuth2Subdomain),
+		Host:   env.CanvasDomain,
 		Path:   "/login/oauth2/auth",
 		Scheme: "https",
 	}
@@ -183,8 +183,14 @@ func OAuth2ResponseHandler(w http.ResponseWriter, r *http.Request, _ httprouter.
 		return
 	}
 
-	_, body, err := oauth2.GetAccessFromRedirectResponse(code)
+	accessResp, body, err := oauth2.GetAccessFromRedirectResponse(code)
 	if err != nil {
+		util.HandleError(errors.Wrap(err, "error getting an access token from a redirect response"))
+		util.SendInternalServerError(w)
+		return
+	}
+	if accessResp.StatusCode != http.StatusOK {
+		util.HandleError(errors.New("error from canvas getting an access token from a redirect response: " + body))
 		util.SendInternalServerError(w)
 		return
 	}
@@ -196,6 +202,8 @@ func OAuth2ResponseHandler(w http.ResponseWriter, r *http.Request, _ httprouter.
 		util.SendInternalServerError(w)
 		return
 	}
+
+	fmt.Println(body, tokenResp)
 
 	if state.Intent == "reauth" {
 		// make sure that they're already a user
@@ -232,8 +240,7 @@ func OAuth2ResponseHandler(w http.ResponseWriter, r *http.Request, _ httprouter.
 	exp := time.Now().Add(time.Duration(tokenResp.ExpiresIn) * time.Second)
 
 	_, pBody, err := users.GetSelfProfile(&util.RequestDetails{
-		Token:     tokenResp.AccessToken,
-		Subdomain: env.CanvasOAuth2Subdomain,
+		Token: tokenResp.AccessToken,
 	})
 	if err != nil {
 		util.HandleError(errors.Wrap(err, "error getting self profile in oauth2 handler"))
@@ -243,6 +250,7 @@ func OAuth2ResponseHandler(w http.ResponseWriter, r *http.Request, _ httprouter.
 
 	ss, p, uResp, err := db.UpsertProfileAndGenerateSession(&pBody)
 	if err != nil {
+		util.HandleError(errors.Wrap(err, "error upserting profile and generating session"))
 		util.SendInternalServerError(w)
 		return
 	}

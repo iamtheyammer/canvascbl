@@ -1,9 +1,7 @@
 package util
 
 import (
-	"github.com/iamtheyammer/canvascbl/backend/src/env"
 	"net/http"
-	"strings"
 )
 
 const RequestDetailsFailedValidationMessage = "no canvas token or subdomain not allowed"
@@ -11,32 +9,24 @@ const RequestDetailsFailedValidationMessage = "no canvas token or subdomain not 
 // RequestDetails contains details needed by functions to perform requests.
 // While this type is exported, you shouldn't use it-- use NewRequestDetails to write to it.
 type RequestDetails struct {
-	Token     string
-	Subdomain string
+	Token string
 }
 
 // NewRequestDetails is the way to create a RequestDetails object for use with other
 // canvasapi functions.
 func NewRequestDetails(
 	token string,
-	subdomain string,
 ) RequestDetails {
-	subdomain = strings.ToLower(subdomain)
 
 	rd := RequestDetails{
-		Token:     token,
-		Subdomain: subdomain,
-	}
-
-	if len(rd.Subdomain) < 1 {
-		rd.Subdomain = env.DefaultSubdomain
+		Token: token,
 	}
 
 	return rd
 }
 
 func GetRequestDetailsFromRequest(r *http.Request) (bool, *RequestDetails) {
-	var token, subdomain string
+	var token string
 
 	// token - header
 	headerToken := r.Header.Get("x-canvas-token")
@@ -56,18 +46,7 @@ func GetRequestDetailsFromRequest(r *http.Request) (bool, *RequestDetails) {
 		return false, nil
 	}
 
-	// subdomain
-	subdomain = r.Header.Get("x-canvas-subdomain")
-
-	if len(subdomain) < 1 {
-		subdomain = env.DefaultSubdomain
-	}
-
-	if !ValidateSubdomain(subdomain) {
-		return false, nil
-	}
-
-	rd := NewRequestDetails(token, subdomain)
+	rd := NewRequestDetails(token)
 
 	// not specified
 	return true, &rd

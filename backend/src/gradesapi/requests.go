@@ -40,8 +40,6 @@ type requestDetails struct {
 	Token string
 	// RefreshToken represents the user's Canvas refresh token
 	RefreshToken string
-	// Subdomain represents the user's Canvas Subdomain
-	Subdomain string
 }
 
 /*
@@ -130,7 +128,7 @@ func getCanvasProfile(rd requestDetails, userID string) (*canvasUserProfileRespo
 
 func getCanvasCourses(rd requestDetails) (*canvasCoursesResponse, error) {
 	var courses canvasCoursesResponse
-	_, err := makeCanvasGetRequest("api/v1/courses?per_page=100", rd, &courses)
+	_, err := makeCanvasGetRequest("api/v1/courses?per_page=100&include[]=total_scores", rd, &courses)
 	if err != nil {
 		return nil, fmt.Errorf("error getting canvas courses: %w", err)
 	}
@@ -354,7 +352,7 @@ func makeCanvasRequest(
 	bodyDestination interface{},
 ) (*http.Response, error) {
 	// this system allows for the Link header so full URLs can be passed in
-	fURL := "https://" + rd.Subdomain + ".instructure.com/"
+	fURL := "https://" + env.CanvasDomain + "/"
 	if strings.HasPrefix(path, fURL) {
 		fURL = path
 	} else {
@@ -421,7 +419,7 @@ func makeCanvasRequest(
 // REMEMBER TO CLOSE IT!
 func proxyCanvasGetRequest(path string, rd requestDetails) (*http.Response, error) {
 	// this system allows for the Link header so full URLs can be passed in
-	fURL := "https://" + rd.Subdomain + ".instructure.com/"
+	fURL := "https://" + env.CanvasDomain + "/"
 	if !strings.HasPrefix(path, fURL) {
 		fURL += path
 	}

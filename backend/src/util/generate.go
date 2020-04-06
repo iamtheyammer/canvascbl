@@ -1,13 +1,13 @@
 package util
 
 import (
-	"fmt"
+	"github.com/iamtheyammer/canvascbl/backend/src/env"
 	"net/url"
 )
 
-func GenerateCanvasURL(path string, sd string) url.URL {
+func GenerateCanvasURL(path string) url.URL {
 	return url.URL{
-		Host:   fmt.Sprintf("%s.instructure.com", sd),
+		Host:   env.CanvasDomain,
 		Scheme: "https",
 		Path:   path,
 	}

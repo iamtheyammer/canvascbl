@@ -11,7 +11,7 @@ import (
 func GetAccessFromRedirectResponse(
 	code string,
 ) (*http.Response, string, error) {
-	oauth2URL := util.GenerateCanvasURL("/login/oauth2/token", env.CanvasOAuth2Subdomain)
+	oauth2URL := util.GenerateCanvasURL("/login/oauth2/token")
 
 	q := oauth2URL.Query()
 	q.Set("grant_type", "authorization_code")
@@ -27,7 +27,7 @@ func GetAccessFromRedirectResponse(
 func GetAccessFromRefresh(
 	rt string,
 ) (*http.Response, string, error) {
-	oauth2URL := util.GenerateCanvasURL("/login/oauth2/token", env.CanvasOAuth2Subdomain)
+	oauth2URL := util.GenerateCanvasURL("/login/oauth2/token")
 
 	q := oauth2URL.Query()
 	q.Set("grant_type", "refresh_token")

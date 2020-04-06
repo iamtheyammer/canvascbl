@@ -6,9 +6,10 @@ import (
 )
 
 var (
+	// CanvasDomain is the domain that Canvas is running on.
+	CanvasDomain             = getEnvOrPanic("CANVAS_DOMAIN")
 	CanvasOAuth2ClientID     = getEnvOrPanic("CANVAS_OAUTH2_CLIENT_ID")
 	CanvasOAuth2ClientSecret = getEnvOrPanic("CANVAS_OAUTH2_CLIENT_SECRET")
-	CanvasOAuth2Subdomain    = getEnvOrPanic("CANVAS_OAUTH2_SUBDOMAIN")
 	CanvasOAuth2SuccessURI   = getEnvOrPanic("CANVAS_OAUTH2_SUCCESS_URI")
 
 	CanvasCurrentEnrollmentTermID = getCanvasCurrentEnrollmentTermID()
