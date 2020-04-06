@@ -12,8 +12,7 @@ import {
   Row,
   Col,
   Statistic,
-  Divider,
-  Tooltip
+  Divider
 } from 'antd';
 import { Accordion as MobileAccordion, List as MobileList } from 'antd-mobile';
 
