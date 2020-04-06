@@ -8,8 +8,7 @@ import (
 	"time"
 )
 
-const spring20EnrollmentTermID = 4
-const spring20DLEnrollmentTermID = 3
+const spring20DLEnrollmentTermID = 18
 
 type processedCourses struct {
 	// Current is all classes that are "in session"
