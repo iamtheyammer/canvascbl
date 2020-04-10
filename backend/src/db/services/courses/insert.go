@@ -1,6 +1,7 @@
 package courses
 
 import (
+	"fmt"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/pkg/errors"
@@ -24,6 +25,12 @@ type OutcomeResultInsertRequest struct {
 	Score           float64
 	Possible        float64
 	SubmissionTime  string
+}
+
+// HideRequest serves as the request for Hide.
+type HideRequest struct {
+	UserID   uint64
+	CourseID uint64
 }
 
 func InsertMultipleOutcomeRollups(db services.DB, req *[]OutcomeRollupInsertRequest) error {
@@ -109,6 +116,28 @@ func InsertMultipleOutcomeResults(db services.DB, req *[]OutcomeResultInsertRequ
 	_, err = db.Exec(query, args...)
 	if err != nil {
 		return errors.Wrap(err, "error executing insert multiple outcome results sql")
+	}
+
+	return nil
+}
+
+// Hide hides a course for a user.
+func Hide(db services.DB, req *HideRequest) error {
+	query, args, err := util.Sq.
+		Insert("hidden_courses").
+		SetMap(map[string]interface{}{
+			"user_id":   req.UserID,
+			"course_id": req.CourseID,
+		}).
+		Suffix("ON CONFLICT DO NOTHING").
+		ToSql()
+	if err != nil {
+		return fmt.Errorf("error building hide course sql: %w", err)
+	}
+
+	_, err = db.Exec(query, args...)
+	if err != nil {
+		return fmt.Errorf("error executing hide course sql: %w", err)
 	}
 
 	return nil
