@@ -2,6 +2,7 @@ package courses
 
 import (
 	"database/sql"
+	"fmt"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
@@ -78,4 +79,39 @@ func GetForUser(db services.DB, userIDs []uint64) (*[]Course, error) {
 	}
 
 	return &courses, nil
+}
+
+// GetUserHiddenCourses gets a user's hidden courses. Returns a map for easy querying.
+func GetUserHiddenCourses(db services.DB, userID uint64) (*map[uint64]struct{}, error) {
+	query, args, err := util.Sq.
+		Select("course_id").
+		From("hidden_courses").
+		Where(sq.Eq{"user_id": userID}).
+		Limit(services.DefaultSelectLimit).
+		ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("error building get user hidden courses sql: %w", err)
+	}
+
+	rows, err := db.Query(query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("error executing get user hidden courses sql: %w", err)
+	}
+
+	defer rows.Close()
+
+	hiddenIDs := make(map[uint64]struct{})
+
+	for rows.Next() {
+		var id uint64
+
+		err := rows.Scan(&id)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning get user hidden courses sql: %w", err)
+		}
+
+		hiddenIDs[id] = struct{}{}
+	}
+
+	return &hiddenIDs, nil
 }

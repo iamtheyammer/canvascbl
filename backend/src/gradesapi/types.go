@@ -84,6 +84,8 @@ type canvasCourse struct {
 	TimeZone                         string             `json:"time_zone"`
 	UUID                             string             `json:"uuid"`
 	WorkflowState                    string             `json:"workflow_state"`
+
+	CanvasCBLHidden bool `json:"canvascbl_hidden"`
 }
 
 // canvasEnrollment represents a user's enrollment in a course.

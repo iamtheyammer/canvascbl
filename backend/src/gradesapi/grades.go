@@ -920,8 +920,9 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *UserGradesDBRe
 	wg := sync.WaitGroup{}
 
 	var (
-		allCourses *[]canvasCourse
-		observees  *canvasUserObserveesResponse
+		allCourses    *[]canvasCourse
+		hiddenCourses map[uint64]struct{}
+		observees     *canvasUserObserveesResponse
 	)
 
 	// get allCourses
@@ -948,6 +949,26 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *UserGradesDBRe
 		mutex.Unlock()
 		return
 	}()
+
+	// we don't want to bother with this if we're bunching them all
+	if !req.ReturnDBRequests {
+		// get the user's hidden courses
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			hiddenIDs, hiddenErr := coursessvc.GetUserHiddenCourses(db, req.UserID)
+			if hiddenErr != nil {
+				mutex.Lock()
+				err = hiddenErr
+				mutex.Unlock()
+				return
+			}
+
+			hiddenCourses = *hiddenIDs
+			return
+		}()
+	}
 
 	wg.Add(1)
 	go func() {
@@ -998,14 +1019,15 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *UserGradesDBRe
 	go saveObserveesToDB((*[]canvasObservee)(observees), profile.ID)
 
 	// we now have both allCourses and observees.
-	gradedUsers, courses := getGradedUsersAndValidCourses(allCourses)
+	gradedUsers, coursesP := getGradedUsersAndValidCourses(allCourses)
+	courses := *coursesP
 
 	// outcome_alignments / outcome_rollups / assignments [Grades/GradeBreakdown]
 
 	// map[courseID]map[userID]map[outcomeID][]canvasOutcomeResult
 	results := processedOutcomeResults{}
 
-	for _, c := range *courses {
+	for i, c := range courses {
 		if c.EnrollmentTermID != spring20DLEnrollmentTermID {
 			// cID is a string of the course ID
 			cID := strconv.Itoa(int(c.ID))
@@ -1014,6 +1036,10 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *UserGradesDBRe
 			var uIDs []string
 			for _, uID := range gradedUsers[c.ID] {
 				uIDs = append(uIDs, strconv.Itoa(int(uID)))
+			}
+
+			if _, ok := hiddenCourses[c.ID]; ok {
+				courses[i].CanvasCBLHidden = true
 			}
 
 			// results
@@ -1219,7 +1245,7 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *UserGradesDBRe
 		Session:        nil,
 		UserProfile:    (*canvasUserProfile)(profile),
 		Observees:      (*[]canvasObservee)(observees),
-		Courses:        courses,
+		Courses:        &courses,
 		OutcomeResults: results,
 		SimpleGrades:   sGrades,
 		DetailedGrades: grades,
