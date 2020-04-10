@@ -22,6 +22,13 @@ export const CANVAS_GOT_INDIVIDUAL_OUTCOME = 'CANVAS_GOT_INDIVIDUAL_OUTCOME';
 
 export const CANVAS_CHANGE_ACTIVE_USER = 'CANVAS_CHANGE_ACTIVE_USER';
 
+export const CANVAS_TOGGLE_COURSE_VISIBILITY =
+  'CANVAS_TOGGLE_COURSE_VISIBILITY';
+export const CANVAS_TOGGLE_COURSE_VISIBILITY_ERROR =
+  'CANVAS_TOGGLE_COURSE_VISIBILITY_ERROR';
+export const CANVAS_TOGGLED_COURSE_VISIBILITY =
+  'CANVAS_TOGGLED_COURSE_VISIBILITY';
+
 export function getInitialData(id) {
   return {
     type: CANVAS_GET_INITIAL_DATA,
@@ -123,5 +130,30 @@ export function changeActiveUser(id) {
   return {
     type: CANVAS_CHANGE_ACTIVE_USER,
     id
+  };
+}
+
+export function toggleCourseVisibility(id, courseId, toggle) {
+  return {
+    type: CANVAS_TOGGLE_COURSE_VISIBILITY,
+    id,
+    courseId,
+    toggle
+  };
+}
+
+export function toggleCourseVisibilityError(e, courseId) {
+  return {
+    type: CANVAS_TOGGLE_COURSE_VISIBILITY_ERROR,
+    e,
+    courseId
+  };
+}
+
+export function toggledCourseVisibility(courseId, newStatus) {
+  return {
+    type: CANVAS_TOGGLED_COURSE_VISIBILITY,
+    courseId,
+    newStatus
   };
 }

@@ -120,5 +120,15 @@
     "type": 0,
     "title": "Fixed logging out",
     "content": "We don't log you out all the time anymore. Sorry for the inconvenience!"
+  },
+  {
+    "timestamp": 1586500739047,
+    "type": 1,
+    "title": "Added hiding courses",
+    "content": "Don't want to see a course in your Dashboard? Hide it! Learn more ",
+    "link": {
+      "url": "https://go.canvascbl.com/help/hiding-courses",
+      "text": "here."
+    }
   }
 ]

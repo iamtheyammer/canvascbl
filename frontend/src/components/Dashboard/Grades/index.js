@@ -35,12 +35,16 @@ import roundNumberToDigits from '../../../util/roundNumberToDigits';
 import {
   destinationNames,
   destinationTypes,
+  itemTypes,
   pageNames,
+  tableNames,
   TrackingLink,
   trackPageView,
+  trackTableRowExpansion,
   vias
 } from '../../../util/tracking';
 import { truncate } from 'lodash';
+import CourseSettings from './CourseSettings';
 
 function PreviousGrade(props) {
   const { userHasValidSubscription, grade, previousGrade } = props;
@@ -99,23 +103,51 @@ const tableColumns = [
           via={vias.gradesTableCourseName}
         >
           {text}
-        </TrackingLink>
-      ) : (
-        <>
-          {text}{' '}
-          {record.isDistanceLearning && (
+          {record.canvascblHidden && (
             <Popover
-              title={'Distance Learning Course'}
+              title="Hidden Course"
               content={
-                <>
-                  This is a distance learning course.
-                  <br />
-                  Learn more about your grade in the Canvas Breakdown.
-                </>
+                'This course is normally hidden, but you have Show Hidden Courses enabled.'
               }
               placement="topLeft"
             >
-              <Icon type="exclamation-circle" />
+              <Divider type="vertical" />
+              <Icon type="eye-invisible" />
+            </Popover>
+          )}
+        </TrackingLink>
+      ) : (
+        <>
+          {text}
+
+          {record.isDistanceLearning && (
+            <>
+              <Divider type="vertical" />
+              <Popover
+                title={'Distance Learning Course'}
+                content={
+                  <>
+                    This is a distance learning course.
+                    <br />
+                    Learn more about your grade in the Canvas Breakdown.
+                  </>
+                }
+                placement="topLeft"
+              >
+                <Icon type="exclamation-circle" />
+              </Popover>
+            </>
+          )}
+          {record.canvascblHidden && (
+            <Popover
+              title="Hidden Course"
+              content={
+                'This course is normally hidden, but you have Show Hidden Courses enabled.'
+              }
+              placement="topLeft"
+            >
+              <Divider type="vertical" />
+              <Icon type="eye-invisible" />
             </Popover>
           )}
         </>
@@ -201,6 +233,7 @@ function Grades(props) {
     dispatch,
     grades,
     subdomain,
+    showHiddenCourses,
     loading,
     error,
     courses,
@@ -281,6 +314,9 @@ function Grades(props) {
       name: c.name,
       grade: detailedGrade.grade.grade,
       id: c.id,
+      canvascblHidden: c.canvascbl_hidden,
+      // don't hide if show hidden courses is enabled-- otherwise respect
+      hide: !!showHiddenCourses ? false : c.canvascbl_hidden,
       userHasValidSubscription: plus.session.has_valid_subscription,
       isDistanceLearning: c.enrollment_term_id === 18,
       breakdownIsAvailable:
@@ -316,12 +352,14 @@ function Grades(props) {
     setLoaded(true);
   }
 
+  const showData = data.filter(d => !d.hide);
+
   if (isMobile) {
     return (
       <div>
         {gradesTitle}
         <MobileAccordion>
-          {data.map(d => (
+          {showData.map(d => (
             <MobileAccordion.Panel
               key={d.key}
               style={{ padding: '5px 5px 5px 0px' }}
@@ -342,6 +380,16 @@ function Grades(props) {
                       This is a distance learning course.
                       <br /> Learn more about your grade in the <br />
                       Canvas Breakdown.
+                    </MobileList.Item.Brief>
+                  </MobileList.Item>
+                )}
+                {d.canvascblHidden && (
+                  <MobileList.Item multipleLine={true}>
+                    Hidden Course
+                    <MobileList.Item.Brief>
+                      This course is normally hidden,
+                      <br /> but you have show hidden <br />
+                      courses enabled.
                     </MobileList.Item.Brief>
                   </MobileList.Item>
                 )}
@@ -394,6 +442,7 @@ function Grades(props) {
                 >
                   Previous Grade
                 </MobileList.Item>
+                <CourseSettings record={d} />
               </MobileList>
             </MobileAccordion.Panel>
           ))}
@@ -468,7 +517,20 @@ function Grades(props) {
         grade in a class, click on the name to see a detailed breakdown.
       </Typography.Text>
       <Padding bottom="12px" />
-      <Table columns={tableColumns} dataSource={data} />
+      <Table
+        columns={tableColumns}
+        dataSource={showData}
+        expandedRowRender={record => <CourseSettings record={record} />}
+        onExpand={(expanded, record) => {
+          trackTableRowExpansion(
+            tableNames.grades.grades,
+            record.id,
+            itemTypes.course,
+            expanded,
+            record.id
+          );
+        }}
+      />
       {showGpa && (
         <>
           <Typography.Title level={3}>GPA</Typography.Title>
@@ -552,6 +614,7 @@ const ConnectedGrades = connect(state => ({
   activeUserId: state.canvas.activeUserId,
   user: state.canvas.user,
   observees: state.canvas.observees,
+  showHiddenCourses: state.settings.showHiddenCourses,
   allGpas: state.canvas.gpa,
   error: state.error,
   loading: state.loading

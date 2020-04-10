@@ -12,6 +12,9 @@ export const SETTINGS_TOGGLE_NOTIFICATION_TYPE_ERROR =
 export const SETTINGS_TOGGLED_NOTIFICATION_TYPE =
   'SETTINGS_TOGGLED_NOTIFICATION_TYPE';
 
+export const SETTINGS_TOGGLED_SHOW_HIDDEN_COURSES =
+  'SETTINGS_TOGGLED_SHOW_HIDDEN_COURSES';
+
 export function getNotificationSettingsAndTypes(id) {
   return {
     type: SETTINGS_GET_NOTIFICATION_SETTINGS_AND_TYPES,
@@ -55,5 +58,12 @@ export function toggledNotificationType(typeId) {
   return {
     type: SETTINGS_TOGGLED_NOTIFICATION_TYPE,
     typeId
+  };
+}
+
+export function toggledShowHiddenCourses(toggle) {
+  return {
+    type: SETTINGS_TOGGLED_SHOW_HIDDEN_COURSES,
+    toggle
   };
 }

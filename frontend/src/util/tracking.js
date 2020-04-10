@@ -94,7 +94,14 @@ export const vias = {
     'Redeem Link On The Upgrades (No Current Subscription) Page',
   mobileGradesObserveeSwitcher: 'Mobile Grades Observee Switcher',
   mobileNavBarLogo: 'Mobile Logo At Top',
-  breakdownUnavailableBackToGrades: 'Grade Breakdown Unavailable Back To Grades'
+  breakdownUnavailableBackToGrades:
+    'Grade Breakdown Unavailable Back To Grades',
+  courseSettingsHideAClassSettingsLink:
+    'Course Settings Hide A Class Settings Link',
+  settingsShowHiddenCoursesDescriptionLearnMoreLink:
+    'Settings Show Hidden Courses Description Learn More Link',
+  courseSettingsHideThisCourseLearnMoreLink:
+    'Course Settings Hide This Course Learn More Link'
 };
 
 export const destinationNames = {
@@ -113,7 +120,8 @@ export const destinationTypes = {
   assignment: 'Assignment',
   helpdesk: {
     home: 'CanvasCBL Helpdesk Home',
-    gpas: 'CanvasCBL Helpdesk Article on GPAs'
+    gpas: 'CanvasCBL Helpdesk Article on GPAs',
+    hidingCourses: 'CanvasCBL Helpdesk Article on Hiding Courses'
   }
 };
 
@@ -139,11 +147,15 @@ export const tabImplementations = {
 export const tableNames = {
   gradeBreakdown: {
     outcomes: 'Grade Breakdown Outcomes'
+  },
+  grades: {
+    grades: 'Grades'
   }
 };
 
 export const itemTypes = {
-  outcome: 'Outcome'
+  outcome: 'Outcome',
+  course: 'Course'
 };
 
 /**
@@ -178,6 +190,7 @@ export function trackDashboardLoad(
 
   mp.register({
     'Subscription Status': subscriptionStatus,
+    'User Has Valid Subscription': hasValidSubscription,
     'Current Version': `${currentVersion}`,
     'Active User ID': activeUserId
   });
@@ -194,7 +207,6 @@ export function trackDashboardLoad(
   mp.track('Dashboard Load', {
     $name: name,
     $email: email,
-    'Subscription Status': subscriptionStatus,
     'CanvasCBL User ID': userId,
     'User Last Version': `${prevVersion}`
   });
@@ -337,6 +349,28 @@ export function trackOAuth2Decision(
     'Did Authorize App': bts(didAuthorize),
     'Consent Code': consentCode,
     Scopes: scopes
+  });
+}
+
+/**
+ * Tracks a toggle of a course's visibility
+ * @param {number} courseId The ID of the course being toggled.
+ * @param {boolean} courseVisibility Whether the course will be visible (true) or hidden (false).
+ */
+export function trackCourseVisibilityToggle(courseId, courseVisibility) {
+  mp.track('Course Visibility Toggle', {
+    'Course ID': courseId,
+    'Course Visibility': bts(courseVisibility)
+  });
+}
+
+/**
+ * Tracks a change of the hidden course visibility setting.
+ * @param {boolean} hiddenCourseVisibility Whether hidden courses are shown or not.
+ */
+export function trackChangedHiddenCourseVisibility(hiddenCourseVisibility) {
+  mp.track('Changed Hidden Course Visibility', {
+    'Hidden Course Visibility': bts(hiddenCourseVisibility)
   });
 }
 

@@ -6,6 +6,7 @@ import v4 from 'uuid';
 import Padding from '../../Padding';
 import {
   getNotificationSettingsAndTypes,
+  toggledShowHiddenCourses,
   toggleNotificationType
 } from '../../../actions/settings';
 import {
@@ -13,16 +14,22 @@ import {
   setToggleNotificationStatusId
 } from '../../../actions/components/settings';
 import {
+  destinationNames,
+  destinationTypes,
   pageNames,
+  trackChangedHiddenCourseVisibility,
   trackNotificationStatusToggle,
-  trackPageView
+  trackPageView,
+  vias
 } from '../../../util/tracking';
+import PopoutLink from '../../PopoutLink';
 
 function Settings(props) {
   const {
     settingsAndTypesId,
     settingsAndTypesError,
     toggleIds,
+    showHiddenCourses,
     notifications,
     loading,
     dispatch
@@ -146,6 +153,32 @@ function Settings(props) {
       ) : (
         <Skeleton active />
       )}
+      <Padding all={10} />
+      <Typography.Title level={3}>Hidden Courses</Typography.Title>
+      <Typography.Text>
+        You can hide a course by expanding a course to view its settings, then
+        enabling Hide This Course. Learn more about hiding courses{' '}
+        <PopoutLink
+          url="https://go.canvascbl.com/help/hiding-courses"
+          tracking={{
+            destinationName: destinationNames.helpdesk,
+            destinationType: destinationTypes.helpdesk.hidingCourses,
+            via: vias.settingsShowHiddenCoursesDescriptionLearnMoreLink
+          }}
+          addIcon
+        >
+          here
+        </PopoutLink>
+        . Do you want to show hidden courses?
+      </Typography.Text>
+      <Padding all={5} />
+      <Switch
+        onChange={toggle => {
+          dispatch(toggledShowHiddenCourses(toggle));
+          trackChangedHiddenCourseVisibility(toggle);
+        }}
+        checked={showHiddenCourses}
+      />
     </>
   );
 }
@@ -155,6 +188,7 @@ export default connect(state => ({
     state.components.settings.getNotificationSettingsAndTypesId,
   settingsAndTypesError: state.settings.getNotificationSettingsAndTypesError,
   toggleIds: state.components.settings.toggleIds,
+  showHiddenCourses: state.settings.showHiddenCourses,
   notifications: state.settings.notifications,
   loading: state.loading
 }))(Settings);

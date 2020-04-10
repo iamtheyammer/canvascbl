@@ -1,7 +1,8 @@
 import {
   SETTINGS_GET_NOTIFICATION_SETTINGS_AND_TYPES_ERROR,
   SETTINGS_GOT_NOTIFICATION_SETTINGS_AND_TYPES,
-  SETTINGS_TOGGLE_NOTIFICATION_TYPE_ERROR
+  SETTINGS_TOGGLE_NOTIFICATION_TYPE_ERROR,
+  SETTINGS_TOGGLED_SHOW_HIDDEN_COURSES
 } from '../actions/settings';
 
 function settings(state = {}, action) {
@@ -30,6 +31,11 @@ function settings(state = {}, action) {
             [action.typeId]: action.e
           }
         }
+      };
+    case SETTINGS_TOGGLED_SHOW_HIDDEN_COURSES:
+      return {
+        ...state,
+        showHiddenCourses: action.toggle
       };
     default:
       return state;

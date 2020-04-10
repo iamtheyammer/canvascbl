@@ -5,7 +5,9 @@ import {
   CANVAS_GOT_OBSERVEES,
   CANVAS_CHANGE_ACTIVE_USER,
   CANVAS_GOT_INITIAL_DATA,
-  CANVAS_GOT_INDIVIDUAL_OUTCOME
+  CANVAS_GOT_INDIVIDUAL_OUTCOME,
+  CANVAS_TOGGLE_COURSE_VISIBILITY_ERROR,
+  CANVAS_TOGGLED_COURSE_VISIBILITY
 } from '../actions/canvas';
 
 export default function canvas(state = {}, action) {
@@ -75,6 +77,24 @@ export default function canvas(state = {}, action) {
         ...state,
         activeUserId: action.id
       };
+    case CANVAS_TOGGLE_COURSE_VISIBILITY_ERROR:
+      return {
+        ...state,
+        toggleCourseVisibilityErrors: {
+          ...state.toggleCourseVisibilityErrors,
+          [action.courseId]: action.e
+        }
+      };
+    case CANVAS_TOGGLED_COURSE_VISIBILITY:
+      return {
+        ...state,
+        courses: state.courses
+          ? state.courses.map(c =>
+              c.id === action.courseId ? { ...c, ...action.newStatus } : c
+            )
+          : state.courses
+      };
+
     default:
       return state;
   }

@@ -6,6 +6,7 @@ import home from './home';
 import oauth2consent from './oauth2consent';
 import userprofile from './userprofile';
 import settings from './settings';
+import coursesettings from './coursesettings';
 
 export default combineReducers({
   redeem,
@@ -13,5 +14,6 @@ export default combineReducers({
   home,
   oauth2consent,
   userprofile,
-  settings
+  settings,
+  coursesettings
 });

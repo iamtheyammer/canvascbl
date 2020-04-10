@@ -6,10 +6,13 @@ import {
   CANVAS_GET_INDIVIDUAL_OUTCOME,
   CANVAS_GET_INITIAL_DATA,
   CANVAS_GET_OUTCOME_ALIGNMENTS_FOR_COURSE,
+  CANVAS_TOGGLE_COURSE_VISIBILITY,
   gotAssignmentsForCourse,
   gotIndividualOutcome,
   gotInitialData,
-  gotOutcomeAlignmentsForCourse
+  gotOutcomeAlignmentsForCourse,
+  toggleCourseVisibilityError,
+  toggledCourseVisibility
 } from '../actions/canvas';
 import makeApiRequest from '../util/api/makeApiRequest';
 import { gotSessionInformation } from '../actions/plus';
@@ -93,6 +96,26 @@ function* getAssignmentsForCourse({ id, courseId }) {
   yield put(endLoading(id));
 }
 
+function* toggleCourseVisibility({ id, courseId, toggle }) {
+  yield put(startLoading(id));
+  try {
+    const toggleResponse = yield makeApiRequest(
+      `courses/${courseId}/hide`,
+      {},
+      toggle ? 'PUT' : 'DELETE'
+    );
+    yield put(toggledCourseVisibility(courseId, toggleResponse.data));
+  } catch (e) {
+    yield put(
+      toggleCourseVisibilityError(
+        e.response ? e.response.data : "can't connect",
+        courseId
+      )
+    );
+  }
+  yield put(endLoading(id));
+}
+
 function* watcher() {
   yield takeLeading(CANVAS_GET_INITIAL_DATA, getInitialData);
   yield takeEvery(CANVAS_GET_INDIVIDUAL_OUTCOME, getIndividualOutcome);
@@ -101,6 +124,7 @@ function* watcher() {
     getOutcomeAlignmentsForCourse
   );
   yield takeEvery(CANVAS_GET_ASSIGNMENTS_FOR_COURSE, getAssignmentsForCourse);
+  yield takeLeading(CANVAS_TOGGLE_COURSE_VISIBILITY, toggleCourseVisibility);
 }
 
 export default function* canvasRootSaga() {
