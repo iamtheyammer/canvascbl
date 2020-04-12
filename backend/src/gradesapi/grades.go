@@ -68,6 +68,19 @@ type calculatedGPA struct {
 // gpa represents more than one user's GPA
 type gpa map[uint64]calculatedGPA
 
+type distanceLearningGrade struct {
+	CourseName string `json:"course_name"`
+	Grade      struct {
+		Grade string `json:"grade"`
+		Rank  int    `json:"rank"`
+	} `json:"grade"`
+	OriginalCourseID         uint64 `json:"original_course_id"`
+	DistanceLearningCourseID uint64 `json:"distance_learning_course_id"`
+}
+
+// map[userID<uint64>][]distanceLearningGrade
+type distanceLearningGrades map[uint64][]distanceLearningGrade
+
 const (
 	gradesErrorNoTokens              = "no stored tokens for this user"
 	gradesErrorRevokedToken          = "the token/refresh token has been revoked or no longer works"
@@ -79,24 +92,26 @@ const (
 	gradesErrorActionRedirectToOAuth = gradesErrorAction("redirect_to_oauth")
 	gradesErrorActionRetryOnce       = gradesErrorAction("retry_once")
 
-	gradesIncludeSession        = gradesInclude("session")
-	gradesIncludeUserProfile    = gradesInclude("user_profile")
-	gradesIncludeObservees      = gradesInclude("observees")
-	gradesIncludeCourses        = gradesInclude("courses")
-	gradesIncludeOutcomeResults = gradesInclude("outcome_results")
-	gradesIncludeSimpleGrades   = gradesInclude("simple_grades")
-	gradesIncludeDetailedGrades = gradesInclude("detailed_grades")
-	gradesIncludeGPA            = gradesInclude("gpa")
+	gradesIncludeSession          = gradesInclude("session")
+	gradesIncludeUserProfile      = gradesInclude("user_profile")
+	gradesIncludeObservees        = gradesInclude("observees")
+	gradesIncludeCourses          = gradesInclude("courses")
+	gradesIncludeOutcomeResults   = gradesInclude("outcome_results")
+	gradesIncludeSimpleGrades     = gradesInclude("simple_grades")
+	gradesIncludeDetailedGrades   = gradesInclude("detailed_grades")
+	gradesIncludeGPA              = gradesInclude("gpa")
+	gradesIncludeDistanceLearning = gradesInclude("distance_learning")
 )
 
 type gradesHandlerRequest struct {
-	Session        bool
-	UserProfile    bool
-	Observees      bool
-	Courses        bool
-	OutcomeResults bool
-	DetailedGrades bool
-	GPA            bool
+	Session          bool
+	UserProfile      bool
+	Observees        bool
+	Courses          bool
+	OutcomeResults   bool
+	DetailedGrades   bool
+	GPA              bool
+	DistanceLearning bool
 }
 
 // UserGradesRequest represents a request for GradesForUser.
@@ -112,14 +127,15 @@ type UserGradesRequest struct {
 // UserGradesResponse is all possible info from a GradesForUser call.
 // It is JSON-serializable.
 type UserGradesResponse struct {
-	Session        *sessions.VerifiedSession `json:"session,omitempty"`
-	UserProfile    *canvasUserProfile        `json:"user_profile,omitempty"`
-	Observees      *[]canvasObservee         `json:"observees,omitempty"`
-	Courses        *[]canvasCourse           `json:"courses,omitempty"`
-	OutcomeResults processedOutcomeResults   `json:"outcome_results,omitempty"`
-	SimpleGrades   simpleGrades              `json:"simple_grades,omitempty"`
-	DetailedGrades detailedGrades            `json:"detailed_grades,omitempty"`
-	GPA            gpa                       `json:"gpa"`
+	Session          *sessions.VerifiedSession `json:"session,omitempty"`
+	UserProfile      *canvasUserProfile        `json:"user_profile,omitempty"`
+	Observees        *[]canvasObservee         `json:"observees,omitempty"`
+	Courses          *[]canvasCourse           `json:"courses,omitempty"`
+	OutcomeResults   processedOutcomeResults   `json:"outcome_results,omitempty"`
+	SimpleGrades     simpleGrades              `json:"simple_grades,omitempty"`
+	DetailedGrades   detailedGrades            `json:"detailed_grades,omitempty"`
+	GPA              gpa                       `json:"gpa"`
+	DistanceLearning distanceLearningGrades    `json:"distance_learning"`
 }
 
 /*
@@ -131,12 +147,13 @@ It is returned from GradesForUser if req.ReturnDBRequests is true.
 Note that observees are excluded due to their special upsert nature.
 */
 type UserGradesDBRequests struct {
-	Profile        *users.UpsertRequest
-	Courses        *[]coursessvc.UpsertRequest
-	OutcomeResults *[]coursessvc.OutcomeResultInsertRequest
-	Grades         *[]gradessvc.InsertRequest
-	RollupScores   *[]coursessvc.OutcomeRollupInsertRequest
-	GPA            *[]gpas.InsertRequest
+	Profile                *users.UpsertRequest
+	Courses                *[]coursessvc.UpsertRequest
+	OutcomeResults         *[]coursessvc.OutcomeResultInsertRequest
+	Grades                 *[]gradessvc.InsertRequest
+	RollupScores           *[]coursessvc.OutcomeRollupInsertRequest
+	GPA                    *[]gpas.InsertRequest
+	DistanceLearningGrades *[]gradessvc.InsertDistanceLearningRequest
 }
 
 // GradesErrorResponse represents an error from GradesForUser.
@@ -151,6 +168,8 @@ type GradesErrorResponse struct {
 
 func (r gradesHandlerRequest) toScopes() []oauth2.Scope {
 	var s []oauth2.Scope
+
+	gradesScope := false
 
 	// session not supported
 
@@ -173,6 +192,12 @@ func (r gradesHandlerRequest) toScopes() []oauth2.Scope {
 	if r.DetailedGrades {
 		s = append(s, oauth2.ScopeDetailedGrades)
 	} else {
+		gradesScope = true
+		s = append(s, oauth2.ScopeGrades)
+	}
+
+	if r.DistanceLearning && !gradesScope {
+		gradesScope = true
 		s = append(s, oauth2.ScopeGrades)
 	}
 
@@ -204,8 +229,10 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 		case gradesIncludeDetailedGrades:
 			req.DetailedGrades = true
 		case gradesIncludeGPA:
-			// Distance Learning
-			//req.GPA = true
+		// Distance Learning
+		//req.GPA = true
+		case gradesIncludeDistanceLearning:
+			req.DistanceLearning = true
 		default:
 			handleError(w, GradesErrorResponse{
 				Error: gradesErrorInvalidInclude,
@@ -322,6 +349,10 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 
 	if req.GPA {
 		resp.GPA = g.GPA
+	}
+
+	if req.DistanceLearning {
+		resp.DistanceLearning = g.DistanceLearning
 	}
 
 	jResp, err := json.Marshal(&resp)
@@ -631,6 +662,7 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 			currentRollupScoreChunk       = 0
 			currentRollupScoreChunkLength = 0
 			gpaReqs                       []gpas.InsertRequest
+			distanceLearningGradesReqs    []gradessvc.InsertDistanceLearningRequest
 		)
 
 		for _, r := range dbReqs {
@@ -711,6 +743,10 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 			if r.GPA != nil {
 				gpaReqs = append(gpaReqs, *r.GPA...)
 			}
+
+			if r.DistanceLearningGrades != nil {
+				distanceLearningGradesReqs = append(distanceLearningGradesReqs, *r.DistanceLearningGrades...)
+			}
 		}
 
 		// we'll request one at a time-- these are big, big requests
@@ -782,6 +818,15 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 		//	util.HandleError(fmt.Errorf("error inserting multiple gpas in insert fetch_all data: %w", err))
 		//	return
 		//}
+
+		err = gradessvc.InsertDistanceLearning(trx, &distanceLearningGradesReqs)
+		if err != nil {
+			rb("distance learning grades")
+			util.HandleError(
+				fmt.Errorf("error inserting distance learning grades in insert fetch_all data: %w", err),
+			)
+			return
+		}
 
 		err = trx.Commit()
 		if err != nil {
@@ -1225,6 +1270,34 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *UserGradesDBRe
 		go saveGradesToDB(grades, req.ManualFetch)
 	}
 
+	dlGrades := distanceLearningGrades{}
+
+	for userID, dg := range grades {
+		wg.Add(1)
+		go func(uID uint64, ac []canvasCourse, detGra map[uint64]computedGrade) {
+			defer wg.Done()
+
+			dlg := calculateDistanceLearningGrades(ac, detGra)
+
+			mutex.Lock()
+			dlGrades[userID] = dlg
+			mutex.Unlock()
+		}(userID, *allCourses, dg)
+	}
+
+	wg.Wait()
+
+	if req.ReturnDBRequests {
+		dbReqsWg.Add(1)
+		go func() {
+			defer dbReqsWg.Done()
+
+			dbReqs.DistanceLearningGrades = prepareDistanceLearningGradesForDB(dlGrades, req.ManualFetch)
+		}()
+	} else {
+		go saveDistanceLearningGradesToDB(dlGrades, req.ManualFetch)
+	}
+
 	//cGPA := calculateGPAFromDetailedGrades(grades)
 	//
 	//if req.ReturnDBRequests {
@@ -1241,6 +1314,10 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *UserGradesDBRe
 	//	go saveGPAToDB(cGPA, req.ManualFetch)
 	//}
 
+	if req.ReturnDBRequests {
+		dbReqsWg.Wait()
+	}
+
 	return &UserGradesResponse{
 		Session:        nil,
 		UserProfile:    (*canvasUserProfile)(profile),
@@ -1250,5 +1327,6 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *UserGradesDBRe
 		SimpleGrades:   sGrades,
 		DetailedGrades: grades,
 		//GPA:            cGPA,
+		DistanceLearning: dlGrades,
 	}, &dbReqs, nil
 }

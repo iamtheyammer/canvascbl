@@ -363,3 +363,29 @@ func saveGPAToDB(g gpa, manualFetch bool) {
 		return
 	}
 }
+
+func prepareDistanceLearningGradesForDB(dlg distanceLearningGrades, manualFetch bool) *[]grades.InsertDistanceLearningRequest {
+	var req []grades.InsertDistanceLearningRequest
+
+	for uID, gs := range dlg {
+		for _, g := range gs {
+			req = append(req, grades.InsertDistanceLearningRequest{
+				DistanceLearningCourseID: g.DistanceLearningCourseID,
+				OriginalCourseID:         g.OriginalCourseID,
+				Grade:                    g.Grade.Grade,
+				UserCanvasID:             uID,
+				ManualFetch:              manualFetch,
+			})
+		}
+	}
+
+	return &req
+}
+
+func saveDistanceLearningGradesToDB(dlg distanceLearningGrades, manualFetch bool) {
+	err := grades.InsertDistanceLearning(db, prepareDistanceLearningGradesForDB(dlg, manualFetch))
+	if err != nil {
+		util.HandleError(fmt.Errorf("error saving distance learning grades to db: %w", err))
+		return
+	}
+}

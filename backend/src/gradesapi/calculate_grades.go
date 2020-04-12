@@ -3,6 +3,7 @@ package gradesapi
 import (
 	"math"
 	"sort"
+	"strings"
 )
 
 type grade struct {
@@ -220,4 +221,136 @@ func calculateGPAFromDetailedGrades(g detailedGrades) gpa {
 	}
 
 	return finalGPA
+}
+
+/*
+calculateDistanceLearningGrades calculates distance learning grades for a single user.
+
+It returns a slice of distance learning grades for the user.
+*/
+func calculateDistanceLearningGrades(courses []canvasCourse, grades map[uint64]computedGrade) []distanceLearningGrade {
+	// find regular vs. distance learning courses
+	distanceCourses := map[uint64]canvasCourse{}
+	originalCourses := map[uint64]canvasCourse{}
+
+	courseMatches := map[string][]uint64{}
+
+	for _, c := range courses {
+		// nickname? bye.
+		splits := strings.Split(c.Name, " - ")
+		if len(splits) != 3 {
+			continue
+		}
+
+		// like "Biology" from "Biology - S2-DL - Teacher"
+		courseTitle := splits[0]
+
+		// add course ID
+		courseMatches[courseTitle] = append(courseMatches[courseTitle], c.ID)
+
+		if c.EnrollmentTermID == spring20DLEnrollmentTermID {
+			distanceCourses[c.ID] = c
+			continue
+		} else {
+			originalCourses[c.ID] = c
+			continue
+		}
+	}
+
+	coursePairs := map[string]struct {
+		DistanceLearningID uint64
+		OriginalID         uint64
+	}{}
+
+	// filter for 2s that have one distance and one original
+	for title, ids := range courseMatches {
+		if len(ids) != 2 {
+			continue
+		}
+
+		foundDistanceLearning := false
+		foundOriginal := false
+
+		pair := coursePairs[title]
+
+		for _, id := range ids {
+			// make sure user has grade in course
+			if _, ok := grades[id]; !ok {
+				continue
+			}
+
+			if _, ok := distanceCourses[id]; ok {
+				foundDistanceLearning = true
+				pair.DistanceLearningID = id
+				continue
+			} else if _, ok := originalCourses[id]; ok {
+				foundOriginal = true
+				pair.OriginalID = id
+				continue
+			}
+		}
+
+		if !foundDistanceLearning || !foundOriginal {
+			continue
+		}
+
+		coursePairs[title] = pair
+	}
+
+	// finally, compute grades
+	var dlGrades []distanceLearningGrade
+
+	for title, pair := range coursePairs {
+		grade := distanceLearningGrade{
+			CourseName: title,
+			Grade: struct {
+				Grade string `json:"grade"`
+				Rank  int    `json:"rank"`
+			}{},
+			OriginalCourseID:         pair.OriginalID,
+			DistanceLearningCourseID: pair.DistanceLearningID,
+		}
+
+		dlCourseGrade := grades[pair.DistanceLearningID]
+		originalCourseGrade := grades[pair.OriginalID]
+
+		if dlCourseGrade.Grade == naGrade || originalCourseGrade.Grade == naGrade {
+			grade.Grade.Grade = "N/A"
+			grade.Grade.Rank = -1
+
+			dlGrades = append(dlGrades, grade)
+			continue
+		}
+
+		dlGrade := dlCourseGrade.Grade.Grade
+		originalGrade := originalCourseGrade.Grade
+		pass := false
+
+		// dl == I ? instant fail
+		if dlGrade == "I" {
+			pass = false
+			// dl != I, original != I OK
+		} else if dlGrade != "I" && originalGrade.Rank > 0 {
+			pass = true
+			// dl != I, and original == I...
+		} else if dlGrade != "I" && originalGrade.Rank == 0 {
+			if dlGrade != "I" && dlGrade != "C" {
+				pass = true
+			} else {
+				pass = false
+			}
+		}
+
+		if pass {
+			grade.Grade.Grade = "P"
+			grade.Grade.Rank = 1
+		} else {
+			grade.Grade.Grade = "I"
+			grade.Grade.Rank = 0
+		}
+
+		dlGrades = append(dlGrades, grade)
+	}
+
+	return dlGrades
 }
