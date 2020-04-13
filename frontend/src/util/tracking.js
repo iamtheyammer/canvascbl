@@ -129,7 +129,8 @@ export const destinationTypes = {
   helpdesk: {
     home: 'CanvasCBL Helpdesk Home',
     gpas: 'CanvasCBL Helpdesk Article on GPAs',
-    hidingCourses: 'CanvasCBL Helpdesk Article on Hiding Courses'
+    hidingCourses: 'CanvasCBL Helpdesk Article on Hiding Courses',
+    distanceLearning: 'CanvasCBL Helpdesk Article on Distance Learning'
   }
 };
 

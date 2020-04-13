@@ -509,6 +509,19 @@ function Grades(props) {
           >
             Show Both
           </MobileRadio.RadioItem>
+          <MobileList.Item>
+            <PopoutLink
+              url="https://go.canvascbl.com/help/distance-learning"
+              tracking={{
+                destinationName: destinationNames.helpdesk,
+                destinationType: destinationTypes.helpdesk.gpas,
+                via: vias.gpaReportCardQuestionIcon
+              }}
+              addIcon
+            >
+              Learn more about view options
+            </PopoutLink>
+          </MobileList.Item>
         </MobileList>
         <Padding all={5} />
         {(!viewType ||
@@ -783,6 +796,18 @@ function Grades(props) {
         </Radio.Button>
         <Radio.Button value="both">Show Both</Radio.Button>
       </Radio.Group>
+      <Divider type="vertical" />
+      <PopoutLink
+        url="https://go.canvascbl.com/help/distance-learning"
+        tracking={{
+          destinationName: destinationNames.helpdesk,
+          destinationType: destinationTypes.helpdesk.gpas,
+          via: vias.gpaReportCardQuestionIcon
+        }}
+        addIcon
+      >
+        Learn more
+      </PopoutLink>
       <Padding bottom="12px" />
       {(!viewType || viewType === 'passIncomplete' || viewType === 'both') && (
         <>

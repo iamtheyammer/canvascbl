@@ -130,5 +130,15 @@
       "url": "https://go.canvascbl.com/help/hiding-courses",
       "text": "here."
     }
+  },
+  {
+    "timestamp": 1586740351959,
+    "type": 1,
+    "title": "Added pass/incomplete grades",
+    "content": "Now, you can see pass/incomplete grades in CanvasCBL. Learn more ",
+    "link": {
+      "url": "https://go.canvascbl.com/help/distance-learning",
+      "text": "here."
+    }
   }
 ]
