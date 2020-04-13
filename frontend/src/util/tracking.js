@@ -109,7 +109,10 @@ export const vias = {
   passIncompleteGradesTableDistanceLearningCourseBreakdownOnCanvasLink:
     'Pass/Incomplete Grades Table Distance Learning Course Breakdown on Canvas Link',
   passIncompleteGradesTableDistanceLearningCourseOpenOnCanvasLink:
-    'Pass/Incomplete Grades Table Distance Learning Course Open on Canvas Link'
+    'Pass/Incomplete Grades Table Distance Learning Course Open on Canvas Link',
+  gradesViewTypeSwitcherLearnMoreLink:
+    'Grades View Type Switcher Learn More Link',
+  gradesSomethingDoesntLookRightLink: "Grades Something Doesn't Look Right Link"
 };
 
 export const destinationNames = {
@@ -130,7 +133,9 @@ export const destinationTypes = {
     home: 'CanvasCBL Helpdesk Home',
     gpas: 'CanvasCBL Helpdesk Article on GPAs',
     hidingCourses: 'CanvasCBL Helpdesk Article on Hiding Courses',
-    distanceLearning: 'CanvasCBL Helpdesk Article on Distance Learning'
+    distanceLearning: 'CanvasCBL Helpdesk Article on Distance Learning',
+    distanceLearningSomethingDoesntLookRight:
+      "CanvasCBL Helpdesk Article on Distance Learning: Something Doesn't Look Right"
   }
 };
 

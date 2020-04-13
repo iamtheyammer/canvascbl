@@ -713,6 +713,23 @@ function Grades(props) {
             </MobileAccordion>
           </>
         )}
+        <Typography.Text>
+          Is a course missing or does something not look right?{' '}
+          <PopoutLink
+            url="https://go.canvascbl.com/help/distance-learning/something-doesnt-look-right"
+            tracking={{
+              destinationName: destinationNames.helpdesk,
+              destinationType:
+                destinationTypes.helpdesk
+                  .distanceLearningSomethingDoesntLookRight,
+              via: vias.gradesSomethingDoesntLookRightLink
+            }}
+            addIcon
+          >
+            Click here.
+          </PopoutLink>
+        </Typography.Text>
+        <Padding all={5} />
         {showGpa && (
           <>
             <Padding all={5} />
@@ -801,8 +818,8 @@ function Grades(props) {
         url="https://go.canvascbl.com/help/distance-learning"
         tracking={{
           destinationName: destinationNames.helpdesk,
-          destinationType: destinationTypes.helpdesk.gpas,
-          via: vias.gpaReportCardQuestionIcon
+          destinationType: destinationTypes.helpdesk.distanceLearning,
+          via: vias.gradesViewTypeSwitcherLearnMoreLink
         }}
         addIcon
       >
@@ -839,6 +856,22 @@ function Grades(props) {
           />
         </>
       )}
+      <Typography.Text>
+        Is a course missing or does something not look right?{' '}
+        <PopoutLink
+          url="https://go.canvascbl.com/help/distance-learning/something-doesnt-look-right"
+          tracking={{
+            destinationName: destinationNames.helpdesk,
+            destinationType:
+              destinationTypes.helpdesk
+                .distanceLearningSomethingDoesntLookRight,
+            via: vias.gradesSomethingDoesntLookRightLink
+          }}
+          addIcon
+        >
+          Click here.
+        </PopoutLink>
+      </Typography.Text>
       {showGpa && (
         <>
           <Typography.Title level={3}>GPA</Typography.Title>
