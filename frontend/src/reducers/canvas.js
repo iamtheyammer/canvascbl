@@ -33,7 +33,8 @@ export default function canvas(state = {}, action) {
         activeUserId: action.gradedUsers[0],
         outcomeResults: action.outcomeResults,
         grades: action.grades,
-        gpa: action.gpa
+        gpa: action.gpa,
+        distanceLearning: action.distanceLearning
       };
     case CANVAS_GOT_ASSIGNMENTS_FOR_COURSE:
       return {

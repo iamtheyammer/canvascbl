@@ -101,7 +101,15 @@ export const vias = {
   settingsShowHiddenCoursesDescriptionLearnMoreLink:
     'Settings Show Hidden Courses Description Learn More Link',
   courseSettingsHideThisCourseLearnMoreLink:
-    'Course Settings Hide This Course Learn More Link'
+    'Course Settings Hide This Course Learn More Link',
+  passIncompleteGradesTableOriginalCourseSeeBreakdownLink:
+    'Pass/Incomplete Grades Table Original Course See Breakdown Link',
+  passIncompleteGradesTableOriginalCourseOpenOnCanvasLink:
+    'Pass/Incomplete Grades Table Original Course Open on Canvas Link',
+  passIncompleteGradesTableDistanceLearningCourseBreakdownOnCanvasLink:
+    'Pass/Incomplete Grades Table Distance Learning Course Breakdown on Canvas Link',
+  passIncompleteGradesTableDistanceLearningCourseOpenOnCanvasLink:
+    'Pass/Incomplete Grades Table Distance Learning Course Open on Canvas Link'
 };
 
 export const destinationNames = {
@@ -371,6 +379,34 @@ export function trackCourseVisibilityToggle(courseId, courseVisibility) {
 export function trackChangedHiddenCourseVisibility(hiddenCourseVisibility) {
   mp.track('Changed Hidden Course Visibility', {
     'Hidden Course Visibility': bts(hiddenCourseVisibility)
+  });
+}
+
+/**
+ * Tracks a change of the Grades view type. View type codenames will be converted before
+ * they are sent to Mixpanel.
+ * @param {string} prevViewType The codename for the type (ex: individualCourses)
+ * @param {string} newViewType The codename for the type (ex: passIncomplete)
+ */
+export function trackChangedGradesViewType(prevViewType, newViewType) {
+  function convertViewType(vt) {
+    switch (vt) {
+      case 'passIncomplete':
+        return 'Pass/Incomplete';
+      case 'individualCourses':
+        return 'Individual Courses';
+      case 'both':
+        return 'Both';
+      case '':
+        return 'Default';
+      default:
+        return 'Unknown';
+    }
+  }
+
+  mp.track('Changed Grades View Type', {
+    'Previous View Type': convertViewType(prevViewType),
+    'New View Type': convertViewType(newViewType)
   });
 }
 

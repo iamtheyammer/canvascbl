@@ -12,9 +12,14 @@ import {
   Row,
   Col,
   Statistic,
-  Divider
+  Divider,
+  Radio
 } from 'antd';
-import { Accordion as MobileAccordion, List as MobileList } from 'antd-mobile';
+import {
+  Accordion as MobileAccordion,
+  List as MobileList,
+  Radio as MobileRadio
+} from 'antd-mobile';
 
 import { gradeMapByGrade } from '../../../util/canvas/gradeMapByGrade';
 import getActiveCourses from '../../../util/canvas/getActiveCourses';
@@ -38,6 +43,7 @@ import {
   itemTypes,
   pageNames,
   tableNames,
+  trackChangedGradesViewType,
   TrackingLink,
   trackPageView,
   trackTableRowExpansion,
@@ -45,6 +51,7 @@ import {
 } from '../../../util/tracking';
 import { truncate } from 'lodash';
 import CourseSettings from './CourseSettings';
+import { switchViewType } from '../../../actions/components/grades';
 
 function PreviousGrade(props) {
   const { userHasValidSubscription, grade, previousGrade } = props;
@@ -205,8 +212,9 @@ const tableColumns = [
                 destinationType: destinationTypes.courseGrades,
                 via: vias.gradesTableBreakdownOnCanvas
               }}
+              addIcon
             >
-              Breakdown on Canvas <Icon component={PopOutIcon} />
+              Breakdown on Canvas
             </PopoutLink>
             <Divider type="vertical" />
           </>
@@ -218,8 +226,96 @@ const tableColumns = [
             destinationType: destinationTypes.course,
             via: vias.gradesTableOpenOnCanvas
           }}
+          addIcon
         >
-          Open on Canvas <Icon component={PopOutIcon} />
+          Open on Canvas
+        </PopoutLink>
+      </>
+    )
+  }
+];
+
+const distanceLearningTableColumns = [
+  {
+    title: 'Class Name',
+    key: 'name',
+    dataIndex: 'name',
+    sorter: (a, b) => desc(a.name, b.name),
+    fixed: 'left'
+  },
+  {
+    title: 'Grade',
+    key: 'grade',
+    dataIndex: 'grade',
+    render: (text, record) => record.grade.grade,
+    fixed: 'left'
+  },
+  {
+    title: 'Original Course',
+    key: 'originalCourseName',
+    dataIndex: 'originalCourseName',
+    render: (text, record) => (
+      <>
+        {text}
+        <br />
+        {record.originalCourseBreakdownIsAvailable && (
+          <>
+            <TrackingLink
+              to={`/dashboard/grades/${record.originalCourseId}`}
+              pageName={pageNames.gradeBreakdown}
+              via={vias.passIncompleteGradesTableOriginalCourseSeeBreakdownLink}
+            >
+              See Breakdown
+            </TrackingLink>
+          </>
+        )}
+        <Divider type="vertical" />
+        <PopoutLink
+          url={`https://${env.defaultSubdomain}.instructure.com/courses/${record.originalCourseId}`}
+          tracking={{
+            destinationName: destinationNames.canvas,
+            destinationType: destinationTypes.course,
+            via: vias.passIncompleteGradesTableOriginalCourseOpenOnCanvasLink
+          }}
+          addIcon
+        >
+          Open on Canvas
+        </PopoutLink>
+      </>
+    )
+  },
+  {
+    title: 'Distance Learning',
+    key: 'distanceLearningCourseName',
+    dataIndex: 'distanceLearningCourseName',
+    render: (text, record) => (
+      <>
+        {text}
+        <br />
+        <PopoutLink
+          url={`https://${env.defaultSubdomain}.instructure.com/courses/${record.distanceLearningCourseId}/grades`}
+          tracking={{
+            destinationName: destinationNames.canvas,
+            destinationType: destinationTypes.courseGrades,
+            via:
+              vias.passIncompleteGradesTableDistanceLearningCourseBreakdownOnCanvasLink
+          }}
+          addIcon
+        >
+          Breakdown on Canvas
+        </PopoutLink>
+        <Divider type="vertical" />
+        <PopoutLink
+          url={`https://${env.defaultSubdomain}.instructure.com/courses/${record.distanceLearningCourseId}`}
+          tracking={{
+            destinationName: destinationNames.canvas,
+            destinationType: destinationTypes.course,
+            via:
+              vias.passIncompleteGradesTableDistanceLearningCourseOpenOnCanvasLink
+          }}
+          addIcon
+        >
+          Open on Canvas
         </PopoutLink>
       </>
     )
@@ -241,7 +337,9 @@ function Grades(props) {
     allGpas,
     activeUserId,
     observees,
-    plus
+    plus,
+    distanceLearning,
+    viewType
   } = props;
 
   const err = error[getPrevGradeId];
@@ -333,6 +431,29 @@ function Grades(props) {
     };
   });
 
+  const distanceLearningData = distanceLearning[activeUserId].map(dl => {
+    const dlCourse = courses.filter(
+      c => c.id === dl.distance_learning_course_id
+    )[0];
+    const dlCourseData = data.filter(
+      d => d.id === dl.distance_learning_course_id
+    )[0];
+
+    const oriCourse = courses.filter(c => c.id === dl.original_course_id)[0];
+    const oriCourseData = data.filter(d => d.id === dl.original_course_id)[0];
+
+    return {
+      key: dl.course_name,
+      name: dl.course_name,
+      grade: dl.grade,
+      originalCourseId: oriCourse.id,
+      originalCourseName: oriCourse.name,
+      originalCourseBreakdownIsAvailable: oriCourseData.breakdownIsAvailable,
+      distanceLearningCourseId: dlCourse.id,
+      distanceLearningCourseName: dlCourse.name
+    };
+  });
+
   const gradesTitle = (
     <Typography.Title level={2}>
       {observees && observees.length
@@ -354,99 +475,231 @@ function Grades(props) {
 
   const showData = data.filter(d => !d.hide);
 
+  function handleChangeViewType(newTypeName) {
+    trackChangedGradesViewType(viewType || '', newTypeName);
+    dispatch(switchViewType(newTypeName));
+  }
+
   if (isMobile) {
     return (
-      <div>
+      <>
         {gradesTitle}
-        <MobileAccordion>
-          {showData.map(d => (
-            <MobileAccordion.Panel
-              key={d.key}
-              style={{ padding: '5px 5px 5px 0px' }}
-              header={
-                <div style={{ paddingRight: '6px' }}>
-                  <div style={{ float: 'left', overflow: 'hidden' }}>
-                    {<>{truncate(d.name, { length: 25 })}</>}
-                  </div>
-                  <div style={{ float: 'right' }}>{d.grade}</div>
-                </div>
-              }
-            >
-              <MobileList style={{ paddingLeft: '6px' }}>
-                {d.isDistanceLearning && (
-                  <MobileList.Item multipleLine={true}>
-                    Distance Learning Course
-                    <MobileList.Item.Brief>
-                      This is a distance learning course.
-                      <br /> Learn more about your grade in the <br />
-                      Canvas Breakdown.
-                    </MobileList.Item.Brief>
-                  </MobileList.Item>
-                )}
-                {d.canvascblHidden && (
-                  <MobileList.Item multipleLine={true}>
-                    Hidden Course
-                    <MobileList.Item.Brief>
-                      This course is normally hidden,
-                      <br /> but you have show hidden <br />
-                      courses enabled.
-                    </MobileList.Item.Brief>
-                  </MobileList.Item>
-                )}
-                {d.breakdownIsAvailable && (
-                  <MobileList.Item>
-                    <TrackingLink
-                      to={`/dashboard/grades/${d.id}`}
-                      pageName={pageNames.gradeBreakdown}
-                      via={vias.gradesTableSeeBreakdownLink}
-                    >
-                      See Breakdown
-                    </TrackingLink>
-                  </MobileList.Item>
-                )}
-                {d.isDistanceLearning && (
-                  <MobileList.Item>
-                    <PopoutLink
-                      url={`https://${env.defaultSubdomain}.instructure.com/courses/${d.id}/grades`}
-                      tracking={{
-                        destinationName: destinationNames.canvas,
-                        destinationType: destinationTypes.courseGrades,
-                        via: vias.gradesTableBreakdownOnCanvas
-                      }}
-                    >
-                      Breakdown on Canvas <Icon component={PopOutIcon} />
-                    </PopoutLink>
-                  </MobileList.Item>
-                )}
-                <MobileList.Item>
-                  <PopoutLink
-                    url={`https://${subdomain ||
-                      'canvas'}.instructure.com/courses/${d.id}`}
-                    tracking={{
-                      destinationName: destinationNames.canvas,
-                      destinationType: destinationTypes.course,
-                      via: vias.gradesTableOpenOnCanvas
-                    }}
-                  >
-                    Open on Canvas <Icon component={PopOutIcon} />
-                  </PopoutLink>
-                </MobileList.Item>
-                <MobileList.Item
-                  extra={
-                    <PreviousGrade
-                      userHasValidSubscription={d.userHasValidSubscription}
-                      grade={d.grade}
-                      previousGrade={d.previousGrade}
-                    />
+        <MobileList>
+          <MobileRadio.RadioItem
+            key="passIncomplete"
+            checked={!viewType || viewType === 'passIncomplete'}
+            onChange={() => handleChangeViewType('passIncomplete')}
+          >
+            Show Pass/Incomplete Grades
+          </MobileRadio.RadioItem>
+          <MobileRadio.RadioItem
+            key="individualCourses"
+            checked={viewType === 'individualCourses'}
+            onChange={() => handleChangeViewType('individualCourses')}
+          >
+            Show Individual Course Grades
+            <MobileList.Item.Brief>
+              This is the traditional CanvasCBL view.
+            </MobileList.Item.Brief>
+          </MobileRadio.RadioItem>
+          <MobileRadio.RadioItem
+            key="both"
+            checked={viewType === 'both'}
+            onChange={() => handleChangeViewType('both')}
+          >
+            Show Both
+          </MobileRadio.RadioItem>
+        </MobileList>
+        <Padding all={5} />
+        {(!viewType ||
+          viewType === 'passIncomplete' ||
+          viewType === 'both') && (
+          <>
+            <Typography.Title level={3}>
+              Pass/Incomplete Grades
+            </Typography.Title>
+            <MobileAccordion>
+              {distanceLearningData.map(dld => (
+                <MobileAccordion.Panel
+                  key={dld.key}
+                  style={{ padding: '5px 5px 5px 0px' }}
+                  header={
+                    <div style={{ paddingRight: '6px' }}>
+                      <div style={{ float: 'left', overflow: 'hidden' }}>
+                        {<>{truncate(dld.name, { length: 25 })}</>}
+                      </div>
+                      <div style={{ float: 'right' }}>{dld.grade.grade}</div>
+                    </div>
                   }
                 >
-                  Previous Grade
-                </MobileList.Item>
-                <CourseSettings record={d} />
-              </MobileList>
-            </MobileAccordion.Panel>
-          ))}
-        </MobileAccordion>
+                  <MobileList style={{ paddingLeft: '6px' }}>
+                    <MobileList.Item>
+                      Original Course
+                      <MobileList.Item.Brief>
+                        {dld.originalCourseName}
+                        {dld.originalCourseBreakdownIsAvailable && (
+                          <>
+                            <br />
+                            <TrackingLink
+                              to={`/dashboard/grades/${dld.originalCourseId}`}
+                              pageName={pageNames.gradeBreakdown}
+                              via={
+                                vias.passIncompleteGradesTableOriginalCourseSeeBreakdownLink
+                              }
+                            >
+                              See Breakdown
+                            </TrackingLink>
+                          </>
+                        )}
+                        <br />
+                        <PopoutLink
+                          url={`https://${env.defaultSubdomain}.instructure.com/courses/${dld.originalCourseId}`}
+                          tracking={{
+                            destinationName: destinationNames.canvas,
+                            destinationType: destinationTypes.course,
+                            via:
+                              vias.passIncompleteGradesTableOriginalCourseOpenOnCanvasLink
+                          }}
+                          addIcon
+                        >
+                          Open on Canvas
+                        </PopoutLink>
+                      </MobileList.Item.Brief>
+                    </MobileList.Item>
+                    <MobileList.Item>
+                      Distance Learning
+                      <MobileList.Item.Brief>
+                        {dld.distanceLearningCourseName}
+                        <br />
+                        <PopoutLink
+                          url={`https://${env.defaultSubdomain}.instructure.com/courses/${dld.distanceLearningCourseId}/grades`}
+                          tracking={{
+                            destinationName: destinationNames.canvas,
+                            destinationType: destinationTypes.courseGrades,
+                            via:
+                              vias.passIncompleteGradesTableDistanceLearningCourseBreakdownOnCanvasLink
+                          }}
+                          addIcon
+                        >
+                          Breakdown on Canvas
+                        </PopoutLink>
+                        <br />
+                        <PopoutLink
+                          url={`https://${env.defaultSubdomain}.instructure.com/courses/${dld.distanceLearningCourseId}`}
+                          tracking={{
+                            destinationName: destinationNames.canvas,
+                            destinationType: destinationTypes.course,
+                            via:
+                              vias.passIncompleteGradesTableDistanceLearningCourseOpenOnCanvasLink
+                          }}
+                          addIcon
+                        >
+                          Open on Canvas
+                        </PopoutLink>
+                      </MobileList.Item.Brief>
+                    </MobileList.Item>
+                  </MobileList>
+                </MobileAccordion.Panel>
+              ))}
+            </MobileAccordion>
+          </>
+        )}{' '}
+        {(viewType === 'individualCourses' || viewType === 'both') && (
+          <>
+            <Typography.Title level={3}>
+              Individual Course Grades
+            </Typography.Title>
+            <MobileAccordion>
+              {showData.map(d => (
+                <MobileAccordion.Panel
+                  key={d.key}
+                  style={{ padding: '5px 5px 5px 0px' }}
+                  header={
+                    <div style={{ paddingRight: '6px' }}>
+                      <div style={{ float: 'left', overflow: 'hidden' }}>
+                        {<>{truncate(d.name, { length: 25 })}</>}
+                      </div>
+                      <div style={{ float: 'right' }}>{d.grade}</div>
+                    </div>
+                  }
+                >
+                  <MobileList style={{ paddingLeft: '6px' }}>
+                    {d.isDistanceLearning && (
+                      <MobileList.Item multipleLine={true}>
+                        Distance Learning Course
+                        <MobileList.Item.Brief>
+                          This is a distance learning course.
+                          <br /> Learn more about your grade in the <br />
+                          Canvas Breakdown.
+                        </MobileList.Item.Brief>
+                      </MobileList.Item>
+                    )}
+                    {d.canvascblHidden && (
+                      <MobileList.Item multipleLine={true}>
+                        Hidden Course
+                        <MobileList.Item.Brief>
+                          This course is normally hidden,
+                          <br /> but you have show hidden <br />
+                          courses enabled.
+                        </MobileList.Item.Brief>
+                      </MobileList.Item>
+                    )}
+                    {d.breakdownIsAvailable && (
+                      <MobileList.Item>
+                        <TrackingLink
+                          to={`/dashboard/grades/${d.id}`}
+                          pageName={pageNames.gradeBreakdown}
+                          via={vias.gradesTableSeeBreakdownLink}
+                        >
+                          See Breakdown
+                        </TrackingLink>
+                      </MobileList.Item>
+                    )}
+                    {d.isDistanceLearning && (
+                      <MobileList.Item>
+                        <PopoutLink
+                          url={`https://${env.defaultSubdomain}.instructure.com/courses/${d.id}/grades`}
+                          tracking={{
+                            destinationName: destinationNames.canvas,
+                            destinationType: destinationTypes.courseGrades,
+                            via: vias.gradesTableBreakdownOnCanvas
+                          }}
+                        >
+                          Breakdown on Canvas <Icon component={PopOutIcon} />
+                        </PopoutLink>
+                      </MobileList.Item>
+                    )}
+                    <MobileList.Item>
+                      <PopoutLink
+                        url={`https://${subdomain ||
+                          'canvas'}.instructure.com/courses/${d.id}`}
+                        tracking={{
+                          destinationName: destinationNames.canvas,
+                          destinationType: destinationTypes.course,
+                          via: vias.gradesTableOpenOnCanvas
+                        }}
+                      >
+                        Open on Canvas <Icon component={PopOutIcon} />
+                      </PopoutLink>
+                    </MobileList.Item>
+                    <MobileList.Item
+                      extra={
+                        <PreviousGrade
+                          userHasValidSubscription={d.userHasValidSubscription}
+                          grade={d.grade}
+                          previousGrade={d.previousGrade}
+                        />
+                      }
+                    >
+                      Previous Grade
+                    </MobileList.Item>
+                    <CourseSettings record={d} />
+                  </MobileList>
+                </MobileAccordion.Panel>
+              ))}
+            </MobileAccordion>
+          </>
+        )}
         {showGpa && (
           <>
             <Padding all={5} />
@@ -505,7 +758,7 @@ function Grades(props) {
             <ConnectedObserveeHandler via={vias.mobileGradesObserveeSwitcher} />
           </>
         )}
-      </div>
+      </>
     );
   }
 
@@ -516,21 +769,51 @@ function Grades(props) {
         If {observees && observees.length ? 'your student has' : 'you have'} a
         grade in a class, click on the name to see a detailed breakdown.
       </Typography.Text>
+      <Padding br />
+      <Padding all={5} />
+      <Radio.Group
+        onChange={e => handleChangeViewType(e.target.value)}
+        value={viewType || 'passIncomplete'}
+      >
+        <Radio.Button value="passIncomplete">
+          Show Pass/Incomplete Grades
+        </Radio.Button>
+        <Radio.Button value="individualCourses">
+          Show Individual Course Grades (Traditional View)
+        </Radio.Button>
+        <Radio.Button value="both">Show Both</Radio.Button>
+      </Radio.Group>
       <Padding bottom="12px" />
-      <Table
-        columns={tableColumns}
-        dataSource={showData}
-        expandedRowRender={record => <CourseSettings record={record} />}
-        onExpand={(expanded, record) => {
-          trackTableRowExpansion(
-            tableNames.grades.grades,
-            record.id,
-            itemTypes.course,
-            expanded,
-            record.id
-          );
-        }}
-      />
+      {(!viewType || viewType === 'passIncomplete' || viewType === 'both') && (
+        <>
+          <Typography.Title level={3}>Combined Grades</Typography.Title>
+          <Table
+            columns={distanceLearningTableColumns}
+            dataSource={distanceLearningData}
+          />
+        </>
+      )}
+      {(viewType === 'individualCourses' || viewType === 'both') && (
+        <>
+          <Typography.Title level={3}>
+            Individual Course Grades
+          </Typography.Title>
+          <Table
+            columns={tableColumns}
+            dataSource={showData}
+            expandedRowRender={record => <CourseSettings record={record} />}
+            onExpand={(expanded, record) => {
+              trackTableRowExpansion(
+                tableNames.grades.grades,
+                record.id,
+                itemTypes.course,
+                expanded,
+                record.id
+              );
+            }}
+          />
+        </>
+      )}
       {showGpa && (
         <>
           <Typography.Title level={3}>GPA</Typography.Title>
@@ -617,7 +900,9 @@ const ConnectedGrades = connect(state => ({
   showHiddenCourses: state.settings.showHiddenCourses,
   allGpas: state.canvas.gpa,
   error: state.error,
-  loading: state.loading
+  loading: state.loading,
+  distanceLearning: state.canvas.distanceLearning,
+  viewType: state.components.grades.viewType
 }))(Grades);
 
 export default ConnectedGrades;

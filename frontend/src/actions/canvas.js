@@ -43,7 +43,8 @@ export function gotInitialData(
   gradedUsers,
   outcomeResults,
   grades,
-  gpa
+  gpa,
+  distanceLearning
 ) {
   return {
     type: CANVAS_GOT_INITIAL_DATA,
@@ -53,7 +54,8 @@ export function gotInitialData(
     gradedUsers,
     outcomeResults,
     grades,
-    gpa
+    gpa,
+    distanceLearning
   };
 }
 

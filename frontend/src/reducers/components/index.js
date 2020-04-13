@@ -7,6 +7,7 @@ import oauth2consent from './oauth2consent';
 import userprofile from './userprofile';
 import settings from './settings';
 import coursesettings from './coursesettings';
+import grades from './grades';
 
 export default combineReducers({
   redeem,
@@ -15,5 +16,6 @@ export default combineReducers({
   oauth2consent,
   userprofile,
   settings,
-  coursesettings
+  coursesettings,
+  grades
 });
