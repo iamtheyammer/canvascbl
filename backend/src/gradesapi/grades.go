@@ -134,8 +134,8 @@ type UserGradesResponse struct {
 	OutcomeResults   processedOutcomeResults   `json:"outcome_results,omitempty"`
 	SimpleGrades     simpleGrades              `json:"simple_grades,omitempty"`
 	DetailedGrades   detailedGrades            `json:"detailed_grades,omitempty"`
-	GPA              gpa                       `json:"gpa"`
-	DistanceLearning distanceLearningGrades    `json:"distance_learning"`
+	GPA              gpa                       `json:"gpa,omitempty"`
+	DistanceLearning distanceLearningGrades    `json:"distance_learning,omitempty"`
 }
 
 /*
@@ -1208,16 +1208,16 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *UserGradesDBRe
 							sGrades[c.Name] = make(map[uint64]string)
 						}
 						sGrades[c.Name][uID] = naGrade.Grade
-					} else {
-						if grades[uID] == nil {
-							grades[uID] = make(map[uint64]computedGrade)
-						}
+					}
 
-						grades[uID][cID] = computedGrade{
-							Grade: naGrade,
-							// so we get [] instead of null
-							Averages: make(map[uint64]computedAverage),
-						}
+					if grades[uID] == nil {
+						grades[uID] = make(map[uint64]computedGrade)
+					}
+
+					grades[uID][cID] = computedGrade{
+						Grade: naGrade,
+						// so we get [] instead of null
+						Averages: make(map[uint64]computedAverage),
 					}
 				}
 
