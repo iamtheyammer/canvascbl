@@ -28,10 +28,10 @@ var (
 	lockedTokens                       = map[uint64]struct{}{}
 )
 
-var proxyURL, _ = url.Parse("http://localhost:8888")
-var httpClient = http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyURL)}}
+//var proxyURL, _ = url.Parse("http://localhost:8888")
+//var httpClient = http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyURL)}}
 
-//var httpClient = http.Client{}
+var httpClient = http.Client{}
 
 type requestDetails struct {
 	// TokenID is the database ID of the token
