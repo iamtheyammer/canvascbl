@@ -165,7 +165,8 @@ const tableColumns = [
     dataIndex: 'grade',
     key: 'grade',
     sorter: (a, b) => desc(a.grade, b.grade),
-    defaultSortOrder: 'desc'
+    defaultSortOrder: 'desc',
+    render: text => <Typography.Text strong>{text}</Typography.Text>
   },
   {
     title: (
@@ -240,15 +241,17 @@ const distanceLearningTableColumns = [
     title: 'Class Name',
     key: 'name',
     dataIndex: 'name',
-    sorter: (a, b) => desc(a.name, b.name),
-    fixed: 'left'
+    sorter: (a, b) => desc(a.name, b.name)
   },
   {
     title: 'Grade',
     key: 'grade',
     dataIndex: 'grade',
-    render: (text, record) => record.grade.grade,
-    fixed: 'left'
+    render: (text, record) => (
+      <Typography.Text strong>{record.grade.grade}</Typography.Text>
+    ),
+    sorter: (a, b) => a.grade.rank < b.grade.rank,
+    defaultSortOrder: 'desc'
   },
   {
     title: 'Original Course',
