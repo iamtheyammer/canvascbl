@@ -1277,10 +1277,11 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *UserGradesDBRe
 		go func(uID uint64, ac []canvasCourse, detGra map[uint64]computedGrade) {
 			defer wg.Done()
 
+			//fmt.Printf("detailed grades for user %d: %+v\n\n", uID, detGra)
 			dlg := calculateDistanceLearningGrades(ac, detGra)
 
 			mutex.Lock()
-			dlGrades[userID] = dlg
+			dlGrades[uID] = dlg
 			mutex.Unlock()
 		}(userID, *allCourses, dg)
 	}

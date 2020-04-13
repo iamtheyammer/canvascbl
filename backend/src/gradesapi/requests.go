@@ -28,10 +28,10 @@ var (
 	lockedTokens                       = map[uint64]struct{}{}
 )
 
-//var proxyURL, _ = url.Parse("http://localhost:8888")
-//var httpClient = http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyURL)}}
+var proxyURL, _ = url.Parse("http://localhost:8888")
+var httpClient = http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyURL)}}
 
-var httpClient = http.Client{}
+//var httpClient = http.Client{}
 
 type requestDetails struct {
 	// TokenID is the database ID of the token
@@ -128,7 +128,7 @@ func getCanvasProfile(rd requestDetails, userID string) (*canvasUserProfileRespo
 
 func getCanvasCourses(rd requestDetails) (*canvasCoursesResponse, error) {
 	var courses canvasCoursesResponse
-	_, err := makeCanvasGetRequest("api/v1/courses?per_page=100&include[]=total_scores", rd, &courses)
+	_, err := makeCanvasGetRequest("api/v1/courses?per_page=100&include[]=total_scores&include[]=observed_users", rd, &courses)
 	if err != nil {
 		return nil, fmt.Errorf("error getting canvas courses: %w", err)
 	}

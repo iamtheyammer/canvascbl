@@ -71,14 +71,13 @@ func getGradedUsersAndValidCourses(courses *[]canvasCourse) (map[uint64][]uint64
 		// this is here because there may not be a valid enrollment (say an observee is a TA)
 		shouldAddCourse := false
 
+		var validEnrollments []canvasEnrollment
+
 		for _, e := range c.Enrollments {
 			uID := e.UserID
 
-			switch e.Type {
-			case canvasEnrollmentTypeObserverEnrollment:
-				uID = e.AssociatedUserID
-			case canvasEnrollmentTypeStudentEnrollment:
-			default:
+			if e.Type == canvasEnrollmentTypeObserverEnrollment {
+				// student enrollments are here as well
 				continue
 			}
 
@@ -86,7 +85,10 @@ func getGradedUsersAndValidCourses(courses *[]canvasCourse) (map[uint64][]uint64
 			shouldAddCourse = true
 
 			gradedUsers[c.ID] = append(gradedUsers[c.ID], uID)
+			validEnrollments = append(validEnrollments, e)
 		}
+
+		c.Enrollments = validEnrollments
 
 		if shouldAddCourse {
 			validCourses = append(validCourses, c)

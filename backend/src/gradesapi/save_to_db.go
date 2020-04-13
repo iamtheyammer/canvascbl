@@ -369,6 +369,10 @@ func prepareDistanceLearningGradesForDB(dlg distanceLearningGrades, manualFetch 
 
 	for uID, gs := range dlg {
 		for _, g := range gs {
+			if g.Grade.Grade == "N/A" {
+				continue
+			}
+
 			req = append(req, grades.InsertDistanceLearningRequest{
 				DistanceLearningCourseID: g.DistanceLearningCourseID,
 				OriginalCourseID:         g.OriginalCourseID,
