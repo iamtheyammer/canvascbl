@@ -435,9 +435,9 @@ function Grades(props) {
     const dlCourse = courses.filter(
       c => c.id === dl.distance_learning_course_id
     )[0];
-    const dlCourseData = data.filter(
-      d => d.id === dl.distance_learning_course_id
-    )[0];
+    // const dlCourseData = data.filter(
+    //   d => d.id === dl.distance_learning_course_id
+    // )[0];
 
     const oriCourse = courses.filter(c => c.id === dl.original_course_id)[0];
     const oriCourseData = data.filter(d => d.id === dl.original_course_id)[0];
