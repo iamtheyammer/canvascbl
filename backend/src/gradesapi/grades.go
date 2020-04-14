@@ -408,7 +408,7 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 	}
 
 	// get all users with tokens
-	toks, err := canvas_tokens.List(util.DB, &canvas_tokens.ListRequest{
+	toksP, err := canvas_tokens.List(util.DB, &canvas_tokens.ListRequest{
 		OrderBys:   []string{"canvas_tokens.canvas_user_id", "canvas_tokens.inserted_at DESC"},
 		DistinctOn: "canvas_tokens.canvas_user_id",
 	})
@@ -422,6 +422,8 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 
 		return
 	}
+
+	toks := *toksP
 
 	var (
 		mutex = sync.Mutex{}
@@ -452,7 +454,9 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 		nrs[ns.CanvasUserID] = struct{}{}
 	}
 
-	for _, tok := range *toks {
+	delay := time.Duration(len(toks)) * time.Millisecond
+
+	for _, tok := range toks {
 		wg.Add(1)
 		go func(cuID uint64) {
 			defer wg.Done()
@@ -632,7 +636,7 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 			set(true)
 			return
 		}(tok.CanvasUserID)
-		time.Sleep(150 * time.Millisecond)
+		time.Sleep(delay)
 	}
 
 	wg.Wait()
