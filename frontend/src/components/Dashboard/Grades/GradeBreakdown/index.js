@@ -563,15 +563,19 @@ function GradeBreakdown(props) {
                   <Icon component={PlusIcon} /> Average Score <br />
                   <ConnectedAverageOutcomeScore outcomeId={d.id} />
                 </MobileList.Item>
-                <MobileAccordion>
-                  <MobileAccordion.Panel header={<div>Future Assignments</div>}>
-                    {
-                      <FutureAssignmentsForOutcome
-                        outcomeAssignments={assignmentsByOutcome[d.id]}
-                      />
-                    }
-                  </MobileAccordion.Panel>
-                </MobileAccordion>
+                {assignmentsByOutcome && (
+                  <MobileAccordion>
+                    <MobileAccordion.Panel
+                      header={<div>Future Assignments</div>}
+                    >
+                      {
+                        <FutureAssignmentsForOutcome
+                          outcomeAssignments={assignmentsByOutcome[d.id]}
+                        />
+                      }
+                    </MobileAccordion.Panel>
+                  </MobileAccordion>
+                )}
                 <MobileAccordion>
                   <MobileAccordion.Panel header="Assignments">
                     {d.assignmentTableData.map(atd => (
