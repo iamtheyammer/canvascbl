@@ -453,7 +453,6 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 	}
 
 	for _, tok := range toks {
-				DetailedGrades: true,
 		rd := rdFromToken(tok)
 
 		cuID := tok.CanvasUserID
