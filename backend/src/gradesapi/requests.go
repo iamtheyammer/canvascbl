@@ -7,6 +7,7 @@ import (
 	"github.com/iamtheyammer/canvascbl/backend/src/env"
 	"github.com/tomnomnom/linkheader"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -291,7 +292,7 @@ func getTokenFromRefreshToken(rd requestDetails) (*canvasRefreshTokenResponse, e
 	return &rtResponse, nil
 }
 
-func categorizeCanvasError(err canvasErrorResponse, resp *http.Response) error {
+func categorizeCanvasError(err canvasErrorArrayResponse, resp *http.Response) error {
 	if len(err.Errors) < 1 {
 		return canvasErrorNoErrors
 	}
@@ -391,19 +392,42 @@ func makeCanvasRequest(
 			)
 		}
 
-		var canvasErr canvasErrorResponse
-		err = json.NewDecoder(resp.Body).Decode(&canvasErr)
+		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"error decoding into canvasErr (canvas status code %d): %w",
+				"error reading the canvas error body (canvas status code %d): %w",
 				resp.StatusCode,
 				err)
+		}
+
+		var canvasArrayErr canvasErrorArrayResponse
+		err = json.Unmarshal(body, &canvasArrayErr)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"error decoding into canvasArrayErr (canvas status code %d): %w",
+				resp.StatusCode,
+				err)
+		}
+
+		if len(canvasArrayErr.Errors) < 1 {
+			var canvasErr canvasErrorResponse
+			err = json.Unmarshal(body, &canvasErr)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"error decoding into canvasErr (canvas status code %d): %w",
+					resp.StatusCode,
+					err)
+			}
+
+			if len(canvasErr.Error) > 0 {
+				canvasArrayErr = canvasErr.toCanvasErrorArrayResponse()
+			}
 		}
 
 		return nil, fmt.Errorf(
 			"error from canvas (canvas status code %d): %w",
 			resp.StatusCode,
-			categorizeCanvasError(canvasErr, resp),
+			categorizeCanvasError(canvasArrayErr, resp),
 		)
 	}
 
@@ -436,19 +460,42 @@ func proxyCanvasGetRequest(path string, rd requestDetails) (*http.Response, erro
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		var canvasErr canvasErrorResponse
-		err = json.NewDecoder(resp.Body).Decode(&canvasErr)
+		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"error decoding into canvasErr (canvas status code %d): %w",
+				"error reading the canvas error body (canvas status code %d): %w",
 				resp.StatusCode,
 				err)
+		}
+
+		var canvasArrayErr canvasErrorArrayResponse
+		err = json.Unmarshal(body, &canvasArrayErr)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"error decoding into canvasArrayErr (canvas status code %d): %w",
+				resp.StatusCode,
+				err)
+		}
+
+		if len(canvasArrayErr.Errors) < 1 {
+			var canvasErr canvasErrorResponse
+			err = json.Unmarshal(body, &canvasErr)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"error decoding into canvasErr (canvas status code %d): %w",
+					resp.StatusCode,
+					err)
+			}
+
+			if len(canvasErr.Error) > 0 {
+				canvasArrayErr = canvasErr.toCanvasErrorArrayResponse()
+			}
 		}
 
 		return nil, fmt.Errorf(
 			"error from canvas (canvas status code %d): %w",
 			resp.StatusCode,
-			categorizeCanvasError(canvasErr, resp),
+			categorizeCanvasError(canvasArrayErr, resp),
 		)
 	}
 

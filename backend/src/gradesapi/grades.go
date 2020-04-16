@@ -426,8 +426,6 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 	toks := *toksP
 
 	var (
-		mutex = sync.Mutex{}
-		wg    = sync.WaitGroup{}
 		// error mapped by canvas user id
 		errs = make(map[uint64]*GradesErrorResponse)
 		// whether we had a success for the specified canvas user id
@@ -454,192 +452,181 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 		nrs[ns.CanvasUserID] = struct{}{}
 	}
 
-	delay := time.Duration(len(toks)) * time.Millisecond
-
 	for _, tok := range toks {
-		wg.Add(1)
-		go func(cuID uint64) {
-			defer wg.Done()
-
-			rd := rdFromToken(tok)
-
-			g, dbReq, gep := GradesForUser(&UserGradesRequest{
-				CanvasUserID: tok.CanvasUserID,
-				// using DetailedGrades because it's computationally easier
 				DetailedGrades: true,
-				// not manual because this is a fetch for other users
-				ManualFetch: false,
-				// we literally already fetched the token
-				Rd: &rd,
-				// batch em!
-				ReturnDBRequests: true,
-			})
-			if gep != nil {
-				mutex.Lock()
+		rd := rdFromToken(tok)
 
-				errs[cuID] = gep
-				statuses[cuID] = false
+		cuID := tok.CanvasUserID
 
-				mutex.Unlock()
-				return
+		g, dbReq, gep := GradesForUser(&UserGradesRequest{
+			CanvasUserID: tok.CanvasUserID,
+			// using DetailedGrades because it's computationally easier
+			DetailedGrades: true,
+			// not manual because this is a fetch for other users
+			ManualFetch: false,
+			// we literally already fetched the token
+			Rd: &rd,
+			// batch em!
+			ReturnDBRequests: true,
+		})
+		if gep != nil {
+
+			errs[cuID] = gep
+			statuses[cuID] = false
+
+			continue
+		}
+
+		dbReqsWg.Add(1)
+		go func() {
+			defer dbReqsWg.Done()
+
+			dbReqsMutex.Lock()
+			dbReqs = append(dbReqs, dbReq)
+			dbReqsMutex.Unlock()
+		}()
+
+		/*
+			now, we'll handle a grade change notification
+		*/
+
+		// sets the status of the request, to be used before returning
+		set := func(ok bool) {
+			statuses[cuID] = ok
+		}
+
+		if len(g.DetailedGrades) < 1 {
+			set(true)
+			continue
+		}
+
+		if _, ok := nrs[tok.CanvasUserID]; !ok {
+			set(true)
+			continue
+		}
+
+		// now, we know that they do want an email.
+
+		var (
+			userIDs   []uint64
+			courseIDs = make(map[uint64]struct{})
+		)
+		for uID, cs := range g.DetailedGrades {
+			// user has one or more classes with a grade?
+			validUser := false
+			for cID, grd := range cs {
+				if grd.Grade != naGrade {
+					validUser = true
+
+					courseIDs[cID] = struct{}{}
+				}
 			}
 
-			dbReqsWg.Add(1)
-			go func() {
-				defer dbReqsWg.Done()
-
-				dbReqsMutex.Lock()
-				dbReqs = append(dbReqs, dbReq)
-				dbReqsMutex.Unlock()
-			}()
-
-			/*
-				now, we'll handle a grade change notification
-			*/
-
-			// sets the status of the request, to be used before returning
-			set := func(ok bool) {
-				mutex.Lock()
-				statuses[cuID] = ok
-				mutex.Unlock()
+			if validUser {
+				userIDs = append(userIDs, uID)
 			}
+		}
+		if len(userIDs) < 1 {
+			continue
+		}
 
-			if len(g.DetailedGrades) < 1 {
-				set(true)
-				return
-			}
+		var cIDs []uint64
+		for cID := range courseIDs {
+			cIDs = append(cIDs, cID)
+		}
 
-			if _, ok := nrs[tok.CanvasUserID]; !ok {
-				set(true)
-				return
-			}
+		// TODO: remove database call
+		before := time.Now().Add(-(2 * time.Minute))
+		pgsP, err := gradessvc.List(db, &gradessvc.ListRequest{
+			UserCanvasIDs: &userIDs,
+			Before:        &before,
+			CourseIDs:     &cIDs,
+		})
+		if err != nil {
+			util.HandleError(fmt.Errorf("error listing previous grades for user %d: %w", cuID, err))
+			set(false)
+			continue
+		}
+		pgs := *pgsP
 
-			// now, we know that they do want an email.
+		type change struct {
+			CanvasUserID  uint64
+			CourseID      uint64
+			PreviousGrade string
+			CurrentGrade  string
+		}
 
-			var (
-				userIDs   []uint64
-				courseIDs = make(map[uint64]struct{})
-			)
-			for uID, cs := range g.DetailedGrades {
-				// user has one or more classes with a grade?
-				validUser := false
-				for cID, grd := range cs {
-					if grd.Grade != naGrade {
-						validUser = true
+		var (
+			fetchUserIDs   = make(map[uint64]struct{})
+			fetchCourseIDs = make(map[uint64]struct{})
+			changes        []change
+		)
 
-						courseIDs[cID] = struct{}{}
-					}
+		// check if grades have changed.
+
+		// check all users
+		for uID, cs := range g.DetailedGrades {
+			// and all courses
+			for cID, grd := range cs {
+				// if the new grade is N/A, skip course
+				if grd.Grade == naGrade {
+					continue
 				}
 
-				if validUser {
-					userIDs = append(userIDs, uID)
+				// then loop thru previous grades for a match
+				for _, pg := range pgs {
+					if pg.UserCanvasID == uID && pg.CourseID == cID && pg.Grade != grd.Grade.Grade {
+						fetchUserIDs[uID] = struct{}{}
+						fetchCourseIDs[cID] = struct{}{}
+						changes = append(changes, change{CanvasUserID: uID, CourseID: cID, PreviousGrade: pg.Grade, CurrentGrade: grd.Grade.Grade})
+						break
+					}
 				}
 			}
-			if len(userIDs) < 1 {
-				return
-			}
+		}
 
-			var cIDs []uint64
-			for cID := range courseIDs {
-				cIDs = append(cIDs, cID)
-			}
+		courseNames := make(map[uint64]string)
+		for _, c := range *g.Courses {
+			courseNames[c.ID] = c.Name
+		}
 
-			// TODO: remove database call
-			before := time.Now().Add(-(2 * time.Minute))
-			pgsP, err := gradessvc.List(db, &gradessvc.ListRequest{
-				UserCanvasIDs: &userIDs,
-				Before:        &before,
-				CourseIDs:     &cIDs,
-			})
-			if err != nil {
-				util.HandleError(fmt.Errorf("error listing previous grades for user %d: %w", cuID, err))
-				set(false)
-				return
-			}
-			pgs := *pgsP
-
-			type change struct {
-				CanvasUserID  uint64
-				CourseID      uint64
-				PreviousGrade string
-				CurrentGrade  string
-			}
-
-			var (
-				fetchUserIDs   = make(map[uint64]struct{})
-				fetchCourseIDs = make(map[uint64]struct{})
-				changes        []change
-			)
-
-			// check if grades have changed.
-
-			// check all users
-			for uID, cs := range g.DetailedGrades {
-				// and all courses
-				for cID, grd := range cs {
-					// if the new grade is N/A, skip course
-					if grd.Grade == naGrade {
-						continue
-					}
-
-					// then loop thru previous grades for a match
-					for _, pg := range pgs {
-						if pg.UserCanvasID == uID && pg.CourseID == cID && pg.Grade != grd.Grade.Grade {
-							fetchUserIDs[uID] = struct{}{}
-							fetchCourseIDs[cID] = struct{}{}
-							changes = append(changes, change{CanvasUserID: uID, CourseID: cID, PreviousGrade: pg.Grade, CurrentGrade: grd.Grade.Grade})
+		userIsParent := len(*g.Observees) > 0
+		for _, c := range changes {
+			p := *g.UserProfile
+			if userIsParent {
+				go func(pr canvasUserProfile, ch change, obs []canvasObservee, courseName string) {
+					// we need to search for the observee's name
+					var studentName string
+					for _, o := range obs {
+						if o.ID == ch.CanvasUserID {
+							studentName = o.Name
 							break
 						}
 					}
-				}
-			}
 
-			courseNames := make(map[uint64]string)
-			for _, c := range *g.Courses {
-				courseNames[c.ID] = c.Name
-			}
-
-			userIsParent := len(*g.Observees) > 0
-			for _, c := range changes {
-				p := *g.UserProfile
-				if userIsParent {
-					go func(pr canvasUserProfile, ch change, obs []canvasObservee, courseName string) {
-						// we need to search for the observee's name
-						var studentName string
-						for _, o := range obs {
-							if o.ID == ch.CanvasUserID {
-								studentName = o.Name
-								break
-							}
-						}
-
-						email.SendParentGradeChangeEmail(&email.ParentGradeChangeEmailData{
-							To:            pr.PrimaryEmail,
-							Name:          pr.Name,
-							StudentName:   studentName,
-							ClassName:     courseName,
-							PreviousGrade: ch.PreviousGrade,
-							CurrentGrade:  ch.CurrentGrade,
-						})
-					}(p, c, *g.Observees, courseNames[c.CourseID])
-				} else {
-					go email.SendGradeChangeEmail(&email.GradeChangeEmailData{
-						To:            p.PrimaryEmail,
-						Name:          p.Name,
-						ClassName:     courseNames[c.CourseID],
-						PreviousGrade: c.PreviousGrade,
-						CurrentGrade:  c.CurrentGrade,
+					email.SendParentGradeChangeEmail(&email.ParentGradeChangeEmailData{
+						To:            pr.PrimaryEmail,
+						Name:          pr.Name,
+						StudentName:   studentName,
+						ClassName:     courseName,
+						PreviousGrade: ch.PreviousGrade,
+						CurrentGrade:  ch.CurrentGrade,
 					})
-				}
+				}(p, c, *g.Observees, courseNames[c.CourseID])
+			} else {
+				go email.SendGradeChangeEmail(&email.GradeChangeEmailData{
+					To:            p.PrimaryEmail,
+					Name:          p.Name,
+					ClassName:     courseNames[c.CourseID],
+					PreviousGrade: c.PreviousGrade,
+					CurrentGrade:  c.CurrentGrade,
+				})
 			}
+		}
 
-			set(true)
-			return
-		}(tok.CanvasUserID)
-		time.Sleep(delay)
+		set(true)
 	}
 
-	wg.Wait()
 	dbReqsWg.Wait()
 
 	go func() {

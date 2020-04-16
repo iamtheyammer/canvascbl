@@ -304,9 +304,23 @@ type canvasRefreshTokenResponse struct {
 	} `json:"user"`
 }
 
-type canvasErrorResponse struct {
+type canvasErrorArrayResponse struct {
 	Errors []struct {
 		Message string `json:"message"`
+	}
+}
+
+type canvasErrorResponse struct {
+	Error string `json:"error"`
+}
+
+func (cer canvasErrorResponse) toCanvasErrorArrayResponse() canvasErrorArrayResponse {
+	return canvasErrorArrayResponse{
+		Errors: []struct {
+			Message string `json:"message"`
+		}{
+			{Message: cer.Error},
+		},
 	}
 }
 
