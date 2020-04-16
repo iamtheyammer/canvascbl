@@ -7,7 +7,6 @@ import (
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/pkg/errors"
 	"net/http"
-	"strings"
 )
 
 // Middlewares have the same function signature as a request handler, however they return a pointer to an object.
@@ -54,10 +53,7 @@ func Session(w http.ResponseWriter, req *http.Request, shouldRespond bool) *sess
 		return nil
 	}
 
-	referer := req.Header.Get("Referer")
-	origin := req.Header.Get("Origin")
-	if (len(referer) > 0 && !strings.HasPrefix(referer, env.ProxyAllowedCORSOrigins)) ||
-		(len(origin) > 0 && origin != env.ProxyAllowedCORSOrigins) {
+	if _, ok := env.ProxyAllowedCORSOrigins[req.Header.Get("Origin")]; !ok {
 		if shouldRespond {
 			util.SendBadRequest(w, "csrf detected-- if you're trying to use this as an api, either remove "+
 				"the Origin and Referer headers or set them to the value of the Access-Control-Allow-Origin header "+

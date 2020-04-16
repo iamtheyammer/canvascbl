@@ -106,13 +106,13 @@ func getRouter() *httprouter.Router {
 
 func (_ MiddlewareRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// apply CORS headers
-	w.Header().Set("Access-Control-Allow-Origin", env.ProxyAllowedCORSOrigins)
+	origin := r.Header.Get("Origin")
+	if _, ok := env.ProxyAllowedCORSOrigins[origin]; ok {
+		w.Header().Set("Access-Control-Allow-Origin", origin)
+	}
+
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, "+
-		"X-Canvas-Token, "+
-		"X-Canvas-Subdomain, "+
-		"X-Session-String")
-	w.Header().Set("Access-Control-Expose-Headers", "X-Canvas-Url, X-Canvas-Status-Code")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 
 	if env.Env == env.EnvironmentStaging {
@@ -141,11 +141,6 @@ func main() {
 	}
 
 	mw := MiddlewareRouter{}
-
-	if env.ProxyAllowedCORSOrigins == "*" {
-		fmt.Println("WARN: Your CANVAS_PROXY_ALLOWED_CORS_ORIGINS env var is currently set to \"*\", " +
-			"which will allow any site to make requests to this server.")
-	}
 
 	stripe.Key = env.StripeAPIKey
 
