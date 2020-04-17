@@ -44,8 +44,16 @@ func getRouter() *httprouter.Router {
 		},
 	}
 
+	/*
+		Canvas OAuth2
+	*/
+
 	router.GET("/api/canvas/oauth2/request", gradesapi.CanvasOAuth2RequestHandler)
 	router.GET("/api/canvas/oauth2/response", gradesapi.CanvasOAuth2ResponseHandler)
+
+	/*
+		Checkout (stripe, etc. for purchasing CanvasCBL+)
+	*/
 
 	router.GET("/api/checkout/session", checkout.CreateCheckoutSessionHandler)
 	router.GET("/api/checkout/products", checkout.ListProductsHandler)
@@ -55,11 +63,21 @@ func getRouter() *httprouter.Router {
 	// stripe webhook handler
 	router.POST("/api/checkout/webhook", checkout.StripeWebhookHandler)
 
+	/*
+		Plus APIs.
+
+		I'd like to incorporate these into the public API...
+	*/
+
 	router.GET("/api/plus/session", plus.GetSessionInformationHandler)
 	router.DELETE("/api/plus/session", plus.ClearSessionHandler)
 	router.GET("/api/plus/courses/:courseID/avg", plus.GetAverageGradeForCourseHandler)
 	router.GET("/api/plus/outcomes/:outcomeID/avg", plus.GetAverageOutcomeScoreHandler)
 	router.GET("/api/plus/grades/previous", plus.GetPreviousGradesHandler)
+
+	/*
+		OAuth2
+	*/
 
 	// Fairly public
 	router.GET("/api/oauth2/auth", oauth2.AuthHandler)
@@ -71,6 +89,10 @@ func getRouter() *httprouter.Router {
 	router.DELETE("/api/oauth2/token", oauth2.DeleteTokenHandler)
 	// Session only
 	router.GET("/api/oauth2/tokens", oauth2.TokensHandler)
+
+	/*
+		Admin APIs.
+	*/
 
 	router.POST("/api/admin/gift_cards", admin.GenerateGiftCardsHandler)
 
