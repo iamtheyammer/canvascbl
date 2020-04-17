@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/canvas_tokens"
 	coursessvc "github.com/iamtheyammer/canvascbl/backend/src/db/services/courses"
+	"github.com/iamtheyammer/canvascbl/backend/src/db/services/enrollments"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/gpas"
 	gradessvc "github.com/iamtheyammer/canvascbl/backend/src/db/services/grades"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/notifications"
@@ -154,6 +155,7 @@ type UserGradesDBRequests struct {
 	RollupScores           *[]coursessvc.OutcomeRollupInsertRequest
 	GPA                    *[]gpas.InsertRequest
 	DistanceLearningGrades *[]gradessvc.InsertDistanceLearningRequest
+	Enrollments            *[]enrollments.UpsertRequest
 }
 
 // GradesErrorResponse represents an error from GradesForUser.
@@ -653,6 +655,7 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 			currentRollupScoreChunkLength = 0
 			gpaReqs                       []gpas.InsertRequest
 			distanceLearningGradesReqs    []gradessvc.InsertDistanceLearningRequest
+			enrollmentReqs                []enrollments.UpsertRequest
 		)
 
 		for _, r := range dbReqs {
@@ -737,6 +740,10 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 			if r.DistanceLearningGrades != nil {
 				distanceLearningGradesReqs = append(distanceLearningGradesReqs, *r.DistanceLearningGrades...)
 			}
+
+			if r.Enrollments != nil {
+				enrollmentReqs = append(enrollmentReqs, *r.Enrollments...)
+			}
 		}
 
 		// we'll request one at a time-- these are big, big requests
@@ -814,6 +821,15 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 			rb("distance learning grades")
 			util.HandleError(
 				fmt.Errorf("error inserting distance learning grades in insert fetch_all data: %w", err),
+			)
+			return
+		}
+
+		err = enrollments.Upsert(trx, &enrollmentReqs)
+		if err != nil {
+			rb("enrollments")
+			util.HandleError(
+				fmt.Errorf("error upserting enrollments in insert fetch_all data: %w", err),
 			)
 			return
 		}
@@ -1044,7 +1060,9 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *UserGradesDBRe
 		go func() {
 			defer dbReqsWg.Done()
 
-			dbReqs.Courses = prepareCoursesForDB(allCourses)
+			cReq, eReq := prepareCoursesForDB(allCourses)
+			dbReqs.Courses = cReq
+			dbReqs.Enrollments = eReq
 		}()
 	} else {
 		go saveCoursesToDB(allCourses)

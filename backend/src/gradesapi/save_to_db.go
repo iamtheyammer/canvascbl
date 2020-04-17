@@ -3,6 +3,7 @@ package gradesapi
 import (
 	"fmt"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/courses"
+	"github.com/iamtheyammer/canvascbl/backend/src/db/services/enrollments"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/gpas"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/grades"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/outcomes"
@@ -29,27 +30,79 @@ func saveProfileToDB(p *canvasUserProfile) {
 	}
 }
 
-func prepareCoursesForDB(cs *[]canvasCourse) *[]courses.UpsertRequest {
-	var req []courses.UpsertRequest
+func prepareCoursesForDB(cs *[]canvasCourse) (*[]courses.UpsertRequest, *[]enrollments.UpsertRequest) {
+	var (
+		cReq []courses.UpsertRequest
+		eReq []enrollments.UpsertRequest
+	)
 	for _, c := range *cs {
-		req = append(req, courses.UpsertRequest{
+		cReq = append(cReq, courses.UpsertRequest{
 			Name:       c.Name,
 			CourseCode: c.CourseCode,
 			State:      c.WorkflowState,
 			UUID:       c.UUID,
 			CourseID:   int64(c.ID),
 		})
+
+		for _, e := range c.Enrollments {
+			eReq = append(eReq, enrollments.UpsertRequest{
+				CourseID:               c.ID,
+				UserCanvasID:           e.UserID,
+				AssociatedUserCanvasID: e.AssociatedUserID,
+				EnrollmentRole:         e.Role,
+				EnrollmentState:        e.EnrollmentState,
+			})
+		}
 	}
 
-	return &req
+	return &cReq, &eReq
 }
 
 func saveCoursesToDB(cs *[]canvasCourse) {
-	err := courses.UpsertMultiple(db, prepareCoursesForDB(cs))
+	cReqs, eReqs := prepareCoursesForDB(cs)
+
+	trx, err := db.Begin()
 	if err != nil {
-		util.HandleError(fmt.Errorf("error saving courses to db: %w", err))
+		util.HandleError(fmt.Errorf("error beginning save courses to db transaction: %w", err))
 		return
 	}
+
+	err = courses.UpsertMultiple(trx, cReqs)
+	if err != nil {
+		util.HandleError(fmt.Errorf("error saving courses to db: %w", err))
+
+		rbErr := trx.Rollback()
+		if rbErr != nil {
+			util.HandleError(fmt.Errorf("error rolling back save courses to db transaction at courses: %w", err))
+		}
+		return
+	}
+
+	err = enrollments.Upsert(trx, eReqs)
+	if err != nil {
+		util.HandleError(fmt.Errorf("error saving enrollments (in courses) to db: %w", err))
+
+		rbErr := trx.Rollback()
+		if rbErr != nil {
+			util.HandleError(fmt.Errorf("error rolling back save courses to db transaction at enrollments: %w"))
+		}
+
+		return
+	}
+
+	err = trx.Commit()
+	if err != nil {
+		util.HandleError(fmt.Errorf("error committing save courses transaction to db: %w", err))
+
+		rbErr := trx.Rollback()
+		if rbErr != nil {
+			util.HandleError(fmt.Errorf("error rolling back save courses to db transaction at commit: %w", err))
+		}
+
+		return
+	}
+
+	return
 }
 
 func saveObserveesToDB(cObs *[]canvasObservee, requestingUserID uint64) {

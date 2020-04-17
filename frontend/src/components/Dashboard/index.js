@@ -30,6 +30,7 @@ import {
   TrackingLink,
   vias
 } from '../../util/tracking';
+import PopoutLink from '../PopoutLink';
 
 const { Content, Footer } = Layout;
 
@@ -128,31 +129,45 @@ function Dashboard(props) {
     setGetInitialDataId(id);
   }
 
+  let errData;
+
   const err = error[getInitialDataId];
   if (err) {
-    const data = err.res.data;
-    switch (data.action) {
-      case 'redirect_to_oauth':
-        // we'll be reauthing
-        loginReturnTo.set(location);
-        window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request`;
-        return null;
-      case 'retry':
-        const id = v4();
-        dispatch(getInitialData(id));
-        setGetInitialDataId(id);
-        return null;
-      default:
-        loginReturnTo.set(location);
-        if (data.error.includes('no session string')) {
-          return <Redirect to={'/'} />;
-        } else if (data.error === 'expired session') {
-          window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request?intent=reauth`;
+    if (err.res) {
+      const data = err.res.data;
+      switch (data.action) {
+        case 'redirect_to_oauth':
+          // we'll be reauthing
+          loginReturnTo.set(location);
+          window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request`;
           return null;
-        } else if (data.error === 'invalid session string') {
-          return <Redirect to="/" />;
-        }
-        return <ConnectedErrorModal error={err} />;
+        case 'retry':
+          const id = v4();
+          dispatch(getInitialData(id));
+          setGetInitialDataId(id);
+          return null;
+        default:
+          loginReturnTo.set(location);
+          if (data.error.includes('no session string')) {
+            return <Redirect to={'/'} />;
+          } else if (data.error === 'expired session') {
+            window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request?intent=reauth`;
+            return null;
+          } else if (data.error === 'invalid session string') {
+            return <Redirect to="/" />;
+          }
+          return <ConnectedErrorModal error={err} />;
+      }
+    } else {
+      errData = (
+        <Typography.Text type="danger">
+          We seem to have encountered a bit of an unexpected error. If this
+          keeps happening, please{' '}
+          <PopoutLink url="https://go.canvascbl.com/help/contact" addIcon>
+            contact us.
+          </PopoutLink>
+        </Typography.Text>
+      );
     }
   }
 
@@ -199,6 +214,8 @@ function Dashboard(props) {
     function displayContent() {
       if (ready) {
         return routes;
+      } else if (errData) {
+        return errData;
       } else {
         return <Loading text="CanvasCBL" />;
       }
@@ -234,7 +251,9 @@ function Dashboard(props) {
               minHeight: 280
             }}
           >
-            {ready ? routes : <Loading text="CanvasCBL" />}
+            {!ready && !errData && <Loading text="CanvasCBL" />}
+            {ready && routes}
+            {errData && errData}
           </div>
         </Content>
         <UpdateHandler />

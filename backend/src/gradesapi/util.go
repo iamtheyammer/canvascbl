@@ -10,13 +10,6 @@ import (
 
 const spring20DLEnrollmentTermID = 18
 
-type processedCourses struct {
-	// Current is all classes that are "in session"
-	Current []canvasCourse
-	// ByEnrollment is a map between a course ID and enrolled user IDs
-	ByEnrollment map[uint64][]uint64
-}
-
 // refreshAccessToken attempts to use the refresh token to get a new access token.
 // You should check the returned error and handle it accordingly.
 func (rd *requestDetails) refreshAccessToken() error {
@@ -76,8 +69,8 @@ func getGradedUsersAndValidCourses(courses *[]canvasCourse) (map[uint64][]uint64
 		for _, e := range c.Enrollments {
 			uID := e.UserID
 
-			if e.Type == canvasEnrollmentTypeObserverEnrollment {
-				// student enrollments are here as well
+			if e.Type != canvasEnrollmentTypeStudentEnrollment {
+				// only allow student enrollments in gradedUsers
 				continue
 			}
 
