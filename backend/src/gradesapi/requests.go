@@ -270,6 +270,28 @@ func getCanvasOutcome(rd requestDetails, outcomeID string) (*canvasOutcomeRespon
 	return &outcome, err
 }
 
+func getTokenFromAuthorizationCode(code string) (*canvasTokenGrantResponse, error) {
+	q := url.Values{}
+	q.Set("grant_type", "authorization_code")
+	q.Set("client_id", env.CanvasOAuth2ClientID)
+	q.Set("client_secret", env.CanvasOAuth2ClientSecret)
+	q.Set("code", code)
+
+	var grantResp canvasTokenGrantResponse
+	_, err := makeCanvasRequest(
+		"login/oauth2/token?"+q.Encode(),
+		http.MethodPost,
+		nil,
+		requestDetails{},
+		&grantResp,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error getting a canvas access token from a refresh token: %w", err)
+	}
+
+	return &grantResp, nil
+}
+
 func getTokenFromRefreshToken(rd requestDetails) (*canvasRefreshTokenResponse, error) {
 	q := url.Values{}
 	q.Set("client_id", env.CanvasOAuth2ClientID)
@@ -365,7 +387,9 @@ func makeCanvasRequest(
 		return nil, fmt.Errorf("error creating http request: %w", err)
 	}
 
-	req.Header.Add("Authorization", "Bearer "+rd.Token)
+	if len(rd.Token) > 0 {
+		req.Header.Add("Authorization", "Bearer "+rd.Token)
+	}
 
 	resp, err := httpClient.Do(req)
 	if err != nil {

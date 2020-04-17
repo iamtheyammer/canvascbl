@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/getsentry/sentry-go"
 	"github.com/iamtheyammer/canvascbl/backend/src/admin"
-	"github.com/iamtheyammer/canvascbl/backend/src/canvasapis"
 	"github.com/iamtheyammer/canvascbl/backend/src/checkout"
 	"github.com/iamtheyammer/canvascbl/backend/src/env"
 	"github.com/iamtheyammer/canvascbl/backend/src/gradesapi"
@@ -45,8 +44,8 @@ func getRouter() *httprouter.Router {
 		},
 	}
 
-	router.GET("/api/canvas/oauth2/request", canvasapis.OAuth2RequestHandler)
-	router.GET("/api/canvas/oauth2/response", canvasapis.OAuth2ResponseHandler)
+	router.GET("/api/canvas/oauth2/request", gradesapi.CanvasOAuth2RequestHandler)
+	router.GET("/api/canvas/oauth2/response", gradesapi.CanvasOAuth2ResponseHandler)
 
 	router.GET("/api/checkout/session", checkout.CreateCheckoutSessionHandler)
 	router.GET("/api/checkout/products", checkout.ListProductsHandler)
@@ -72,10 +71,6 @@ func getRouter() *httprouter.Router {
 	router.DELETE("/api/oauth2/token", oauth2.DeleteTokenHandler)
 	// Session only
 	router.GET("/api/oauth2/tokens", oauth2.TokensHandler)
-
-	// no google needed for now but we could bring it back later.
-	//router.GET("/api/google/oauth2/request", googleapis.OAuth2RequestHandler)
-	//router.GET("/api/google/oauth2/response", googleapis.OAuth2ResponseHandler)
 
 	router.POST("/api/admin/gift_cards", admin.GenerateGiftCardsHandler)
 

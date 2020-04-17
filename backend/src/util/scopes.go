@@ -68,19 +68,7 @@ var scopes = []string{
 
 var stringScopes = strings.Join(scopes, " ")
 
-var googleScopes = []string{
-	"https://www.googleapis.com/auth/userinfo.email",
-	"https://www.googleapis.com/auth/userinfo.profile",
-}
-
-var stringGoogleScopes = strings.Join(googleScopes, " ")
-
 // GetScopesList gets the static string list of scopes.
 func GetScopesList() string {
 	return stringScopes
-}
-
-// GetGoogleScopesList gets the static list of google scopes.
-func GetGoogleScopesList() string {
-	return stringGoogleScopes
 }

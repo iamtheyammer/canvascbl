@@ -291,6 +291,20 @@ type canvasOutcomeAlignment struct {
 	URL               string `json:"url"`
 }
 
+// POST /login/oauth2/token with ?grant_type=code
+type canvasTokenGrantResponse struct {
+	AccessToken  string `json:"access_token"`
+	ExpiresIn    uint64 `json:"expires_in"`
+	RefreshToken string `json:"refresh_token"`
+	TokenType    string `json:"token_type"`
+	User         struct {
+		EffectiveLocale string `json:"effective_locale"`
+		GlobalID        string `json:"global_id"`
+		ID              uint64 `json:"id"`
+		Name            string `json:"name"`
+	} `json:"user"`
+}
+
 // POST /login/oauth2/token with ?grant_type=refresh_token
 type canvasRefreshTokenResponse struct {
 	AccessToken string `json:"access_token"`

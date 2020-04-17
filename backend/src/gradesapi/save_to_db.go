@@ -2,6 +2,7 @@ package gradesapi
 
 import (
 	"fmt"
+	"github.com/iamtheyammer/canvascbl/backend/src/db/services/canvas_tokens"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/courses"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/enrollments"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/gpas"
@@ -11,6 +12,7 @@ import (
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func prepareProfileForDB(p *canvasUserProfile) *users.UpsertRequest {
@@ -443,6 +445,25 @@ func saveDistanceLearningGradesToDB(dlg distanceLearningGrades, manualFetch bool
 	err := grades.InsertDistanceLearning(db, prepareDistanceLearningGradesForDB(dlg, manualFetch))
 	if err != nil {
 		util.HandleError(fmt.Errorf("error saving distance learning grades to db: %w", err))
+		return
+	}
+}
+
+func prepareCanvasOAuth2GrantForDB(grant *canvasTokenGrantResponse) *canvas_tokens.InsertRequest {
+	expAt := time.Now().Add(time.Duration(grant.ExpiresIn) * time.Second)
+
+	return &canvas_tokens.InsertRequest{
+		CanvasUserID: grant.User.ID,
+		Token:        grant.AccessToken,
+		RefreshToken: grant.RefreshToken,
+		ExpiresAt:    &expAt,
+	}
+}
+
+func saveCanvasOAuth2GrantToDB(grant *canvasTokenGrantResponse) {
+	err := canvas_tokens.Insert(db, prepareCanvasOAuth2GrantForDB(grant))
+	if err != nil {
+		util.HandleError(fmt.Errorf("error saving canvas oauth2 grant to db: %w", err))
 		return
 	}
 }
