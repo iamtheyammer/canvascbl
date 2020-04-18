@@ -47,15 +47,13 @@ func prepareCoursesForDB(cs *[]canvasCourse) (*[]courses.UpsertRequest, *[]enrol
 		})
 
 		for _, e := range c.Enrollments {
-			r := enrollments.UpsertRequest{
+			eReq = append(eReq, enrollments.UpsertRequest{
 				CourseID:               c.ID,
 				UserCanvasID:           e.UserID,
 				AssociatedUserCanvasID: e.AssociatedUserID,
 				EnrollmentRole:         e.Role,
 				EnrollmentState:        e.EnrollmentState,
-			}
-			fmt.Printf("%+v\n", r)
-			eReq = append(eReq, r)
+			})
 		}
 	}
 
