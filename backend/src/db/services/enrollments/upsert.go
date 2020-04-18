@@ -33,7 +33,7 @@ func Upsert(db services.DB, req *[]UpsertRequest) error {
 			//"updated_at",
 		).
 		Suffix(
-			"ON CONFLICT (course_id, user_canvas_id) DO UPDATE SET " +
+			"ON CONFLICT (course_id, user_canvas_id, associated_user_canvas_id) DO UPDATE SET " +
 				"enrollment_role = EXCLUDED.enrollment_role, " +
 				"enrollment_state = EXCLUDED.enrollment_state",
 			//"updated_at = EXCLUDED.updated_at",
