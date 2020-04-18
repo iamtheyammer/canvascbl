@@ -52,7 +52,7 @@ var naGrade = grade{"N/A", -1, 0, 0, 0, 0}
 
 /*
 calculateGradeFromOutcomeResults calculates a grade object from a map of scores.
-The map should look like this: map[courseID<uint64>][]scores<float64>.
+The map should look like this: map[outcomeID<uint64>][]scores<float64>.
 
 isAfterCutoff represents whether the lowest score should be dropped to improve a grade.
 
@@ -78,7 +78,7 @@ func calculateGradeFromOutcomeResults(results map[uint64][]canvasOutcomeResult, 
 			continue
 		}
 
-		if len(rs) == 1 {
+		if len(rs) == 1 && rs[0].Score > 0 {
 			// why do the work if there's only one score?
 			averages[oID] = computedAverage{
 				DidDropWorstScore: false,
@@ -91,11 +91,9 @@ func calculateGradeFromOutcomeResults(results map[uint64][]canvasOutcomeResult, 
 
 		var scores []float64
 		for _, s := range rs {
-			if s.Score < 1 {
-				continue
+			if s.Score > 0 {
+				scores = append(scores, s.Score)
 			}
-
-			scores = append(scores, s.Score)
 		}
 
 		if len(scores) < 1 {
