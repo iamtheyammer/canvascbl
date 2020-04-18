@@ -140,5 +140,11 @@
       "url": "https://go.canvascbl.com/help/distance-learning",
       "text": "here."
     }
+  },
+  {
+    "timestamp": 1587176292296,
+    "type": 0,
+    "title": "Fixed 0 outcome scores",
+    "content": "We've removed all outcome scores with a score of less than one."
   }
 ]

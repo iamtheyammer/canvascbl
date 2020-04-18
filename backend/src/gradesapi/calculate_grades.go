@@ -91,7 +91,15 @@ func calculateGradeFromOutcomeResults(results map[uint64][]canvasOutcomeResult, 
 
 		var scores []float64
 		for _, s := range rs {
+			if s.Score < 1 {
+				continue
+			}
+
 			scores = append(scores, s.Score)
+		}
+
+		if len(scores) < 1 {
+			continue
 		}
 
 		sortedScores := sort.Float64Slice(scores)
