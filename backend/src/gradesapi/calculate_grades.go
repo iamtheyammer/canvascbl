@@ -37,6 +37,12 @@ type computedGrade struct {
 	Averages map[uint64]computedAverage `json:"averages"`
 }
 
+type distanceLearningPair struct {
+	CourseName               string `json:"course_name"`
+	OriginalCourseID         uint64 `json:"original_course_id"`
+	DistanceLearningCourseID uint64 `json:"distance_learning_course_id"`
+}
+
 // gradeMap is a slice of possible grades
 var gradeMap = []grade{
 	{"A", 6, 3.3, 3, 4, 4},
@@ -223,6 +229,70 @@ func calculateGPAFromDetailedGrades(g detailedGrades) gpa {
 	return finalGPA
 }
 
+func findDistanceLearningCoursePairs(courses []canvasCourse) *[]distanceLearningPair {
+	// find regular vs. distance learning courses
+	distanceCourses := map[uint64]canvasCourse{}
+	originalCourses := map[uint64]canvasCourse{}
+
+	courseMatches := map[string][]uint64{}
+
+	for _, c := range courses {
+		// nickname? bye.
+		splits := strings.Split(c.Name, " - ")
+		if len(splits) != 3 {
+			continue
+		}
+
+		// like "Biology" from "Biology - S2-DL - Teacher"
+		courseTitle := splits[0]
+
+		// add course ID
+		courseMatches[courseTitle] = append(courseMatches[courseTitle], c.ID)
+
+		if c.EnrollmentTermID == spring20DLEnrollmentTermID {
+			distanceCourses[c.ID] = c
+			continue
+		} else {
+			originalCourses[c.ID] = c
+			continue
+		}
+	}
+
+	var coursePairs []distanceLearningPair
+
+	// filter for 2s that have one distance and one original
+	for title, ids := range courseMatches {
+		if len(ids) != 2 {
+			continue
+		}
+
+		foundDistanceLearning := false
+		foundOriginal := false
+
+		pair := distanceLearningPair{CourseName: title}
+
+		for _, id := range ids {
+			if _, ok := distanceCourses[id]; ok {
+				foundDistanceLearning = true
+				pair.DistanceLearningCourseID = id
+				continue
+			} else if _, ok := originalCourses[id]; ok {
+				foundOriginal = true
+				pair.OriginalCourseID = id
+				continue
+			}
+		}
+
+		if !foundDistanceLearning || !foundOriginal {
+			continue
+		}
+
+		coursePairs = append(coursePairs, pair)
+	}
+
+	return &coursePairs
+}
+
 /*
 calculateDistanceLearningGrades calculates distance learning grades for a single user.
 
@@ -257,10 +327,7 @@ func calculateDistanceLearningGrades(courses []canvasCourse, grades map[uint64]c
 		}
 	}
 
-	coursePairs := map[string]struct {
-		DistanceLearningID uint64
-		OriginalID         uint64
-	}{}
+	var coursePairs []distanceLearningPair
 
 	// filter for 2s that have one distance and one original
 	for title, ids := range courseMatches {
@@ -271,7 +338,7 @@ func calculateDistanceLearningGrades(courses []canvasCourse, grades map[uint64]c
 		foundDistanceLearning := false
 		foundOriginal := false
 
-		pair := coursePairs[title]
+		pair := distanceLearningPair{CourseName: title}
 
 		for _, id := range ids {
 			// make sure user has grade in course
@@ -281,11 +348,11 @@ func calculateDistanceLearningGrades(courses []canvasCourse, grades map[uint64]c
 
 			if _, ok := distanceCourses[id]; ok {
 				foundDistanceLearning = true
-				pair.DistanceLearningID = id
+				pair.DistanceLearningCourseID = id
 				continue
 			} else if _, ok := originalCourses[id]; ok {
 				foundOriginal = true
-				pair.OriginalID = id
+				pair.OriginalCourseID = id
 				continue
 			}
 		}
@@ -294,25 +361,25 @@ func calculateDistanceLearningGrades(courses []canvasCourse, grades map[uint64]c
 			continue
 		}
 
-		coursePairs[title] = pair
+		coursePairs = append(coursePairs, pair)
 	}
 
 	// finally, compute grades
 	var dlGrades []distanceLearningGrade
 
-	for title, pair := range coursePairs {
+	for _, pair := range coursePairs {
 		grade := distanceLearningGrade{
-			CourseName: title,
+			CourseName: pair.CourseName,
 			Grade: struct {
 				Grade string `json:"grade"`
 				Rank  int    `json:"rank"`
 			}{},
-			OriginalCourseID:         pair.OriginalID,
-			DistanceLearningCourseID: pair.DistanceLearningID,
+			OriginalCourseID:         pair.OriginalCourseID,
+			DistanceLearningCourseID: pair.DistanceLearningCourseID,
 		}
 
-		dlCourseGrade := grades[pair.DistanceLearningID]
-		originalCourseGrade := grades[pair.OriginalID]
+		dlCourseGrade := grades[pair.DistanceLearningCourseID]
+		originalCourseGrade := grades[pair.OriginalCourseID]
 
 		if dlCourseGrade.Grade == naGrade || originalCourseGrade.Grade == naGrade {
 			grade.Grade.Grade = "N/A"

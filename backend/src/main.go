@@ -105,6 +105,7 @@ func getRouter() *httprouter.Router {
 	router.GET("/api/v1/grades/fetch_all", gradesapi.GradesForAllHandler)
 
 	// courses
+	router.GET("/api/v1/courses", gradesapi.ListCoursesHandler)
 	router.GET("/api/v1/courses/:courseID/assignments", gradesapi.AssignmentsHandler)
 	router.GET("/api/v1/courses/:courseID/outcome_alignments", gradesapi.AlignmentsHandler)
 	router.PUT("/api/v1/courses/:courseID/hide", gradesapi.HideCourseHandler)
