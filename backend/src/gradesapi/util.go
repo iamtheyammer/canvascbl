@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/canvas_tokens"
+	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 )
@@ -191,4 +193,21 @@ func sendJSON(w http.ResponseWriter, data interface{}) {
 		handleISE(w, fmt.Errorf("error encoding json to send from gradesapi: %w", err))
 		return
 	}
+}
+
+// intFromQuery pulls a uint64 from a url.Values and handles it.
+// If the return value is zero, return your request handler.
+func intFromQuery(w http.ResponseWriter, name string, q url.Values) uint64 {
+	n := q.Get(name)
+	if len(n) < 1 || !util.ValidateIntegerString(n) {
+		util.SendBadRequest(w, "missing or invalid "+name+" as query param")
+		return 0
+	}
+
+	in, err := strconv.Atoi(n)
+	if err != nil {
+		util.SendBadRequest(w, "invalid "+name+" as query param")
+	}
+
+	return uint64(in)
 }

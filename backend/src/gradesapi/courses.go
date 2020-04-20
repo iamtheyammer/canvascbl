@@ -86,15 +86,6 @@ func CourseEnrollmentsHandler(w http.ResponseWriter, r *http.Request, ps httprou
 		return
 	}
 
-	userID, rdP, sess := authorizer(w, r, []oauth2.Scope{oauth2.ScopeEnrollments, oauth2.ScopeGrades}, &oauth2.AuthorizerAPICall{
-		Method:    "GET",
-		RoutePath: "courses/:courseID/enrollments",
-		Query:     &r.URL.RawQuery,
-	})
-	if (userID == nil || rdP == nil) && sess == nil {
-		return
-	}
-
 	q := r.URL.Query()
 	types := q["type[]"]
 	for _, t := range types {
@@ -127,6 +118,15 @@ func CourseEnrollmentsHandler(w http.ResponseWriter, r *http.Request, ps httprou
 			util.SendBadRequest(w, "invalid state as query param")
 			return
 		}
+	}
+
+	userID, rdP, sess := authorizer(w, r, []oauth2.Scope{oauth2.ScopeEnrollments, oauth2.ScopeGrades}, &oauth2.AuthorizerAPICall{
+		Method:    "GET",
+		RoutePath: "courses/:courseID/enrollments",
+		Query:     &r.URL.RawQuery,
+	})
+	if (userID == nil || rdP == nil) && sess == nil {
+		return
 	}
 
 	var es canvasEnrollmentsResponse

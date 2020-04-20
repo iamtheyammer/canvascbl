@@ -213,6 +213,18 @@ func (r gradesHandlerRequest) toScopes() []oauth2.Scope {
 	return s
 }
 
+type distanceLearningOverviewGrade struct {
+	UserID uint64 `json:"user_id"`
+	Grade  struct {
+		Grade string `json:"grade"`
+	} `json:"grade"`
+	Timestamp string
+}
+
+type distanceLearningOverviewResponse struct {
+	DistanceLearningGradesOverview *[]distanceLearningOverviewGrade `json:"distance_learning_grades_overview"`
+}
+
 // GradesHandler handles /api/v1/grades
 func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	inc := r.URL.Query()["include[]"]
@@ -367,6 +379,91 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 	}
 	util.SendJSONResponse(w, jResp)
 
+	return
+}
+
+// DistanceLearningOverviewHandler handles /api/v1/grades/distance_learning/overview
+func DistanceLearningOverviewHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	// get and validate IDs
+	dlCourseID := intFromQuery(w, "distance_learning_course_id", r.URL.Query())
+	if dlCourseID < 1 {
+		return
+	}
+
+	oriCourseID := intFromQuery(w, "original_course_id", r.URL.Query())
+	if oriCourseID < 1 {
+		return
+	}
+
+	if dlCourseID == oriCourseID {
+		util.SendBadRequest(w, "distance_learning_course_id and original_course_id are the same")
+	}
+
+	// check for TeacherEnrollment (first, validate user)
+	userID, rdP, sess := authorizer(w, r, []oauth2.Scope{oauth2.ScopeGrades}, &oauth2.AuthorizerAPICall{
+		Method:    "GET",
+		RoutePath: "grades/distance_learning/overview",
+		Query:     &r.URL.RawQuery,
+	})
+	if (userID == nil || rdP == nil) && sess == nil {
+		return
+	}
+
+	enrolls, err := enrollments.List(db, &enrollments.ListRequest{
+		CourseID: 0,
+		UserID:   *userID,
+		Type:     enrollments.TypeTeacher,
+	})
+	if err != nil {
+		handleISE(w, fmt.Errorf("error listing enrollments in distance learning overview handler: %w", err))
+		return
+	}
+
+	var hasDLEnroll, hasOriEnroll bool
+	for _, e := range *enrolls {
+		// don't need to bother checking if it's a teacher enrollments as we only requested those
+		switch e.CourseID {
+		case dlCourseID:
+			hasDLEnroll = true
+		case oriCourseID:
+			hasOriEnroll = true
+		default:
+		}
+	}
+
+	if !hasDLEnroll || !hasOriEnroll {
+		util.SendUnauthorized(w, "you are not enrolled as a teacher in both courses "+
+			"(note that it can take up to three hours for enrollments to sync to CanvasCBL)")
+		return
+	}
+
+	// user is authorized, return grades
+
+	dlGradesList, err := gradessvc.ListDistanceLearning(db, &gradessvc.ListDistanceLearningRequest{
+		DistanceLearningCourseID: dlCourseID,
+		OriginalCourseID:         oriCourseID,
+		// 48 hours
+		After: time.Now().Add(-(time.Hour * 48)),
+	})
+	if err != nil {
+		handleISE(w, fmt.Errorf("error listing distance learning grades in distance learning overview handler: %w", err))
+		return
+	}
+
+	dlGrades := []distanceLearningOverviewGrade{}
+	for _, g := range *dlGradesList {
+		dlGrades = append(dlGrades, distanceLearningOverviewGrade{
+			UserID: g.UserCanvasID,
+			Grade: struct {
+				Grade string `json:"grade"`
+			}{
+				g.Grade,
+			},
+			Timestamp: g.InsertedAt.Format(time.RFC3339),
+		})
+	}
+
+	sendJSON(w, &distanceLearningOverviewResponse{DistanceLearningGradesOverview: &dlGrades})
 	return
 }
 

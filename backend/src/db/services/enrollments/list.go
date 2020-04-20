@@ -86,7 +86,9 @@ type Enrollment struct {
 type ListRequest struct {
 	ID           uint64
 	CourseID     uint64
+	CourseIDs    []uint64
 	UserCanvasID uint64
+	UserID       uint64
 	Type         Type
 	Role         Role
 	State        State
@@ -96,38 +98,48 @@ type ListRequest struct {
 func List(db services.DB, req *ListRequest) (*[]Enrollment, error) {
 	q := util.Sq.
 		Select(
-			"id",
-			"course_id",
-			"user_canvas_id",
-			"enrollment_type",
-			"enrollment_role",
-			"enrollment_state",
-			"inserted_at",
+			"enrollments.id",
+			"enrollments.course_id",
+			"enrollments.user_canvas_id",
+			"enrollments.enrollment_type",
+			"enrollments.enrollment_role",
+			"enrollments.enrollment_state",
+			"enrollments.inserted_at",
 		).
 		From("enrollments")
 
 	if req.ID > 0 {
-		q = q.Where(sq.Eq{"id": req.ID})
+		q = q.Where(sq.Eq{"enrollments.id": req.ID})
 	}
 
 	if req.CourseID > 0 {
-		q = q.Where(sq.Eq{"course_id": req.CourseID})
+		q = q.Where(sq.Eq{"enrollments.course_id": req.CourseID})
+	}
+
+	if len(req.CourseIDs) > 0 {
+		q = q.Where(sq.Eq{"enrollments.course_id": req.CourseIDs})
 	}
 
 	if req.UserCanvasID > 0 {
-		q = q.Where(sq.Eq{"user_canvas_id": req.UserCanvasID})
+		q = q.Where(sq.Eq{"enrollments.user_canvas_id": req.UserCanvasID})
+	}
+
+	if req.UserID > 0 {
+		q = q.
+			Join("users ON enrollments.user_canvas_id = users.canvas_user_id").
+			Where(sq.Eq{"users.id": req.UserID})
 	}
 
 	if len(req.Type) > 0 {
-		q = q.Where(sq.Eq{"enrollment_type": req.Type})
+		q = q.Where(sq.Eq{"enrollments.enrollment_type": req.Type})
 	}
 
 	if len(req.Role) > 0 {
-		q = q.Where(sq.Eq{"enrollment_role": req.Role})
+		q = q.Where(sq.Eq{"enrollments.enrollment_role": req.Role})
 	}
 
 	if len(req.State) > 0 {
-		q = q.Where(sq.Eq{"enrollment_state": req.State})
+		q = q.Where(sq.Eq{"enrollments.enrollment_state": req.State})
 	}
 
 	query, args, err := q.ToSql()
