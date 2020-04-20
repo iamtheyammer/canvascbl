@@ -29,10 +29,10 @@ var (
 	lockedTokens                       = map[uint64]struct{}{}
 )
 
-//var proxyURL, _ = url.Parse("http://localhost:8888")
-//var httpClient = http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyURL)}}
+var proxyURL, _ = url.Parse("http://localhost:8888")
+var httpClient = http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyURL)}}
 
-var httpClient = http.Client{}
+//var httpClient = http.Client{}
 
 type requestDetails struct {
 	// TokenID is the database ID of the token
@@ -193,6 +193,7 @@ func proxyCanvasOutcomeAlignments(rd requestDetails, courseID string, studentID 
 //	return &rollups, nil
 //}
 
+// getCanvasOutcomeResults gets outcome results. Paginated.
 func getCanvasOutcomeResults(rd requestDetails, courseID string, userIDs []string) (*canvasOutcomeResultsResponse, error) {
 	q := url.Values{}
 	q.Add("per_page", canvasPerPage)
@@ -257,7 +258,38 @@ func getCanvasCourseAssignments(rd requestDetails, courseID string, assignmentID
 			u = *nu
 		}
 	}
+}
 
+// getCanvasCourseEnrollments gets all enrollments for a course. This request can be performed by
+// any user, but only teachers get grades.
+func getCanvasCourseEnrollments(rd requestDetails, courseID string) (*canvasEnrollmentsResponse, error) {
+	q := url.Values{}
+	q.Add("per_page", canvasPerPage)
+	q.Add("type[]", "StudentEnrollment")
+	q.Add("state[]", "active")
+	q.Add("include[]", "avatar_url")
+
+	var (
+		allEnrollments canvasEnrollmentsResponse
+		u              = "api/v1/courses/" + courseID + "/enrollments?" + q.Encode()
+	)
+
+	for {
+		var enrollments canvasEnrollmentsResponse
+		resp, err := makeCanvasGetRequest(u, rd, &enrollments)
+		if err != nil {
+			return nil, fmt.Errorf("error getting canvas enrollments for course %s: %w", courseID, err)
+		}
+
+		allEnrollments = append(allEnrollments, enrollments...)
+
+		nu := nextPageUrl(resp.Header.Get("link"))
+		if nu == nil {
+			return &allEnrollments, nil
+		} else {
+			u = *nu
+		}
+	}
 }
 
 func getCanvasOutcome(rd requestDetails, outcomeID string) (*canvasOutcomeResponse, error) {

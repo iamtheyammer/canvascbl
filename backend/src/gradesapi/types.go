@@ -6,6 +6,7 @@ package gradesapi
 type canvasEnrollmentType string
 
 const (
+	canvasEnrollmentTypeTeacherEnrollment  = canvasEnrollmentType("teacher")
 	canvasEnrollmentTypeStudentEnrollment  = canvasEnrollmentType("student")
 	canvasEnrollmentTypeObserverEnrollment = canvasEnrollmentType("observer")
 )
@@ -89,6 +90,7 @@ type canvasCourse struct {
 }
 
 // canvasEnrollment represents a user's enrollment in a course.
+// This abridged info comes from the enrollments property on a course.
 // https://canvas.instructure.com/doc/api/enrollments.html#Enrollment
 type canvasEnrollment struct {
 	AssociatedUserID               uint64               `json:"associated_user_id"`
@@ -100,6 +102,62 @@ type canvasEnrollment struct {
 	UserID                         uint64               `json:"user_id"`
 	ComputedCurrentScore           float64              `json:"computed_current_score"`
 	ComputedCurrentGrade           string               `json:"computed_current_grade"`
+}
+
+// /api/v1/courses/:courseID/enrollments OR /api/v1/users/:userID/enrollments
+type canvasEnrollmentsResponse []canvasFullEnrollment
+
+// canvasFullEnrollment represents a user's enrollment in a course.
+// It contains all info as it comes from /api/v1/courses/:courseID/enrollments
+type canvasFullEnrollment struct {
+	AssociatedUserID    uint64      `json:"associated_user_id"`
+	CourseID            uint64      `json:"course_id"`
+	CourseIntegrationID interface{} `json:"course_integration_id"`
+	CourseSectionID     uint64      `json:"course_section_id"`
+	CreatedAt           string      `json:"created_at"`
+	EndAt               string      `json:"end_at"`
+	EnrollmentState     string      `json:"enrollment_state"`
+	Grades              struct {
+		CurrentGrade         string  `json:"current_grade"`
+		CurrentScore         float64 `json:"current_score"`
+		FinalGrade           string  `json:"final_grade"`
+		FinalScore           float64 `json:"final_score"`
+		HTMLURL              string  `json:"html_url"`
+		UnpostedCurrentGrade string  `json:"unposted_current_grade"`
+		UnpostedCurrentScore float64 `json:"unposted_current_score"`
+		UnpostedFinalGrade   string  `json:"unposted_final_grade"`
+		UnpostedFinalScore   float64 `json:"unposted_final_score"`
+	} `json:"grades"`
+	HTMLURL                        string      `json:"html_url"`
+	ID                             uint64      `json:"id"`
+	LastActivityAt                 string      `json:"last_activity_at"`
+	LastAttendedAt                 interface{} `json:"last_attended_at"`
+	LimitPrivilegesToCourseSection bool        `json:"limit_privileges_to_course_section"`
+	Role                           string      `json:"role"`
+	RoleID                         uint64      `json:"role_id"`
+	RootAccountID                  uint64      `json:"root_account_id"`
+	SectionIntegrationID           interface{} `json:"section_integration_id"`
+	SisAccountID                   interface{} `json:"sis_account_id"`
+	SisCourseID                    interface{} `json:"sis_course_id"`
+	SisImportID                    interface{} `json:"sis_import_id"`
+	SisSectionID                   interface{} `json:"sis_section_id"`
+	SisUserID                      interface{} `json:"sis_user_id"`
+	StartAt                        interface{} `json:"start_at"`
+	TotalActivityTime              uint64      `json:"total_activity_time"`
+	Type                           string      `json:"type"`
+	UpdatedAt                      string      `json:"updated_at"`
+	User                           struct {
+		CreatedAt     string      `json:"created_at"`
+		ID            uint64      `json:"id"`
+		IntegrationID interface{} `json:"integration_id"`
+		LoginID       string      `json:"login_id"`
+		Name          string      `json:"name"`
+		ShortName     string      `json:"short_name"`
+		SisImportID   interface{} `json:"sis_import_id"`
+		SisUserID     interface{} `json:"sis_user_id"`
+		SortableName  string      `json:"sortable_name"`
+	} `json:"user"`
+	UserID uint64 `json:"user_id"`
 }
 
 // /api/v1/courses/:courseID/outcome_rollups

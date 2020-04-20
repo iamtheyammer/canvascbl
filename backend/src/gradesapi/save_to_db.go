@@ -51,8 +51,9 @@ func prepareCoursesForDB(cs *[]canvasCourse) (*[]courses.UpsertRequest, *[]enrol
 				CourseID:               c.ID,
 				UserCanvasID:           e.UserID,
 				AssociatedUserCanvasID: e.AssociatedUserID,
-				EnrollmentRole:         e.Role,
-				EnrollmentState:        e.EnrollmentState,
+				Type:                   enrollments.Type(e.Type),
+				Role:                   enrollments.Role(e.Role),
+				State:                  e.EnrollmentState,
 			})
 		}
 	}
@@ -86,7 +87,7 @@ func saveCoursesToDB(cs *[]canvasCourse) {
 
 		rbErr := trx.Rollback()
 		if rbErr != nil {
-			util.HandleError(fmt.Errorf("error rolling back save courses to db transaction at enrollments: %w"))
+			util.HandleError(fmt.Errorf("error rolling back save ️courses to db transaction at enrollments: %w"))
 		}
 
 		return
@@ -466,4 +467,290 @@ func saveCanvasOAuth2GrantToDB(grant *canvasTokenGrantResponse) {
 		util.HandleError(fmt.Errorf("error saving canvas oauth2 grant to db: %w", err))
 		return
 	}
+}
+
+func prepareEnrollmentsForDB(req []canvasFullEnrollment) *[]enrollments.UpsertRequest {
+	var reqs []enrollments.UpsertRequest
+
+	for _, e := range req {
+		reqs = append(reqs, enrollments.UpsertRequest{
+			CanvasID:               e.ID,
+			CourseID:               e.CourseID,
+			UserCanvasID:           e.UserID,
+			AssociatedUserCanvasID: e.AssociatedUserID,
+			Type:                   enrollments.Role(e.Type).ToType(),
+			Role:                   enrollments.Role(e.Role),
+			State:                  e.EnrollmentState,
+			CreatedAt:              e.CreatedAt,
+			UpdatedAt:              e.UpdatedAt,
+		})
+	}
+
+	return &reqs
+}
+
+func saveEnrollmentsToDB(req []canvasFullEnrollment) {
+	err := enrollments.Upsert(db, prepareEnrollmentsForDB(req))
+	if err != nil {
+		util.HandleError(fmt.Errorf("error saving enrollments to db: %w", err))
+		return
+	}
+}
+
+// handleBatchGradesDBRequests handles tons of UserGradesDBRequests from fetch_all. It handles chunking and more.
+func handleBatchGradesDBRequests(dbReqs []UserGradesDBRequests) {
+	go func() {
+		var (
+			profiles []users.UpsertRequest
+			// keeps out duplicates
+			coursesMap = make(map[int64]struct{})
+			cs         []courses.UpsertRequest
+			// keeps out duplicates
+			outcomeResultsMap = make(map[uint64]struct{})
+			// chunked in 7281 due to postgres's 65535 parameter limit
+			// 9 params each
+			chunkedOutcomeResults           = [][]courses.OutcomeResultInsertRequest{{}}
+			currentOutcomeResultChunk       = 0
+			currentOutcomeResultChunkLength = 0
+			// chunk in 16383 due to postgres's 65535 parameter limit
+			// 4 params each
+			chunkedGrades            = [][]grades.InsertRequest{{}}
+			currentGradesChunk       = 0
+			currentGradesChunkLength = 0
+			// chunk in 13107 due to postgres's 65535 parameter limit
+			// 5 params each
+			chunkedRollupScores           = [][]courses.OutcomeRollupInsertRequest{{}}
+			currentRollupScoreChunk       = 0
+			currentRollupScoreChunkLength = 0
+
+			gpaReqs                    []gpas.InsertRequest
+			distanceLearningGradesReqs []grades.InsertDistanceLearningRequest
+
+			// chunked in 7281 due to postgres's 65535 parameter limit
+			// 9 params each
+			chunkedEnrollments            = [][]enrollments.UpsertRequest{{}}
+			currentEnrollmentsChunk       = 0
+			currentEnrollmentsChunkLength = 0
+		)
+
+		for _, r := range dbReqs {
+			if r.Profile != nil {
+				profiles = append(profiles, *r.Profile)
+			}
+
+			if r.Courses != nil {
+				// keeps out duplicate courses
+				for _, c := range *r.Courses {
+					if _, ok := coursesMap[c.CourseID]; !ok {
+						cs = append(cs, c)
+						coursesMap[c.CourseID] = struct{}{}
+					}
+				}
+			}
+
+			if r.OutcomeResults != nil {
+				for _, or := range *r.OutcomeResults {
+					// keeps out duplicate outcome results
+					if _, ok := outcomeResultsMap[or.ID]; !ok {
+						// if we are over the max per chunk, move to next chunk
+						if currentOutcomeResultChunkLength >= 7281 {
+							currentOutcomeResultChunk++
+							chunkedOutcomeResults = append(chunkedOutcomeResults, []courses.OutcomeResultInsertRequest{})
+							currentOutcomeResultChunkLength = 0
+						}
+
+						// add to the current chunk
+						chunkedOutcomeResults[currentOutcomeResultChunk] =
+							append(chunkedOutcomeResults[currentOutcomeResultChunk], or)
+
+						// no duplicates
+						outcomeResultsMap[or.ID] = struct{}{}
+
+						// add to the number in the current chunk
+						currentOutcomeResultChunkLength++
+					}
+				}
+			}
+
+			if r.Grades != nil {
+				for _, g := range *r.Grades {
+					// if we are over the max per chunk, move to next chunk
+					if currentGradesChunkLength >= 16383 {
+						currentGradesChunk++
+						chunkedGrades = append(chunkedGrades, []grades.InsertRequest{})
+						currentGradesChunkLength = 0
+					}
+
+					// add to the current chunk
+					chunkedGrades[currentGradesChunk] =
+						append(chunkedGrades[currentGradesChunk], g)
+
+					// add to the number in the current chunk
+					currentGradesChunkLength++
+				}
+			}
+
+			if r.RollupScores != nil {
+				for _, rs := range *r.RollupScores {
+					// if we are over the max per chunk, move to next chunk
+					if currentRollupScoreChunkLength >= 13107 {
+						currentRollupScoreChunk++
+						chunkedRollupScores = append(chunkedRollupScores, []courses.OutcomeRollupInsertRequest{})
+						currentRollupScoreChunkLength = 0
+					}
+
+					// add to the current chunk
+					chunkedRollupScores[currentRollupScoreChunk] =
+						append(chunkedRollupScores[currentRollupScoreChunk], rs)
+
+					// add to the number in the current chunk
+					currentRollupScoreChunkLength++
+				}
+			}
+
+			if r.GPA != nil {
+				gpaReqs = append(gpaReqs, *r.GPA...)
+			}
+
+			if r.DistanceLearningGrades != nil {
+				distanceLearningGradesReqs = append(distanceLearningGradesReqs, *r.DistanceLearningGrades...)
+			}
+
+			if r.Enrollments != nil {
+				for _, es := range r.Enrollments {
+					// if we are over the max per chunk, move to next chunk
+					if currentEnrollmentsChunkLength >= 7281 {
+						currentEnrollmentsChunk++
+						chunkedEnrollments = append(chunkedEnrollments, []enrollments.UpsertRequest{})
+						currentEnrollmentsChunkLength = 0
+					}
+
+					// add to the current chunk
+					chunkedEnrollments[currentEnrollmentsChunk] =
+						append(chunkedEnrollments[currentEnrollmentsChunk], es)
+
+					// add to the number in the current chunk
+					currentEnrollmentsChunkLength++
+				}
+			}
+		}
+
+		// we'll request one at a time-- these are big, big requests
+		trx, err := db.Begin()
+		if err != nil {
+			util.HandleError(fmt.Errorf("error beginning insert grades fetch_all data transaction: %w", err))
+			return
+		}
+
+		rb := func(at string) {
+			err := trx.Rollback()
+			if err != nil {
+				util.HandleError(
+					fmt.Errorf("error rolling back insert grades fetch_all data transaction at %s: %w", at, err),
+				)
+			}
+		}
+
+		_, err = users.UpsertMultipleProfiles(trx, &profiles, false)
+		if err != nil {
+			rb("profiles")
+			util.HandleError(fmt.Errorf("error upserting multiple profiles in insert fetch_all data: %w", err))
+			return
+		}
+
+		err = courses.UpsertMultiple(trx, &cs)
+		if err != nil {
+			rb("courses")
+			util.HandleError(fmt.Errorf("error upserting multiple courses in insert fetch_all data: %w", err))
+			return
+		}
+
+		for i, req := range chunkedOutcomeResults {
+			if len(req) < 1 {
+				continue
+			}
+
+			err = courses.InsertMultipleOutcomeResults(trx, &req)
+			if err != nil {
+				rb("outcome results")
+				util.HandleError(
+					fmt.Errorf("error inserting multiple outcome results in insert fetch_all data (chunk %d): %w", i, err),
+				)
+				return
+			}
+		}
+
+		for i, req := range chunkedGrades {
+			if len(req) < 1 {
+				continue
+			}
+
+			err = grades.Insert(trx, &req)
+			if err != nil {
+				rb("grades")
+				util.HandleError(
+					fmt.Errorf("error inserting multiple grades in insert fetch_all data (chunk %d): %w", i, err),
+				)
+				return
+			}
+		}
+
+		for i, req := range chunkedRollupScores {
+			if len(req) < 1 {
+				continue
+			}
+
+			err = courses.InsertMultipleOutcomeRollups(trx, &req)
+			if err != nil {
+				rb("rollup scores")
+				util.HandleError(
+					fmt.Errorf("error inserting multiple rollup scores in insert fetch_all data (chunk %d): %w", i, err),
+				)
+				return
+			}
+		}
+
+		//err = gpas.InsertMultiple(trx, &gpaReqs)
+		//if err != nil {
+		//	rb("gpas")
+		//	util.HandleError(fmt.Errorf("error inserting multiple gpas in insert fetch_all data: %w", err))
+		//	return
+		//}
+
+		if len(distanceLearningGradesReqs) > 0 {
+			err = grades.InsertDistanceLearning(trx, &distanceLearningGradesReqs)
+			if err != nil {
+				rb("distance learning grades")
+				util.HandleError(
+					fmt.Errorf("error inserting distance learning grades in insert fetch_all data: %w", err),
+				)
+				return
+			}
+		}
+
+		for i, req := range chunkedEnrollments {
+			if len(req) < 1 {
+				continue
+			}
+
+			err = enrollments.Upsert(db, &req)
+			if err != nil {
+				rb("enrollments")
+				util.HandleError(
+					fmt.Errorf("error inserting multiple enrollments in insert fetch_all data (chunk %d): %w", i, err),
+				)
+				return
+			}
+		}
+
+		err = trx.Commit()
+		if err != nil {
+			rb("commit")
+			util.HandleError(fmt.Errorf("error commiting insert fetch_all data transaction: %w", err))
+			return
+		}
+
+		// success
+		return
+	}()
 }
