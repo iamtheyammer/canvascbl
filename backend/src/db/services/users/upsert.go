@@ -42,7 +42,7 @@ func UpsertProfile(db services.DB, ur *UpsertRequest, returnInsertedAt bool) (*U
 
 // UpsertMultipleProfiles upserts multiple user profiles
 func UpsertMultipleProfiles(db services.DB, ur *[]UpsertRequest, returnInsertedAt bool) (*[]UpsertResponse, error) {
-	suffix := "ON CONFLICT (lti_user_id) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email"
+	suffix := "ON CONFLICT (canvas_user_id) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email"
 	if returnInsertedAt {
 		suffix += " RETURNING id, inserted_at"
 	}
@@ -58,7 +58,12 @@ func UpsertMultipleProfiles(db services.DB, ur *[]UpsertRequest, returnInsertedA
 		Suffix(suffix)
 
 	for _, r := range *ur {
-		q = q.Values(r.Name, r.Email, r.LTIUserID, r.CanvasUserID)
+		var LTIUserID interface{}
+		if len(r.LTIUserID) > 0 {
+			LTIUserID = r.LTIUserID
+		}
+
+		q = q.Values(r.Name, r.Email, LTIUserID, r.CanvasUserID)
 	}
 
 	query, args, err := q.ToSql()
