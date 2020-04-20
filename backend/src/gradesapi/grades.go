@@ -693,48 +693,6 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 					}
 				}
 			}
-
-			//// range thru users
-			//for uID, cs := range resp.DetailedGrades {
-			//	// range thru courses
-			//	for cID, c := range cs {
-			//		// if a previous grade exists for user
-			//		if uPrev, ok := studentPrevGrades[uID]; ok {
-			//			// prev grade for course?
-			//			if prev, ok := uPrev[cID]; ok {
-			//				// are they different?
-			//				if c.Grade.Grade != prev.Grade {
-			//					if userIsObserver {
-			//						var studentName string
-			//						for _, o := range *resp.Observees {
-			//							if o.ID == uID {
-			//								studentName = o.Name
-			//								break
-			//							}
-			//						}
-			//
-			//						go email.SendParentGradeChangeEmail(&email.ParentGradeChangeEmailData{
-			//							To:            pr.PrimaryEmail,
-			//							Name:          pr.Name,
-			//							StudentName:   studentName,
-			//							ClassName:     courseNames[cID],
-			//							PreviousGrade: prev.Grade,
-			//							CurrentGrade:  c.Grade.Grade,
-			//						})
-			//					} else {
-			//						go email.SendGradeChangeEmail(&email.GradeChangeEmailData{
-			//							To:            pr.PrimaryEmail,
-			//							Name:          pr.Name,
-			//							ClassName:     courseNames[cID],
-			//							PreviousGrade: prev.Grade,
-			//							CurrentGrade:  c.Grade.Grade,
-			//						})
-			//					}
-			//				}
-			//			}
-			//		}
-			//	}
-			//}
 		}
 	}
 
@@ -763,10 +721,20 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 		Errors          map[uint64]*GradesErrorResponse `json:"errors"`
 		TeacherStatuses map[uint64]bool                 `json:"teacher_statuses"`
 		RestStatuses    map[uint64]bool                 `json:"rest_statuses"`
+		NumTeachers     int                             `json:"num_teachers"`
+		NumBoth         int                             `json:"num_both"`
+		NumStudents     int                             `json:"num_students"`
+		NumObservers    int                             `json:"num_observers"`
+		NumErrors       int                             `json:"num_errors"`
 	}{
 		Errors:          errs,
 		TeacherStatuses: teacherStatuses,
 		RestStatuses:    restStatuses,
+		NumTeachers:     len(teacherTokens),
+		NumBoth:         len(bothTokens),
+		NumStudents:     len(studentTokens),
+		NumObservers:    len(observerTokens),
+		NumErrors:       len(errs),
 	}
 
 	if returnData {
