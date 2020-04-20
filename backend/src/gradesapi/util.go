@@ -1,9 +1,11 @@
 package gradesapi
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/canvas_tokens"
+	"net/http"
 	"strconv"
 	"time"
 )
@@ -177,5 +179,16 @@ func rdFromToken(tok canvas_tokens.CanvasToken) requestDetails {
 		TokenID:      tok.ID,
 		Token:        tok.Token,
 		RefreshToken: tok.RefreshToken,
+	}
+}
+
+// sendJSON sends a JSON response.
+func sendJSON(w http.ResponseWriter, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+
+	err := json.NewEncoder(w).Encode(data)
+	if err != nil {
+		handleISE(w, fmt.Errorf("error encoding json to send from gradesapi: %w", err))
+		return
 	}
 }

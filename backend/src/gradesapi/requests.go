@@ -262,12 +262,21 @@ func getCanvasCourseAssignments(rd requestDetails, courseID string, assignmentID
 
 // getCanvasCourseEnrollments gets all enrollments for a course. This request can be performed by
 // any user, but only teachers get grades.
-func getCanvasCourseEnrollments(rd requestDetails, courseID string) (*canvasEnrollmentsResponse, error) {
+func getCanvasCourseEnrollments(rd requestDetails, courseID string, types []string, states []string, includes []string) (*canvasEnrollmentsResponse, error) {
 	q := url.Values{}
 	q.Add("per_page", canvasPerPage)
-	q.Add("type[]", "StudentEnrollment")
-	q.Add("state[]", "active")
-	q.Add("include[]", "avatar_url")
+
+	for _, t := range types {
+		q.Add("type[]", t)
+	}
+
+	for _, s := range states {
+		q.Add("state[]", s)
+	}
+
+	for _, in := range includes {
+		q.Add("include[]", in)
+	}
 
 	var (
 		allEnrollments canvasEnrollmentsResponse

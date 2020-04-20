@@ -41,15 +41,9 @@ func AlignmentsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 		alignments = resp
 		return nil
 	}, rdP, *userID)
-	if errors.Is(err, canvasErrorInvalidAccessTokenError) {
+	if errors.Is(err, canvasErrorInvalidAccessTokenError) || errors.Is(err, canvasErrorInsufficientScopesOnAccessTokenError) {
 		handleError(w, GradesErrorResponse{
 			Error:  gradesErrorRevokedToken,
-			Action: gradesErrorActionRedirectToOAuth,
-		}, http.StatusForbidden)
-		return
-	} else if errors.Is(err, canvasErrorInvalidAccessTokenError) {
-		handleError(w, GradesErrorResponse{
-			Error:  gradesErrorRefreshedTokenError,
 			Action: gradesErrorActionRedirectToOAuth,
 		}, http.StatusForbidden)
 		return

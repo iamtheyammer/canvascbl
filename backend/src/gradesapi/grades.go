@@ -1494,6 +1494,9 @@ func AllGradesForTeacher(req *UserGradesRequest) (*UserGradesResponse, *UserGrad
 			es, eErr := getCanvasCourseEnrollments(
 				rd,
 				fmt.Sprintf("%d", courseID),
+				[]string{"StudentEnrollment"},
+				[]string{"active"},
+				[]string{"avatar_url"},
 			)
 			if eErr != nil {
 				mutex.Lock()
