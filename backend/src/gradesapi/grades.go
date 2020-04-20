@@ -748,13 +748,6 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 		handleRestRequests(st)
 	}
 
-	// to DB we go
-	if len(dbReqs) > 0 {
-		handleBatchGradesDBRequests(dbReqs)
-	}
-
-	dbReqs = []UserGradesDBRequests{}
-
 	for _, ot := range observerTokens {
 		handleRestRequests(ot)
 	}
@@ -1129,13 +1122,16 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *UserGradesDBRe
 				// if a computed current grade exists
 				if len(e.ComputedCurrentGrade) > 0 {
 					if !req.DetailedGrades {
+						mutex.Lock()
 						if sGrades[c.Name] == nil {
 							sGrades[c.Name] = make(map[uint64]string)
 						}
 
 						// drop it into simple grades (easy!)
 						sGrades[c.Name][uID] = e.ComputedCurrentGrade
+						mutex.Unlock()
 					} else {
+						mutex.Lock()
 						if grades[uID] == nil {
 							grades[uID] = make(map[uint64]computedGrade)
 						}
@@ -1146,8 +1142,10 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *UserGradesDBRe
 							// so we get [] instead of null
 							//Averages: make(map[uint64]computedAverage),
 						}
+						mutex.Unlock()
 					}
 				} else {
+					mutex.Lock()
 					if !req.DetailedGrades {
 						if sGrades[c.Name] == nil {
 							sGrades[c.Name] = make(map[uint64]string)
@@ -1164,10 +1162,12 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *UserGradesDBRe
 						// so we get [] instead of null
 						Averages: make(map[uint64]computedAverage),
 					}
+					mutex.Unlock()
 				}
 
 				continue
 			}
+
 			wg.Add(1)
 			go func(courseID uint64, userID uint64) {
 				defer wg.Done()
