@@ -531,6 +531,8 @@ func handleBatchGradesDBRequests(dbReqs []UserGradesDBRequests) {
 			chunkedEnrollments            = [][]enrollments.UpsertRequest{{}}
 			currentEnrollmentsChunk       = 0
 			currentEnrollmentsChunkLength = 0
+			// enrollmentsCache makes sure we don't get the "can't DO UPDATE more than once" error
+			enrollmentsCache = make(map[uint64]map[uint64]struct{})
 		)
 
 		for _, r := range dbReqs {
@@ -618,6 +620,21 @@ func handleBatchGradesDBRequests(dbReqs []UserGradesDBRequests) {
 
 			if r.Enrollments != nil {
 				for _, es := range r.Enrollments {
+					if _, ok := enrollmentsCache[es.UserCanvasID]; ok {
+						// user => course
+						if enrollmentsCache[es.UserCanvasID] == nil {
+							enrollmentsCache[es.UserCanvasID] = map[uint64]struct{}{}
+						}
+
+						if _, ok := enrollmentsCache[es.UserCanvasID][es.CourseID]; ok {
+							continue
+						} else {
+							enrollmentsCache[es.UserCanvasID][es.CourseID] = struct{}{}
+						}
+					} else {
+						enrollmentsCache[es.UserCanvasID] = map[uint64]struct{}{es.CourseID: {}}
+					}
+
 					// if we are over the max per chunk, move to next chunk
 					if currentEnrollmentsChunkLength >= 7281 {
 						currentEnrollmentsChunk++

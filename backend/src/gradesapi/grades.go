@@ -655,6 +655,7 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 
 			pr := *resp.UserProfile
 
+			// once for grades a teacher fetched
 			for cID, g := range studentNewGrades[pr.ID] {
 				// if a previous grade exists for user
 				if uPrev, ok := studentPrevGrades[pr.ID]; ok {
@@ -692,6 +693,48 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 									PreviousGrade: prev.Grade,
 									CurrentGrade:  g.Grade.Grade,
 								})
+							}
+						}
+					}
+				}
+			}
+
+			// and once more for grades the user fetched
+			for uID, cs := range resp.DetailedGrades {
+				// range thru courses
+				for cID, c := range cs {
+					// if a previous grade exists for user
+					if uPrev, ok := studentPrevGrades[uID]; ok {
+						// prev grade for course?
+						if prev, ok := uPrev[cID]; ok {
+							// are they different?
+							if c.Grade.Grade != prev.Grade {
+								if userIsObserver {
+									var studentName string
+									for _, o := range *resp.Observees {
+										if o.ID == uID {
+											studentName = o.Name
+											break
+										}
+									}
+
+									go email.SendParentGradeChangeEmail(&email.ParentGradeChangeEmailData{
+										To:            pr.PrimaryEmail,
+										Name:          pr.Name,
+										StudentName:   studentName,
+										ClassName:     courseNames[cID],
+										PreviousGrade: prev.Grade,
+										CurrentGrade:  c.Grade.Grade,
+									})
+								} else {
+									go email.SendGradeChangeEmail(&email.GradeChangeEmailData{
+										To:            pr.PrimaryEmail,
+										Name:          pr.Name,
+										ClassName:     courseNames[cID],
+										PreviousGrade: prev.Grade,
+										CurrentGrade:  c.Grade.Grade,
+									})
+								}
 							}
 						}
 					}
