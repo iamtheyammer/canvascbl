@@ -153,6 +153,8 @@ func CourseEnrollmentsHandler(w http.ResponseWriter, r *http.Request, ps httprou
 		return
 	}
 
+	go saveEnrollmentsToDB(es)
+
 	sendJSON(w, &listEnrollmentsResponse{Enrollments: es})
 	return
 }
