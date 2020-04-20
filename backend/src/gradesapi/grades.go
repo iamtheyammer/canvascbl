@@ -639,6 +639,10 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 
 		restStatuses[t.CanvasUserID] = err == nil
 
+		if err != nil {
+			return
+		}
+
 		userIsObserver := resp.Observees != nil && len(*resp.Observees) > 0
 
 		if _, ok := studentsEnabledNotifications[t.CanvasUserID]; ok {
