@@ -13,6 +13,7 @@ case "$1" in
   yarn install
   ;;
 "build")
+  nvm use
   yarn run formatcheck || exit 2
 	yarn run build || exit 2
 	echo "Built frontend. Output is in ./build"
