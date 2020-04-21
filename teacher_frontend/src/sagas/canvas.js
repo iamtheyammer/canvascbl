@@ -4,13 +4,27 @@ import {
   CANVAS_GET_COURSE_ENROLLMENTS,
   CANVAS_GET_COURSES,
   CANVAS_GET_DISTANCE_LEARNING_GRADES_OVERVIEW,
+  CANVAS_GET_USER_PROFILE,
   getCourseEnrollmentsError,
   getCoursesError,
   getDistanceLearningGradesOverviewError,
+  getUserProfileError,
   gotCourseEnrollments,
   gotCourses,
-  gotDistanceLearningGradesOverview
+  gotDistanceLearningGradesOverview,
+  gotUserProfile
 } from "../actions/canvas";
+
+function* getUserProfile() {
+  try {
+    const userProfileResponse = yield makeApiRequest(`users/self/profile`);
+    yield put(gotUserProfile(userProfileResponse.data.profile));
+  } catch (e) {
+    yield put(
+      getUserProfileError(e.response ? e.response.data : "can't connect")
+    );
+  }
+}
 
 function* getCourses() {
   try {
@@ -73,6 +87,7 @@ function* getCourseEnrollments({ courseId }) {
 }
 
 function* watcher() {
+  yield takeLeading(CANVAS_GET_USER_PROFILE, getUserProfile);
   yield takeLeading(CANVAS_GET_COURSES, getCourses);
   yield takeEvery(
     CANVAS_GET_DISTANCE_LEARNING_GRADES_OVERVIEW,

@@ -1,3 +1,7 @@
+export const CANVAS_GET_USER_PROFILE = "CANVAS_GET_USER_PROFILE";
+export const CANVAS_GET_USER_PROFILE_ERROR = "CANVAS_GET_USER_PROFILE_ERROR";
+export const CANVAS_GOT_USER_PROFILE = "CANVAS_GOT_USER_PROFILE";
+
 export const CANVAS_GET_COURSES = "CANVAS_GET_COURSES";
 export const CANVAS_GET_COURSES_ERROR = "CANVAS_GET_COURSES_ERROR";
 export const CANVAS_GOT_COURSES = "CANVAS_GOT_COURSES";
@@ -13,6 +17,26 @@ export const CANVAS_GET_COURSE_ENROLLMENTS = "CANVAS_GET_COURSE_ENROLLMENTS";
 export const CANVAS_GET_COURSE_ENROLLMENTS_ERROR =
   "CANVAS_GET_COURSE_ENROLLMENTS_ERROR";
 export const CANVAS_GOT_COURSE_ENROLLMENTS = "CANVAS_GOT_COURSE_ENROLLMENTS";
+
+export function getUserProfile() {
+  return {
+    type: CANVAS_GET_USER_PROFILE
+  };
+}
+
+export function getUserProfileError(e) {
+  return {
+    type: CANVAS_GET_USER_PROFILE_ERROR,
+    e
+  };
+}
+
+export function gotUserProfile(profile) {
+  return {
+    type: CANVAS_GOT_USER_PROFILE,
+    profile
+  };
+}
 
 export function getCourses() {
   return {

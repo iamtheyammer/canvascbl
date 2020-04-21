@@ -5,13 +5,33 @@ import {
   CANVAS_GET_COURSES_ERROR,
   CANVAS_GET_DISTANCE_LEARNING_GRADES_OVERVIEW,
   CANVAS_GET_DISTANCE_LEARNING_GRADES_OVERVIEW_ERROR,
+  CANVAS_GET_USER_PROFILE,
+  CANVAS_GET_USER_PROFILE_ERROR,
   CANVAS_GOT_COURSE_ENROLLMENTS,
   CANVAS_GOT_COURSES,
-  CANVAS_GOT_DISTANCE_LEARNING_GRADES_OVERVIEW
+  CANVAS_GOT_DISTANCE_LEARNING_GRADES_OVERVIEW,
+  CANVAS_GOT_USER_PROFILE
 } from "../actions/canvas";
 
 export default function canvas(state = {}, action) {
   switch (action.type) {
+    case CANVAS_GET_USER_PROFILE:
+      return {
+        ...state,
+        loadingUserProfile: true
+      };
+    case CANVAS_GET_USER_PROFILE_ERROR:
+      return {
+        ...state,
+        loadingUserProfile: false,
+        getUserProfileError: action.e
+      };
+    case CANVAS_GOT_USER_PROFILE:
+      return {
+        ...state,
+        loadingUserProfile: false,
+        userProfile: action.profile
+      };
     case CANVAS_GET_COURSES:
       return {
         ...state,

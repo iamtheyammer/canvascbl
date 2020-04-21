@@ -11,13 +11,14 @@ import {
   destinationNames,
   destinationTypes,
   pageNameFromPath,
+  trackDashboardLoad,
   trackExternalLinkClickOther,
   TrackingLink,
   vias
 } from "../../util/tracking";
 import UpdateHandler from "./UpdateHandler";
 import Courses from "./Courses";
-import { getCourses } from "../../actions/canvas";
+import { getCourses, getUserProfile } from "../../actions/canvas";
 import CourseOverview from "./Courses/CourseOverview";
 import PopoutLink from "../PopoutLink";
 
@@ -63,7 +64,10 @@ const routes = (
 
 function Dashboard(props) {
   const {
-    coursesAreLoading,
+    loadingUserProfile,
+    getUserProfileError,
+    userProfile,
+    loadingCourses,
     getCoursesError,
     courses,
     distanceLearningPairs,
@@ -71,9 +75,28 @@ function Dashboard(props) {
     location
   } = props;
 
-  if (!coursesAreLoading && !getCoursesError && !courses) {
-    dispatch(getCourses());
-  }
+  useEffect(() => {
+    if (!loadingUserProfile && !getUserProfileError && !userProfile) {
+      dispatch(getUserProfile());
+    }
+
+    if (userProfile) {
+      trackDashboardLoad(
+        userProfile.name,
+        userProfile.email,
+        userProfile.id,
+        userProfile.canvas_user_id,
+        env.currentVersion,
+        localStorage.prevVersion
+      );
+    }
+  }, [loadingUserProfile, getUserProfileError, userProfile, dispatch]);
+
+  useEffect(() => {
+    if (!loadingCourses && !getCoursesError && !courses) {
+      dispatch(getCourses());
+    }
+  }, [loadingCourses, getCoursesError, courses, dispatch]);
 
   const pathSnippets = location.pathname.split("/").filter(i => i);
   // const breadcrumbNameMap = getBreadcrumbNameMap(courses || []);
@@ -93,6 +116,7 @@ function Dashboard(props) {
     );
   });
 
+  // handle non-teachers
   useEffect(() => {
     if (courses) {
       let hasOpenedModal = false;
@@ -149,7 +173,7 @@ function Dashboard(props) {
     }
   }, [courses]);
 
-  const err = getCoursesError;
+  const err = getUserProfileError;
   if (err) {
     if (err.res) {
       const data = err.res.data;
@@ -157,7 +181,7 @@ function Dashboard(props) {
         case "redirect_to_oauth":
           // we'll be reauthing
           loginReturnTo.set(location);
-          window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request`;
+          window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request?dest=teacher`;
           return null;
         // case "retry":
         //   dispatch(getInitialData(id));
@@ -231,7 +255,10 @@ function Dashboard(props) {
 }
 
 const ConnectedDashboard = connect(state => ({
-  coursesAreLoading: state.canvas.coursesAreLoading,
+  loadingUserProfile: state.canvas.loadingUserProfile,
+  getUserProfileError: state.canvas.getUserProfileError,
+  userProfile: state.canvas.userProfile,
+  loadingCourses: state.canvas.loadingCourses,
   getCoursesError: state.canvas.getCoursesError,
   courses: state.canvas.courses,
   distanceLearningPairs: state.canvas.distanceLearningPairs
