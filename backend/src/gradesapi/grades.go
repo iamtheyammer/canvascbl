@@ -397,6 +397,7 @@ func DistanceLearningOverviewHandler(w http.ResponseWriter, r *http.Request, _ h
 
 	if dlCourseID == oriCourseID {
 		util.SendBadRequest(w, "distance_learning_course_id and original_course_id are the same")
+		return
 	}
 
 	// check for TeacherEnrollment (first, validate user)

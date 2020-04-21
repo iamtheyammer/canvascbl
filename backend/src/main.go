@@ -97,7 +97,7 @@ func getRouter() *httprouter.Router {
 	router.POST("/api/admin/gift_cards", admin.GenerateGiftCardsHandler)
 
 	/*
-		API
+		Public API
 	*/
 
 	// grades
@@ -116,6 +116,9 @@ func getRouter() *httprouter.Router {
 
 	// outcomes
 	router.GET("/api/v1/outcomes/:outcomeID", gradesapi.OutcomeHandler)
+
+	// users
+	router.GET("/api/v1/users/:userID/profile", gradesapi.UserProfileHandler)
 
 	// notifications
 	router.GET("/api/v1/notifications/types", gradesapi.ListNotificationTypesHandler)

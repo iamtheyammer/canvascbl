@@ -95,18 +95,25 @@ func List(db services.DB, req *ListRequest) (*[]User, error) {
 	var us []User
 
 	for rows.Next() {
-		var u User
+		var (
+			u         User
+			LTIUserID sql.NullString
+		)
 		err = rows.Scan(
 			&u.ID,
 			&u.Name,
 			&u.Email,
-			&u.LTIUserID,
+			&LTIUserID,
 			&u.CanvasUserID,
 			&u.InsertedAt,
 			&u.Status,
 		)
 		if err != nil {
 			return nil, errors.Wrap(err, "error scanning users")
+		}
+
+		if LTIUserID.Valid {
+			u.LTIUserID = LTIUserID.String
 		}
 
 		us = append(us, u)
