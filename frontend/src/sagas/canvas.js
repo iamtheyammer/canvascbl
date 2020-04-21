@@ -12,7 +12,7 @@ import {
   gotInitialData,
   gotOutcomeAlignmentsForCourse,
   toggleCourseVisibilityError,
-  toggledCourseVisibility,
+  toggledCourseVisibility
 } from '../actions/canvas';
 import makeApiRequest from '../util/api/makeApiRequest';
 import { gotSessionInformation } from '../actions/plus';
@@ -29,8 +29,8 @@ function* getInitialData({ id }) {
         'outcome_results',
         'detailed_grades',
         'gpa',
-        'distance_learning',
-      ],
+        'distance_learning'
+      ]
     });
     const {
       session,
@@ -40,7 +40,7 @@ function* getInitialData({ id }) {
       outcome_results,
       detailed_grades,
       gpa,
-      distance_learning,
+      distance_learning
     } = gradesRequest.data;
     yield put(gotSessionInformation(session));
     yield put(
@@ -49,7 +49,7 @@ function* getInitialData({ id }) {
         observees,
         courses,
         detailed_grades &&
-          Object.keys(detailed_grades).map((uID) => parseInt(uID)),
+          Object.keys(detailed_grades).map(uID => parseInt(uID)),
         outcome_results,
         detailed_grades,
         gpa,

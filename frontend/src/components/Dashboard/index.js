@@ -12,7 +12,7 @@ import {
   Popover,
   Typography,
   notification,
-  Modal,
+  Modal
 } from 'antd';
 
 import DashboardNav from './DashboardNav';
@@ -35,7 +35,7 @@ import {
   pageNameFromPath,
   trackDashboardLoad,
   TrackingLink,
-  vias,
+  vias
 } from '../../util/tracking';
 import PopoutLink from '../PopoutLink';
 
@@ -49,12 +49,11 @@ const getBreadcrumbNameMap = (courses = []) => {
     '/dashboard/upgrades': 'Upgrades',
     '/dashboard/upgrades/redeem': 'Redeem',
     '/dashboard/authorize': 'Authorize an App',
-    '/dashboard/settings': 'Settings',
+    '/dashboard/settings': 'Settings'
   };
 
   courses.forEach(
-    (c) =>
-      (routes[`/dashboard/grades/${c.id}`] = `Grade Breakdown for ${c.name}`)
+    c => (routes[`/dashboard/grades/${c.id}`] = `Grade Breakdown for ${c.name}`)
   );
 
   return routes;
@@ -73,7 +72,7 @@ function Dashboard(props) {
     session,
     loading,
     error,
-    dispatch,
+    dispatch
   } = props;
 
   useEffect(() => {
@@ -85,7 +84,7 @@ function Dashboard(props) {
       notification.error({
         message: 'CanvasCBL is disabled for this user.',
         description:
-          'CanvasCBL is disabled for this user. Please contact your school for more information.',
+          'CanvasCBL is disabled for this user. Please contact your school for more information.'
       });
     }
   }, [session]);
@@ -113,8 +112,8 @@ function Dashboard(props) {
   useEffect(() => {
     if (courses) {
       let modalShown = false;
-      courses.forEach((c) =>
-        c.enrollments.map((e) => {
+      courses.forEach(c =>
+        c.enrollments.map(e => {
           if (!modalShown && e.type === 'teacher') {
             Modal.confirm({
               title: 'Are you in the right place?',
@@ -122,7 +121,7 @@ function Dashboard(props) {
                 "You're currently at CanvasCBL for Students and Parents. Do you want to go to CanvasCBL for Teachers?",
               okText: 'Go to CanvasCBL for Teachers',
               cancelText: 'No, thanks',
-              onOk: () => (window.location = env.teacherUrl),
+              onOk: () => (window.location = env.teacherUrl)
             });
             modalShown = true;
           }
@@ -132,7 +131,7 @@ function Dashboard(props) {
     }
   });
 
-  const pathSnippets = location.pathname.split('/').filter((i) => i);
+  const pathSnippets = location.pathname.split('/').filter(i => i);
   const breadcrumbNameMap = getBreadcrumbNameMap(props.courses || []);
   const breadcrumbItems = pathSnippets.map((_, index) => {
     const url = `/${pathSnippets.slice(0, index + 1).join('/')}`;
@@ -259,7 +258,7 @@ function Dashboard(props) {
             background: '#ffffff',
             padding: '8px 8px 12px 8px',
             marginRight: '8px',
-            height: 'auto',
+            height: 'auto'
           }}
         >
           {displayContent()}
@@ -279,7 +278,7 @@ function Dashboard(props) {
               background: '#fff',
               padding: 24,
               marginTop: 12,
-              minHeight: 280,
+              minHeight: 280
             }}
           >
             {!ready && !errData && <Loading text="CanvasCBL" />}
@@ -306,7 +305,7 @@ function Dashboard(props) {
   );
 }
 
-const ConnectedDashboard = connect((state) => ({
+const ConnectedDashboard = connect(state => ({
   token: state.canvas.token,
   subdomain: state.canvas.subdomain,
   courses: state.canvas.courses,
@@ -314,7 +313,7 @@ const ConnectedDashboard = connect((state) => ({
   activeUserId: state.canvas.activeUserId,
   session: state.plus.session,
   loading: state.loading,
-  error: state.error,
+  error: state.error
 }))(Dashboard);
 
 export default ConnectedDashboard;

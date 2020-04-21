@@ -32,7 +32,7 @@ function OAuth2Response(props) {
     } else {
       notification.success({
         message: 'Success!',
-        description: notificationMessage,
+        description: notificationMessage
       });
     }
 
@@ -51,7 +51,7 @@ function OAuth2Response(props) {
         message: 'Unknown Error',
         duration: 0,
         description:
-          'There was an unknown error logging you in with Canvas. Try again later.',
+          'There was an unknown error logging you in with Canvas. Try again later.'
       });
       return <Redirect to="/" />;
     } else {
@@ -62,6 +62,6 @@ function OAuth2Response(props) {
   return <Redirect to={'/'} />;
 }
 
-const ConnectedOAuth2Response = connect((state) => ({}))(OAuth2Response);
+const ConnectedOAuth2Response = connect(state => ({}))(OAuth2Response);
 
 export default ConnectedOAuth2Response;

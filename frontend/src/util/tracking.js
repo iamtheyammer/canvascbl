@@ -8,7 +8,7 @@ mixpanel.init(env.mixpanelToken);
 
 mixpanel.set_config({
   ignore_dnt: true,
-  debug: env.nodeEnv === 'development',
+  debug: env.nodeEnv === 'development'
 });
 
 const env_check = true;
@@ -18,13 +18,13 @@ const env_check = true;
  * @param {boolean} b The boolean to stringify.
  * @returns {string} A string, like "true" or "false".
  */
-const bts = (b) => `${b}`;
+const bts = b => `${b}`;
 
 const mp = {
-  identify: (id) => {
+  identify: id => {
     if (env_check) mixpanel.identify(id);
   },
-  alias: (id) => {
+  alias: id => {
     if (env_check) mixpanel.alias(id);
   },
   track: (name, props, callback) => {
@@ -33,14 +33,14 @@ const mp = {
   track_links: (query, event_name, properties) => {
     if (env_check) mixpanel.track_links(query, event_name, properties);
   },
-  register: (props) => {
+  register: props => {
     if (env_check) mixpanel.register(props);
   },
   people: {
-    set: (props) => {
+    set: props => {
       if (env_check) mixpanel.people.set(props);
-    },
-  },
+    }
+  }
 };
 
 export const pageNames = {
@@ -51,7 +51,7 @@ export const pageNames = {
   redeem: 'Redeem',
   settings: 'Settings',
   logout: 'Logout',
-  authorize: 'OAuth2 Authorize',
+  authorize: 'OAuth2 Authorize'
 };
 
 export function pageNameFromPath(path) {
@@ -112,8 +112,7 @@ export const vias = {
     'Pass/Incomplete Grades Table Distance Learning Course Open on Canvas Link',
   gradesViewTypeSwitcherLearnMoreLink:
     'Grades View Type Switcher Learn More Link',
-  gradesSomethingDoesntLookRightLink:
-    "Grades Something Doesn't Look Right Link",
+  gradesSomethingDoesntLookRightLink: "Grades Something Doesn't Look Right Link"
 };
 
 export const destinationNames = {
@@ -122,7 +121,7 @@ export const destinationNames = {
   privacyPolicy: 'CanvasCBL Privacy Policy',
   termsOfService: 'CanvasCBL Terms of Service',
   statusPage: 'CanvasCBL Status Page',
-  extension: 'CanvasCBL Extension Download Page',
+  extension: 'CanvasCBL Extension Download Page'
 };
 
 export const destinationTypes = {
@@ -136,8 +135,8 @@ export const destinationTypes = {
     hidingCourses: 'CanvasCBL Helpdesk Article on Hiding Courses',
     distanceLearning: 'CanvasCBL Helpdesk Article on Distance Learning',
     distanceLearningSomethingDoesntLookRight:
-      "CanvasCBL Helpdesk Article on Distance Learning: Something Doesn't Look Right",
-  },
+      "CanvasCBL Helpdesk Article on Distance Learning: Something Doesn't Look Right"
+  }
 };
 
 export const tabImplementations = {
@@ -145,8 +144,8 @@ export const tabImplementations = {
     name: 'Grade Breakdown Grade Card',
     tabNames: {
       userGrade: 'Your Grade',
-      averageGrade: 'Average Grade',
-    },
+      averageGrade: 'Average Grade'
+    }
   },
   outcomeInfo: {
     name: 'Grade Breakdown Outcome Info Card',
@@ -154,23 +153,23 @@ export const tabImplementations = {
       lowestOutcome: 'Lowest Outcome',
       averageOutcomeScore: 'Average Outcome Score',
       toGetAnA: 'How To Get An A',
-      moreInfo: 'More Info',
-    },
-  },
+      moreInfo: 'More Info'
+    }
+  }
 };
 
 export const tableNames = {
   gradeBreakdown: {
-    outcomes: 'Grade Breakdown Outcomes',
+    outcomes: 'Grade Breakdown Outcomes'
   },
   grades: {
-    grades: 'Grades',
-  },
+    grades: 'Grades'
+  }
 };
 
 export const itemTypes = {
   outcome: 'Outcome',
-  course: 'Course',
+  course: 'Course'
 };
 
 /**
@@ -207,7 +206,7 @@ export function trackDashboardLoad(
     'Subscription Status': subscriptionStatus,
     'User Has Valid Subscription': hasValidSubscription,
     'Current Version': `${currentVersion}`,
-    'Active User ID': activeUserId,
+    'Active User ID': activeUserId
   });
 
   mp.people.set({
@@ -216,14 +215,14 @@ export function trackDashboardLoad(
     'CanvasCBL User ID': userId,
     'Canvas User ID': canvasUserId,
     'Has Valid Subscription': hasValidSubscription,
-    'Subscription Status': subscriptionStatus,
+    'Subscription Status': subscriptionStatus
   });
 
   mp.track('Dashboard Load', {
     $name: name,
     $email: email,
     'CanvasCBL User ID': userId,
-    'User Last Version': `${prevVersion}`,
+    'User Last Version': `${prevVersion}`
   });
 }
 
@@ -235,7 +234,7 @@ export function trackDashboardLoad(
 export function trackPageView(pageName, courseId) {
   mp.track('Page View', {
     'Page Name': pageName,
-    'Course ID': courseId,
+    'Course ID': courseId
   });
 }
 
@@ -247,7 +246,7 @@ export function trackPageView(pageName, courseId) {
 export function trackNavigation(to, via) {
   mp.track('Navigation', {
     To: to,
-    Via: via,
+    Via: via
   });
 }
 
@@ -270,7 +269,7 @@ export function trackExternalLinkClick(
     'Destination URL': destinationUrl,
     'Destination Name': destinationName,
     'Destination Type': destinationType,
-    Via: via,
+    Via: via
   });
 
   // mp.track('External Link Click', {
@@ -293,7 +292,7 @@ export function trackNotificationStatusToggle(
   mp.track('Notification Status Toggle', {
     // Notification Status should be submitted as a string
     'Notification Status': bts(notificationStatus),
-    'Notification Type Short Name': notificationTypeShortName,
+    'Notification Type Short Name': notificationTypeShortName
   });
 }
 
@@ -317,7 +316,7 @@ export function trackTableRowExpansion(
     'Expanded Item ID': expandedItemId,
     'Expanded Item Type': expandedItemType,
     'Expansion Status': expansionStatus,
-    'Course ID': courseId,
+    'Course ID': courseId
   });
 }
 
@@ -329,7 +328,7 @@ export function trackTableRowExpansion(
 export function trackTabChange(containerName, newTabName) {
   mp.track('Tab Change', {
     'Container Name': containerName,
-    'New Tab Name': newTabName,
+    'New Tab Name': newTabName
   });
 }
 
@@ -342,7 +341,7 @@ export function trackActiveUserChange(activeUserId, via) {
   mp.register({ 'Active User ID': activeUserId });
 
   mp.track('Active User Change', {
-    Via: via,
+    Via: via
   });
 }
 
@@ -363,7 +362,7 @@ export function trackOAuth2Decision(
     'OAuth2 Credential ID': oAuth2CredentialName,
     'Did Authorize App': bts(didAuthorize),
     'Consent Code': consentCode,
-    Scopes: scopes,
+    Scopes: scopes
   });
 }
 
@@ -375,7 +374,7 @@ export function trackOAuth2Decision(
 export function trackCourseVisibilityToggle(courseId, courseVisibility) {
   mp.track('Course Visibility Toggle', {
     'Course ID': courseId,
-    'Course Visibility': bts(courseVisibility),
+    'Course Visibility': bts(courseVisibility)
   });
 }
 
@@ -385,7 +384,7 @@ export function trackCourseVisibilityToggle(courseId, courseVisibility) {
  */
 export function trackChangedHiddenCourseVisibility(hiddenCourseVisibility) {
   mp.track('Changed Hidden Course Visibility', {
-    'Hidden Course Visibility': bts(hiddenCourseVisibility),
+    'Hidden Course Visibility': bts(hiddenCourseVisibility)
   });
 }
 
@@ -413,7 +412,7 @@ export function trackChangedGradesViewType(prevViewType, newViewType) {
 
   mp.track('Changed Grades View Type', {
     'Previous View Type': convertViewType(prevViewType),
-    'New View Type': convertViewType(newViewType),
+    'New View Type': convertViewType(newViewType)
   });
 }
 
@@ -443,5 +442,5 @@ TrackingLink.propTypes = {
   pageName: PropTypes.oneOf(Object.values(pageNames)),
   via: PropTypes.oneOf(Object.values(vias)).isRequired,
   style: PropTypes.object,
-  children: PropTypes.any,
+  children: PropTypes.any
 };
