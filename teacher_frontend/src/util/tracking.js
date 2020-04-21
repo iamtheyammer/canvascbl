@@ -43,30 +43,29 @@ const mp = {
   }
 };
 
-export const pageNames = {};
+export const pageNames = {
+  profile: "Profile",
+  courses: "Courses",
+  courseOverview: "Course Overview"
+};
+
+const courseOverviewRegex = /^\/dashboard\/courses\/[0-9]+_[0-9]+\/overview$/;
 
 export function pageNameFromPath(path) {
   switch (path) {
     case "/dashboard/profile":
       return pageNames.profile;
-    case "/dashboard/grades":
-      return pageNames.grades;
-    case "/dashboard/upgrades":
-      return pageNames.upgrades;
-    case "/dashboard/upgrades/redeem":
-      return pageNames.redeem;
-    case "/dashboard/settings":
-      return pageNames.settings;
-    case "/dashboard/authorize":
-      return pageNames.authorize;
+    case "/dashboard/courses":
+      return pageNames.courses;
     default:
-      if (path.startsWith("/dashboard/grades/")) {
-        return pageNames.gradeBreakdown;
+      if (courseOverviewRegex.test(path)) {
+        return pageNames.courseOverview;
       }
   }
 }
 
 export const vias = {
+  dashboardMenu: "Dashboard Menu",
   breadcrumb: "Breadcrumb",
   coursesCourseCard: "Courses Course Card",
   notATeacherPopup: "Not a Teacher Popup"
@@ -74,11 +73,14 @@ export const vias = {
 
 export const destinationNames = {
   courseOverview: "Course Overview",
-  canvascblForStudentsAndParents: "CanvasCBL for Students and Parents"
+  canvascblForStudentsAndParents: "CanvasCBL for Students and Parents",
+  googleForms: "Google Forms"
 };
 
 export const destinationTypes = {
-  canvascbl: "CanvasCBL"
+  canvascbl: "CanvasCBL",
+  canvascblLogout: "CanvasCBL Logout",
+  canvascblForTeachersFeedbackForm: "CanvasCBL for Teachers Feedback Form"
 };
 
 export const tabImplementations = {};
@@ -96,41 +98,30 @@ export const itemTypes = {};
  * - It tracks a sign in event
  * @param {string} name The user's full name
  * @param {string} email The user's email
- * @param {boolean} hasValidSubscription Whether the user has a valid subscription.
- * @param {string} subscriptionStatus The user's subscription status (ex: active)
  * @param {number} userId The user's ID (from CanvasCBL, not Canvas)
  * @param {number} canvasUserId The user's Canvas ID
- * @param {number} activeUserId The active user's Canvas ID
  * @param {number|string} currentVersion The current version
  * @param {number|string} prevVersion The user's previous version
  */
 export function trackDashboardLoad(
   name,
   email,
-  hasValidSubscription,
-  subscriptionStatus,
   userId,
   canvasUserId,
-  activeUserId,
   currentVersion,
   prevVersion
 ) {
   mp.identify(userId);
 
   mp.register({
-    "Subscription Status": subscriptionStatus,
-    "User Has Valid Subscription": hasValidSubscription,
-    "Current Version": `${currentVersion}`,
-    "Active User ID": activeUserId
+    "Current Version": `${currentVersion}`
   });
 
   mp.people.set({
     $name: name,
     $email: email,
     "CanvasCBL User ID": userId,
-    "Canvas User ID": canvasUserId,
-    "Has Valid Subscription": hasValidSubscription,
-    "Subscription Status": subscriptionStatus
+    "Canvas User ID": canvasUserId
   });
 
   mp.track("Dashboard Load", {
@@ -212,6 +203,16 @@ export function trackExternalLinkClickOther(
     "Destination URL": destinationUrl,
     "Destination Name": destinationName,
     "Destination Type": destinationType,
+    Via: via
+  });
+}
+
+/**
+ * Tracks a logout.
+ * @param via - How the user got to logout
+ */
+export function trackLogout(via) {
+  mp.track("Logout", {
     Via: via
   });
 }

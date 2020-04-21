@@ -1,7 +1,8 @@
 import React from "react";
+import { Redirect } from "react-router-dom";
 
 function Home(props) {
-  return <p>Home</p>;
+  return <Redirect to="/dashboard" />;
 }
 
 export default Home;

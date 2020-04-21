@@ -10,7 +10,10 @@ import {
   CANVAS_GOT_COURSE_ENROLLMENTS,
   CANVAS_GOT_COURSES,
   CANVAS_GOT_DISTANCE_LEARNING_GRADES_OVERVIEW,
-  CANVAS_GOT_USER_PROFILE
+  CANVAS_GOT_USER_PROFILE,
+  CANVAS_LOGGED_OUT,
+  CANVAS_LOGOUT,
+  CANVAS_LOGOUT_ERROR
 } from "../actions/canvas";
 
 export default function canvas(state = {}, action) {
@@ -89,6 +92,21 @@ export default function canvas(state = {}, action) {
           [action.courseId]: action.enrollments
         },
         courseEnrollmentsAreLoading: false
+      };
+    case CANVAS_LOGOUT:
+      return {
+        ...state,
+        loadingLogout: true
+      };
+    case CANVAS_LOGOUT_ERROR:
+      return {
+        ...state,
+        loadingLogout: false,
+        logoutError: action.e
+      };
+    case CANVAS_LOGGED_OUT:
+      return {
+        loggedOut: true
       };
     default:
       return state;

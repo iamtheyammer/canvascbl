@@ -16,8 +16,6 @@ import (
 )
 
 var (
-	canvasOAuth2AuthURI    = getCanvasOAuth2AuthURI()
-	canvasOAuth2ReauthURI  = getCanvasOAuth2ReauthURI()
 	canvasOAuth2SuccessURL = func() *url.URL {
 		s, err := url.Parse(env.CanvasOAuth2SuccessURI)
 		if err != nil {
@@ -30,12 +28,16 @@ var (
 type canvasState struct {
 	Intent string
 	State  string
+	Dest   string
 }
 
 func (st canvasState) String() string {
 	var s string
 	s += "intent=" + st.Intent + ";"
 	s += "state=" + st.State + ";"
+	if len(st.Dest) > 0 {
+		s += "dest=" + st.Dest + ";"
+	}
 	return s
 }
 
@@ -49,13 +51,26 @@ func unmarshalCanvasState(st string) canvasState {
 			s.State = kv[1]
 		case "intent":
 			s.Intent = kv[1]
+		case "dest":
+			s.Dest = kv[1]
 		}
 	}
 
 	return s
 }
 
-func getCanvasOAuth2AuthURI() string {
+func destIsValid(dest string) bool {
+	switch dest {
+	case "teacher":
+	case "canvascbl":
+	default:
+		return false
+	}
+
+	return true
+}
+
+func getCanvasOAuth2AuthURI(intent string, dest string) string {
 	redirectURL := url.URL{
 		Host:   env.CanvasDomain,
 		Path:   "/login/oauth2/auth",
@@ -71,9 +86,13 @@ func getCanvasOAuth2AuthURI() string {
 	}
 
 	state := canvasState{
-		Intent: "auth",
+		Intent: intent,
 		State:  uuid.NewV4().String(),
-	}.String()
+	}
+
+	if len(dest) > 0 && destIsValid(dest) {
+		state.Dest = dest
+	}
 
 	q := redirectURL.Query()
 	q.Set("client_id", env.CanvasOAuth2ClientID)
@@ -81,49 +100,20 @@ func getCanvasOAuth2AuthURI() string {
 	q.Set("purpose", purpose)
 	q.Set("redirect_uri", env.BaseURL+"/api/canvas/oauth2/response")
 	q.Set("scope", util.GetScopesList())
-	q.Set("state", state)
+	q.Set("state", state.String())
 	redirectURL.RawQuery = q.Encode()
 
 	return redirectURL.String()
 }
 
-func getCanvasOAuth2ReauthURI() string {
-	redirectURL := url.URL{
-		Host:   env.CanvasDomain,
-		Path:   "/login/oauth2/auth",
-		Scheme: "https",
-	}
-
-	purpose := "CanvasCBLAuth"
-	switch env.Env {
-	case env.EnvironmentStaging:
-		purpose += "-staging"
-	case env.EnvironmentDevelopment:
-		purpose += "-development"
-	}
-
-	state := canvasState{
-		Intent: "reauth",
-		State:  uuid.NewV4().String(),
-	}.String()
-
-	q := redirectURL.Query()
-	q.Set("client_id", env.CanvasOAuth2ClientID)
-	q.Set("response_type", "code")
-	q.Set("purpose", purpose)
-	q.Set("redirect_uri", env.BaseURL+"/api/canvas/oauth2/response")
-	q.Set("scope", "/auth/userinfo")
-	q.Set("state", state)
-	redirectURL.RawQuery = q.Encode()
-
-	return redirectURL.String()
-}
-
-func getCanvasOAuth2SuccessURI(name string, intent string) string {
+func getCanvasOAuth2SuccessURI(name string, intent string, dest string) string {
 	q := canvasOAuth2SuccessURL.Query()
 	q.Add("type", "canvas")
 	q.Add("name", name)
 	q.Add("intent", intent)
+	if len(dest) > 0 {
+		q.Add("dest", dest)
+	}
 
 	return canvasOAuth2SuccessURL.String() + "?" + q.Encode()
 }
@@ -131,13 +121,14 @@ func getCanvasOAuth2SuccessURI(name string, intent string) string {
 // CanvasOAuth2RequestHandler handles forwarding the user to the proper URI for OAuth2 with Canvas.
 func CanvasOAuth2RequestHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	intent := r.URL.Query().Get("intent")
+	dest := r.URL.Query().Get("dest")
 	switch intent {
 	case "auth":
-		util.SendRedirect(w, canvasOAuth2AuthURI)
+		util.SendRedirect(w, getCanvasOAuth2AuthURI(intent, dest))
 	case "reauth":
-		util.SendRedirect(w, canvasOAuth2ReauthURI)
+		util.SendRedirect(w, getCanvasOAuth2AuthURI(intent, dest))
 	default:
-		util.SendRedirect(w, canvasOAuth2AuthURI)
+		util.SendRedirect(w, getCanvasOAuth2AuthURI("auth", dest))
 	}
 }
 
@@ -179,7 +170,7 @@ func CanvasOAuth2ResponseHandler(w http.ResponseWriter, r *http.Request, _ httpr
 
 		if len(*profiles) < 1 {
 			// this user is trying to reauth without authing first?
-			util.SendRedirect(w, canvasOAuth2AuthURI)
+			util.SendRedirect(w, getCanvasOAuth2AuthURI("auth", ""))
 			return
 		}
 
@@ -193,7 +184,7 @@ func CanvasOAuth2ResponseHandler(w http.ResponseWriter, r *http.Request, _ httpr
 
 		util.AddSessionToResponse(w, *ss)
 
-		util.SendRedirect(w, getCanvasOAuth2SuccessURI(grantResp.User.Name, state.Intent))
+		util.SendRedirect(w, getCanvasOAuth2SuccessURI(grantResp.User.Name, state.Intent, state.Dest))
 		return
 	}
 
@@ -235,7 +226,7 @@ func CanvasOAuth2ResponseHandler(w http.ResponseWriter, r *http.Request, _ httpr
 
 	util.AddSessionToResponse(w, *ss)
 
-	util.SendRedirect(w, getCanvasOAuth2SuccessURI(profile.Name, state.Intent))
+	util.SendRedirect(w, getCanvasOAuth2SuccessURI(profile.Name, state.Intent, state.Dest))
 
 	return
 }

@@ -48,7 +48,8 @@ function* getInitialData({ id }) {
         user_profile,
         observees,
         courses,
-        Object.keys(detailed_grades).map(uID => parseInt(uID)),
+        detailed_grades &&
+          Object.keys(detailed_grades).map(uID => parseInt(uID)),
         outcome_results,
         detailed_grades,
         gpa,

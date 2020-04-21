@@ -11,5 +11,6 @@ export default {
   ),
   defaultSubdomain: process.env.REACT_APP_DEFAULT_SUBDOMAIN,
   mixpanelToken: process.env.REACT_APP_MIXPANEL_TOKEN,
+  teacherUrl: process.env.REACT_APP_TEACHER_URL,
   nodeEnv: process.env.NODE_ENV
 };

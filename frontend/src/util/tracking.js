@@ -181,30 +181,41 @@ export const itemTypes = {
  * - It tracks a sign in event
  * @param {string} name The user's full name
  * @param {string} email The user's email
+ * @param {boolean} hasValidSubscription Whether the user has a valid subscription.
+ * @param {string} subscriptionStatus The user's subscription status (ex: active)
  * @param {number} userId The user's ID (from CanvasCBL, not Canvas)
  * @param {number} canvasUserId The user's Canvas ID
+ * @param {number} activeUserId The active user's Canvas ID
  * @param {number|string} currentVersion The current version
  * @param {number|string} prevVersion The user's previous version
  */
 export function trackDashboardLoad(
   name,
   email,
+  hasValidSubscription,
+  subscriptionStatus,
   userId,
   canvasUserId,
+  activeUserId,
   currentVersion,
   prevVersion
 ) {
   mp.identify(userId);
 
   mp.register({
-    'Current Version': `${currentVersion}`
+    'Subscription Status': subscriptionStatus,
+    'User Has Valid Subscription': hasValidSubscription,
+    'Current Version': `${currentVersion}`,
+    'Active User ID': activeUserId
   });
 
   mp.people.set({
     $name: name,
     $email: email,
     'CanvasCBL User ID': userId,
-    'Canvas User ID': canvasUserId
+    'Canvas User ID': canvasUserId,
+    'Has Valid Subscription': hasValidSubscription,
+    'Subscription Status': subscriptionStatus
   });
 
   mp.track('Dashboard Load', {

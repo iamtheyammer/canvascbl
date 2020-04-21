@@ -1,10 +1,19 @@
 import React from 'react';
-import { Redirect } from 'react-router-dom';
+import { Link, Redirect } from 'react-router-dom';
 import { connect } from 'react-redux';
 import './index.css';
 import banner from '../../assets/banner.svg';
 
-import { Card, Typography, Button, Checkbox, Divider, Icon } from 'antd';
+import {
+  Card,
+  Typography,
+  Button,
+  Checkbox,
+  Divider,
+  Icon,
+  Row,
+  Col
+} from 'antd';
 import {
   Checkbox as MobileCheckbox,
   Button as MobileButton
@@ -20,6 +29,7 @@ import {
 } from '../../actions/components/home';
 import { getSessionInformation } from '../../actions/plus';
 import Padding from '../Padding';
+import { parse } from 'qs';
 
 function Home(props) {
   const {
@@ -40,6 +50,10 @@ function Home(props) {
   if (session) {
     return <Redirect to="/dashboard" />;
   }
+
+  const { dest } = parse(
+    props.location.search.slice(1, props.location.search.length)
+  );
 
   const getSessionErr = error[getSessionId];
   let getSessionErrText = '';
@@ -102,7 +116,9 @@ function Home(props) {
       <div className="home" />
       <Card className="card" title={<img src={banner} alt="banner" />}>
         <div className="static-text">
-          <Typography.Title level={2}>Log in to CanvasCBL</Typography.Title>
+          <Typography.Title level={2}>
+            Log in to CanvasCBL{dest === 'teacher' && ' for Teachers'}
+          </Typography.Title>
           {env.buildBranch !== 'master' && (
             <Typography.Text type="danger">
               CanvasCBL is running in {env.buildBranch}
@@ -139,7 +155,9 @@ function Home(props) {
               className="center button"
               disabled={!signInButtonAvailability}
               onClick={() =>
-                (window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request?intent=auth`)
+                (window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request?intent=auth${
+                  dest === 'teacher' ? '&dest=teacher' : ''
+                }`)
               }
             >
               Sign in with Canvas
@@ -147,9 +165,24 @@ function Home(props) {
           )}
         </div>
         <Divider />
-        <a href="https://canvascbl.com">
-          <Icon type="arrow-left" /> Back home
-        </a>
+        <Row justify="space-between">
+          <Col span={9}>
+            <a href="https://canvascbl.com">
+              <Icon type="arrow-left" /> Back home
+            </a>
+          </Col>
+          <Col span={15}>
+            {dest === 'teacher' ? (
+              <Link to="/" style={{ float: 'right' }}>
+                CanvasCBL for Students and Parents <Icon type="arrow-right" />
+              </Link>
+            ) : (
+              <a href={env.teacherUrl} style={{ float: 'right' }}>
+                CanvasCBL for Teachers <Icon type="arrow-right" />
+              </a>
+            )}
+          </Col>
+        </Row>
       </Card>
     </>
   );

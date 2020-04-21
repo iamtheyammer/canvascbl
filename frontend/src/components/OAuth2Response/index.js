@@ -12,6 +12,11 @@ function OAuth2Response(props) {
     props.location.search.slice(1, props.location.search.length)
   );
 
+  if (query.dest === 'teacher') {
+    window.location = env.teacherUrl;
+    return null;
+  }
+
   function processCanvasResponse(name, intent) {
     // set the version to current since it's a new user
     localStorage.prevVersion = env.currentVersion;

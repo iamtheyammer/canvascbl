@@ -56,6 +56,11 @@ const routes = (
     <Route exact path="/dashboard/courses" component={Courses} />
     <Route
       exact
+      path="/dashboard/courses/:courseId"
+      render={() => <Redirect to={"/dashboard/courses"} />}
+    />
+    <Route
+      exact
       path="/dashboard/courses/:courseId/overview"
       component={CourseOverview}
     />
@@ -64,6 +69,7 @@ const routes = (
 
 function Dashboard(props) {
   const {
+    loggedOut,
     loadingUserProfile,
     getUserProfileError,
     userProfile,
@@ -76,7 +82,12 @@ function Dashboard(props) {
   } = props;
 
   useEffect(() => {
-    if (!loadingUserProfile && !getUserProfileError && !userProfile) {
+    if (
+      !loggedOut &&
+      !loadingUserProfile &&
+      !getUserProfileError &&
+      !userProfile
+    ) {
       dispatch(getUserProfile());
     }
 
@@ -90,26 +101,30 @@ function Dashboard(props) {
         localStorage.prevVersion
       );
     }
-  }, [loadingUserProfile, getUserProfileError, userProfile, dispatch]);
+  }, [
+    loggedOut,
+    loadingUserProfile,
+    getUserProfileError,
+    userProfile,
+    dispatch
+  ]);
 
   useEffect(() => {
-    if (!loadingCourses && !getCoursesError && !courses) {
+    if (!loggedOut && !loadingCourses && !getCoursesError && !courses) {
       dispatch(getCourses());
     }
-  }, [loadingCourses, getCoursesError, courses, dispatch]);
+  }, [loggedOut, loadingCourses, getCoursesError, courses, dispatch]);
 
   const pathSnippets = location.pathname.split("/").filter(i => i);
   // const breadcrumbNameMap = getBreadcrumbNameMap(courses || []);
   const breadcrumbNameMap = getBreadcrumbNameMap(distanceLearningPairs || []);
   const breadcrumbItems = pathSnippets.map((_, index) => {
     const url = `/${pathSnippets.slice(0, index + 1).join("/")}`;
+    const pageName = pageNameFromPath(url);
     return (
       <Breadcrumb.Item key={url}>
-        <TrackingLink
-          to={url}
-          pageName={pageNameFromPath(url)}
-          via={vias.breadcrumb}
-        >
+        {!breadcrumbNameMap[url] && "..."}
+        <TrackingLink to={url} pageName={pageName} via={vias.breadcrumb}>
           {breadcrumbNameMap[url]}
         </TrackingLink>
       </Breadcrumb.Item>
@@ -175,8 +190,9 @@ function Dashboard(props) {
 
   const err = getUserProfileError;
   if (err) {
-    if (err.res) {
-      const data = err.res.data;
+    if (err.error) {
+      const data = err;
+      console.log(data);
       switch (data.action) {
         case "redirect_to_oauth":
           // we'll be reauthing
@@ -189,7 +205,7 @@ function Dashboard(props) {
         default:
           loginReturnTo.set(location);
           if (data.error.includes("no session string")) {
-            return <Redirect to={"/"} />;
+            window.location = env.canvascblUrl + "?dest=teacher";
           } else if (data.error === "expired session") {
             window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request?intent=reauth&dest=teacher`;
             return null;
@@ -215,6 +231,11 @@ function Dashboard(props) {
         </Typography.Text>
       );
     }
+  }
+
+  if (loggedOut) {
+    window.location = env.canvascblUrl;
+    return null;
   }
 
   return (
@@ -255,6 +276,7 @@ function Dashboard(props) {
 }
 
 const ConnectedDashboard = connect(state => ({
+  loggedOut: state.canvas.loggedOut,
   loadingUserProfile: state.canvas.loadingUserProfile,
   getUserProfileError: state.canvas.getUserProfileError,
   userProfile: state.canvas.userProfile,

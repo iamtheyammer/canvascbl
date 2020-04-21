@@ -6,7 +6,14 @@ import v4 from 'uuid/v4';
 import { isMobile } from 'react-device-detect';
 import * as loginReturnTo from '../../util/loginReturnTo';
 
-import { Layout, Breadcrumb, Popover, Typography, notification } from 'antd';
+import {
+  Layout,
+  Breadcrumb,
+  Popover,
+  Typography,
+  notification,
+  Modal
+} from 'antd';
 
 import DashboardNav from './DashboardNav';
 import ConnectedUserProfile from './UserProfile';
@@ -60,6 +67,7 @@ function Dashboard(props) {
   const {
     location,
     user,
+    courses,
     activeUserId,
     session,
     loading,
@@ -100,6 +108,28 @@ function Dashboard(props) {
 
     setHasInitializedTracking(true);
   }, [session, user, activeUserId, hasInitializedTracking]);
+
+  useEffect(() => {
+    if (courses) {
+      let modalShown = false;
+      courses.forEach(c =>
+        c.enrollments.map(e => {
+          if (!modalShown && e.type === 'teacher') {
+            Modal.confirm({
+              title: 'Are you in the right place?',
+              content:
+                "You're currently at CanvasCBL for Students and Parents. Do you want to go to CanvasCBL for Teachers?",
+              okText: 'Go to CanvasCBL for Teachers',
+              cancelText: 'No, thanks',
+              onOk: () => (window.location = env.teacherUrl)
+            });
+            modalShown = true;
+          }
+          return null;
+        })
+      );
+    }
+  });
 
   const pathSnippets = location.pathname.split('/').filter(i => i);
   const breadcrumbNameMap = getBreadcrumbNameMap(props.courses || []);

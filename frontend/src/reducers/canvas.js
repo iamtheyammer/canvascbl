@@ -30,7 +30,7 @@ export default function canvas(state = {}, action) {
         courses: action.courses,
         gradedUsers: action.gradedUsers,
         // by default, the active user is the first graded user
-        activeUserId: action.gradedUsers[0],
+        activeUserId: action.gradedUsers && action.gradedUsers[0],
         outcomeResults: action.outcomeResults,
         grades: action.grades,
         gpa: action.gpa,
