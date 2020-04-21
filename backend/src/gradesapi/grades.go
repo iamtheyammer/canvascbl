@@ -218,7 +218,7 @@ type distanceLearningOverviewGrade struct {
 	Grade  struct {
 		Grade string `json:"grade"`
 	} `json:"grade"`
-	Timestamp string
+	Timestamp string `json:"timestamp"`
 }
 
 type distanceLearningOverviewResponse struct {

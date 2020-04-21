@@ -70,6 +70,7 @@ type canvasCourse struct {
 	GradingStandardID                int64              `json:"grading_standard_id"`
 	HideFinalGrades                  bool               `json:"hide_final_grades"`
 	ID                               uint64             `json:"id"`
+	ImageDownloadURL                 string             `json:"image_download_url,omitempty"`
 	IsPublic                         bool               `json:"is_public"`
 	IsPublicToAuthUsers              bool               `json:"is_public_to_auth_users"`
 	License                          string             `json:"license"`

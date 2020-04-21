@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-const spring20DLEnrollmentTermID = 18
+const spring20DLEnrollmentTermID = 3
 
 // refreshAccessToken attempts to use the refresh token to get a new access token.
 // You should check the returned error and handle it accordingly.

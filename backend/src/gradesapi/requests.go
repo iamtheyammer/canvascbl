@@ -129,7 +129,7 @@ func getCanvasProfile(rd requestDetails, userID string) (*canvasUserProfileRespo
 
 func getCanvasCourses(rd requestDetails) (*canvasCoursesResponse, error) {
 	var courses canvasCoursesResponse
-	_, err := makeCanvasGetRequest("api/v1/courses?per_page=100&enrollment_state=active&include[]=total_scores&include[]=observed_users", rd, &courses)
+	_, err := makeCanvasGetRequest("api/v1/courses?per_page=100&enrollment_state=active&include[]=total_scores&include[]=observed_users&include[]=course_image", rd, &courses)
 	if err != nil {
 		return nil, fmt.Errorf("error getting canvas courses: %w", err)
 	}

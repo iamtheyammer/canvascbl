@@ -1,0 +1,86 @@
+import { all, put, takeLeading, takeEvery } from "redux-saga/effects";
+import makeApiRequest from "../util/api/makeApiRequest";
+import {
+  CANVAS_GET_COURSE_ENROLLMENTS,
+  CANVAS_GET_COURSES,
+  CANVAS_GET_DISTANCE_LEARNING_GRADES_OVERVIEW,
+  getCourseEnrollmentsError,
+  getCoursesError,
+  getDistanceLearningGradesOverviewError,
+  gotCourseEnrollments,
+  gotCourses,
+  gotDistanceLearningGradesOverview
+} from "../actions/canvas";
+
+function* getCourses() {
+  try {
+    const coursesResponse = yield makeApiRequest(`courses`, {
+      include: ["distance_learning_pairs"]
+    });
+    yield put(
+      gotCourses(
+        coursesResponse.data.courses,
+        coursesResponse.data.distance_learning_pairs
+      )
+    );
+  } catch (e) {
+    yield put(getCoursesError(e.response ? e.response.data : "can't connect"));
+  }
+}
+
+function* getDistanceLearningGradesOverview({
+  originalCourseId,
+  distanceLearningCourseId
+}) {
+  try {
+    const dlgOverviewResponse = yield makeApiRequest(
+      `grades/distance_learning/overview`,
+      {
+        original_course_id: originalCourseId,
+        distance_learning_course_id: distanceLearningCourseId
+      }
+    );
+    yield put(
+      gotDistanceLearningGradesOverview(
+        originalCourseId,
+        distanceLearningCourseId,
+        dlgOverviewResponse.data.distance_learning_grades_overview
+      )
+    );
+  } catch (e) {
+    yield put(
+      getDistanceLearningGradesOverviewError(
+        e.response ? e.response.data : "can't connect"
+      )
+    );
+  }
+}
+
+function* getCourseEnrollments({ courseId }) {
+  try {
+    const enrollmentsRequest = yield makeApiRequest(
+      `courses/${courseId}/enrollments`,
+      { type: ["StudentEnrollment"], state: ["active"] }
+    );
+    yield put(
+      gotCourseEnrollments(courseId, enrollmentsRequest.data.enrollments)
+    );
+  } catch (e) {
+    yield put(
+      getCourseEnrollmentsError(e.response ? e.response.data : "can't connect")
+    );
+  }
+}
+
+function* watcher() {
+  yield takeLeading(CANVAS_GET_COURSES, getCourses);
+  yield takeEvery(
+    CANVAS_GET_DISTANCE_LEARNING_GRADES_OVERVIEW,
+    getDistanceLearningGradesOverview
+  );
+  yield takeEvery(CANVAS_GET_COURSE_ENROLLMENTS, getCourseEnrollments);
+}
+
+export default function* canvasRootSaga() {
+  yield all([watcher()]);
+}
