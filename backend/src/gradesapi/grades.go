@@ -1366,7 +1366,7 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *UserGradesDBRe
 		Session:        nil,
 		UserProfile:    (*canvasUserProfile)(profile),
 		Observees:      (*[]canvasObservee)(observees),
-		Courses:        &courses,
+		Courses:        allCourses,
 		OutcomeResults: results,
 		SimpleGrades:   sGrades,
 		DetailedGrades: grades,
