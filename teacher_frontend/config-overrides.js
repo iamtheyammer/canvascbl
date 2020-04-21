@@ -1,7 +1,7 @@
 const {
   override,
   fixBabelImports,
-  addWebpackPlugin
+  addWebpackPlugin,
 } = require("customize-cra");
 const Dotenv = require("dotenv-webpack");
 
@@ -9,7 +9,7 @@ module.exports = override(
   fixBabelImports("import-antd", {
     libraryName: "antd",
     libraryDirectory: "es",
-    style: "css"
+    style: "css",
   }),
   // fixBabelImports("import-mobile", {
   //   libraryName: "antd-mobile",
@@ -18,7 +18,7 @@ module.exports = override(
   fixBabelImports("import-lodash", {
     libraryName: "lodash",
     libraryDirectory: "",
-    camel2DashComponentName: false // default: true
+    camel2DashComponentName: false, // default: true
   }),
   addWebpackPlugin(new Dotenv())
 );

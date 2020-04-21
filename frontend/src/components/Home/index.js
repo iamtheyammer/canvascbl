@@ -12,11 +12,11 @@ import {
   Divider,
   Icon,
   Row,
-  Col
+  Col,
 } from 'antd';
 import {
   Checkbox as MobileCheckbox,
-  Button as MobileButton
+  Button as MobileButton,
 } from 'antd-mobile';
 import { isMobile } from 'react-device-detect';
 import v4 from 'uuid/v4';
@@ -25,7 +25,7 @@ import PopoutLink from '../PopoutLink';
 import env from '../../util/env';
 import {
   setGetSessionId,
-  setSigninButtonAvailability
+  setSigninButtonAvailability,
 } from '../../actions/components/home';
 import { getSessionInformation } from '../../actions/plus';
 import Padding from '../Padding';
@@ -38,7 +38,7 @@ function Home(props) {
     loading,
     error,
     session,
-    dispatch
+    dispatch,
   } = props;
 
   if (!session && !getSessionId) {
@@ -76,7 +76,7 @@ function Home(props) {
         style={{
           textAlign: 'center',
           margin: '10px 5px 10px 5px',
-          backgroundColor: '#ffffff'
+          backgroundColor: '#ffffff',
         }}
       >
         <img src={banner} alt={'banner'} />
@@ -85,7 +85,7 @@ function Home(props) {
           To use CanvasCBL, please accept the terms and sign in with Canvas.
         </Typography.Text>
         <MobileCheckbox.AgreeItem
-          onChange={e =>
+          onChange={(e) =>
             dispatch(setSigninButtonAvailability(e.target.checked))
           }
         >
@@ -132,7 +132,7 @@ function Home(props) {
         </div>
         <div>
           <Checkbox
-            onChange={e =>
+            onChange={(e) =>
               dispatch(setSigninButtonAvailability(e.target.checked))
             }
             className="center-checkbox"
@@ -188,12 +188,12 @@ function Home(props) {
   );
 }
 
-const ConnectedHome = connect(state => ({
+const ConnectedHome = connect((state) => ({
   getSessionId: state.components.home.getSessionId,
   signInButtonAvailability: state.components.home.signInButtonAvailability,
   loading: state.loading,
   error: state.error,
-  session: state.plus.session
+  session: state.plus.session,
 }))(Home);
 
 export default ConnectedHome;
