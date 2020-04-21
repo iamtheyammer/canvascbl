@@ -272,6 +272,10 @@ func saveOutcomeResultsToDB(results processedOutcomeResults) {
 		return
 	}
 
+	if len(*req) < 1 {
+		return
+	}
+
 	err = courses.InsertMultipleOutcomeResults(db, req)
 	if err != nil {
 		util.HandleError(fmt.Errorf("error inserting multiple outcome rollups: %w", err))
@@ -317,21 +321,25 @@ func prepareGradesForDB(
 func saveGradesToDB(grds detailedGrades, manualFetch bool) {
 	req, rs := prepareGradesForDB(grds, manualFetch)
 
-	go func(request *[]grades.InsertRequest) {
-		err := grades.Insert(db, request)
-		if err != nil {
-			util.HandleError(fmt.Errorf("error inserting grades: %w", err))
-			return
-		}
-	}(req)
+	if len(*req) > 0 {
+		go func(request *[]grades.InsertRequest) {
+			err := grades.Insert(db, request)
+			if err != nil {
+				util.HandleError(fmt.Errorf("error inserting grades: %w", err))
+				return
+			}
+		}(req)
+	}
 
-	go func(request *[]courses.OutcomeRollupInsertRequest) {
-		err := courses.InsertMultipleOutcomeRollups(db, request)
-		if err != nil {
-			util.HandleError(fmt.Errorf("error inserting multiple outcome averages (outcome rollups): %w", err))
-			return
-		}
-	}(rs)
+	if len(*rs) > 0 {
+		go func(request *[]courses.OutcomeRollupInsertRequest) {
+			err := courses.InsertMultipleOutcomeRollups(db, request)
+			if err != nil {
+				util.HandleError(fmt.Errorf("error inserting multiple outcome averages (outcome rollups): %w", err))
+				return
+			}
+		}(rs)
+	}
 
 	return
 }
@@ -443,7 +451,12 @@ func prepareDistanceLearningGradesForDB(dlg distanceLearningGrades, manualFetch 
 }
 
 func saveDistanceLearningGradesToDB(dlg distanceLearningGrades, manualFetch bool) {
-	err := grades.InsertDistanceLearning(db, prepareDistanceLearningGradesForDB(dlg, manualFetch))
+	req := prepareDistanceLearningGradesForDB(dlg, manualFetch)
+	if len(*req) < 1 {
+		return
+	}
+
+	err := grades.InsertDistanceLearning(db, req)
 	if err != nil {
 		util.HandleError(fmt.Errorf("error saving distance learning grades to db: %w", err))
 		return
