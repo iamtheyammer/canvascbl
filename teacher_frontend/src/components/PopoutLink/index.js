@@ -1,9 +1,9 @@
-import React, { useEffect } from "react";
-import * as PropTypes from "prop-types";
-import { v4 } from "uuid";
-import { Icon } from "antd";
-import { ReactComponent as PopOutIcon } from "../../assets/pop_out.svg";
-import { trackExternalLinkClick } from "../../util/tracking";
+import React, { useEffect } from 'react';
+import * as PropTypes from 'prop-types';
+import { v4 } from 'uuid';
+import { Icon } from 'antd';
+import { ReactComponent as PopOutIcon } from '../../assets/pop_out.svg';
+import { trackExternalLinkClick } from '../../util/tracking';
 
 function PopoutLink(props) {
   const { url, children, addIcon, id, tracking } = props;
@@ -31,7 +31,7 @@ function PopoutLink(props) {
   return (
     <a target="_blank" rel="noopener noreferrer" href={url} id={elId}>
       {children}
-      {addIcon && " "}
+      {addIcon && ' '}
       {addIcon && <Icon component={PopOutIcon} />}
     </a>
   );
@@ -48,8 +48,8 @@ PopoutLink.propTypes = {
   tracking: PropTypes.shape({
     destinationName: PropTypes.string.isRequired,
     destinationType: PropTypes.string,
-    via: PropTypes.string.isRequired
-  })
+    via: PropTypes.string.isRequired,
+  }),
 };
 
 export default PopoutLink;

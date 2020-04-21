@@ -1,5 +1,5 @@
-import { all, put, takeLeading, takeEvery } from "redux-saga/effects";
-import makeApiRequest from "../util/api/makeApiRequest";
+import { all, put, takeLeading, takeEvery } from 'redux-saga/effects';
+import makeApiRequest from '../util/api/makeApiRequest';
 import {
   CANVAS_GET_COURSE_ENROLLMENTS,
   CANVAS_GET_COURSES,
@@ -15,9 +15,9 @@ import {
   gotDistanceLearningGradesOverview,
   gotUserProfile,
   loggedOut,
-  logoutError
-} from "../actions/canvas";
-import makePlusRequest from "../util/plus/makePlusRequest";
+  logoutError,
+} from '../actions/canvas';
+import makePlusRequest from '../util/plus/makePlusRequest';
 
 function* getUserProfile() {
   try {
@@ -33,7 +33,7 @@ function* getUserProfile() {
 function* getCourses() {
   try {
     const coursesResponse = yield makeApiRequest(`courses`, {
-      include: ["distance_learning_pairs"]
+      include: ['distance_learning_pairs'],
     });
     yield put(
       gotCourses(
@@ -48,14 +48,14 @@ function* getCourses() {
 
 function* getDistanceLearningGradesOverview({
   originalCourseId,
-  distanceLearningCourseId
+  distanceLearningCourseId,
 }) {
   try {
     const dlgOverviewResponse = yield makeApiRequest(
       `grades/distance_learning/overview`,
       {
         original_course_id: originalCourseId,
-        distance_learning_course_id: distanceLearningCourseId
+        distance_learning_course_id: distanceLearningCourseId,
       }
     );
     yield put(
@@ -78,7 +78,7 @@ function* getCourseEnrollments({ courseId }) {
   try {
     const enrollmentsRequest = yield makeApiRequest(
       `courses/${courseId}/enrollments`,
-      { type: ["StudentEnrollment"], state: ["active"] }
+      { type: ['StudentEnrollment'], state: ['active'] }
     );
     yield put(
       gotCourseEnrollments(courseId, enrollmentsRequest.data.enrollments)
@@ -92,7 +92,7 @@ function* getCourseEnrollments({ courseId }) {
 
 function* logout() {
   try {
-    yield makePlusRequest("session", {}, "delete");
+    yield makePlusRequest('session', {}, 'delete');
     yield put(loggedOut());
   } catch (e) {
     put(logoutError(e.response ? e.response.data : "can't connect"));

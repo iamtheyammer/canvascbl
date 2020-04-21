@@ -1,7 +1,7 @@
-import React, { Fragment, useEffect } from "react";
-import { connect } from "react-redux";
-import { Redirect } from "react-router-dom";
-import styled from "styled-components";
+import React, { Fragment, useEffect } from 'react';
+import { connect } from 'react-redux';
+import { Redirect } from 'react-router-dom';
+import styled from 'styled-components';
 import {
   Button,
   Divider,
@@ -10,53 +10,53 @@ import {
   Select,
   Skeleton,
   Table,
-  Typography
-} from "antd";
-import Padding from "../../../Padding";
+  Typography,
+} from 'antd';
+import Padding from '../../../Padding';
 import {
   getCourseEnrollments,
-  getDistanceLearningGradesOverview
-} from "../../../../actions/canvas";
-import moment from "moment";
+  getDistanceLearningGradesOverview,
+} from '../../../../actions/canvas';
+import moment from 'moment';
 import {
   clearFilters,
   filterName,
-  filterNameType
-} from "../../../../actions/filters";
-import { desc } from "../../../../util/sort";
-import PopoutLink from "../../../PopoutLink";
+  filterNameType,
+} from '../../../../actions/filters';
+import { desc } from '../../../../util/sort';
+import PopoutLink from '../../../PopoutLink';
 
 const gradeOverviewTableColumns = [
   {
-    title: "Student Name",
-    dataIndex: "studentName",
-    key: "studentName",
-    sorter: (a, b) => desc(a.studentName, b.studentName)
+    title: 'Student Name',
+    dataIndex: 'studentName',
+    key: 'studentName',
+    sorter: (a, b) => desc(a.studentName, b.studentName),
   },
   {
-    title: "Grade",
-    dataIndex: "grade",
-    key: "grade",
-    render: text => <Typography.Text strong>{text}</Typography.Text>
+    title: 'Grade',
+    dataIndex: 'grade',
+    key: 'grade',
+    render: (text) => <Typography.Text strong>{text}</Typography.Text>,
   },
   {
-    title: "Timestamp",
-    dataIndex: "timestamp",
-    key: "timestamp",
-    render: text => moment.utc(text).calendar()
+    title: 'Timestamp',
+    dataIndex: 'timestamp',
+    key: 'timestamp',
+    render: (text) => moment.utc(text).calendar(),
   },
   {
-    title: "Actions",
-    dataIndex: "actions",
-    key: "actions",
-    render: items =>
+    title: 'Actions',
+    dataIndex: 'actions',
+    key: 'actions',
+    render: (items) =>
       items.map((a, i) => (
         <Fragment key={i}>
           {a}
           {i !== items.length - 1 && <Divider type="vertical" />}
         </Fragment>
-      ))
-  }
+      )),
+  },
 ];
 
 const HalfWidthSkeleton = styled(Skeleton)`
@@ -74,14 +74,14 @@ function CourseOverview(props) {
     enrollments,
     filters,
     match,
-    dispatch
+    dispatch,
   } = props;
 
   const courseId = match.params.courseId;
   const dlPair =
     distanceLearningPairs &&
     distanceLearningPairs.filter(
-      p =>
+      (p) =>
         courseId === `${p.original_course_id}_${p.distance_learning_course_id}`
     )[0];
 
@@ -108,7 +108,7 @@ function CourseOverview(props) {
     loadingDlGradesOverviews,
     getDlGradesOverviewError,
     overview,
-    dispatch
+    dispatch,
   ]);
 
   useEffect(() => {
@@ -125,7 +125,7 @@ function CourseOverview(props) {
     loadingEnrollments,
     getCourseEnrollmentsError,
     dlEnrolls,
-    dispatch
+    dispatch,
   ]);
 
   if (!dlPair && distanceLearningPairs) {
@@ -154,9 +154,9 @@ function CourseOverview(props) {
   const tableData =
     overview &&
     overview
-      .filter(o => {
+      .filter((o) => {
         const enroll =
-          dlEnrolls && dlEnrolls.filter(e => e.user_id === o.user_id)[0];
+          dlEnrolls && dlEnrolls.filter((e) => e.user_id === o.user_id)[0];
 
         const name =
           enroll && enroll.user.name && enroll.user.name.toLowerCase();
@@ -164,17 +164,17 @@ function CourseOverview(props) {
 
         if (filters.name) {
           switch (filters.nameType) {
-            case "includes":
+            case 'includes':
               if (!name.includes(fname)) {
                 return false;
               }
               break;
-            case "startsWith":
+            case 'startsWith':
               if (!name.startsWith(fname)) {
                 return false;
               }
               break;
-            case "endsWith":
+            case 'endsWith':
               if (!name.endsWith(fname)) {
                 return false;
               }
@@ -191,7 +191,7 @@ function CourseOverview(props) {
       })
       .map((o, i) => {
         const enroll =
-          dlEnrolls && dlEnrolls.filter(e => e.user_id === o.user_id)[0];
+          dlEnrolls && dlEnrolls.filter((e) => e.user_id === o.user_id)[0];
 
         return {
           studentName: enroll ? (
@@ -207,9 +207,9 @@ function CourseOverview(props) {
               <PopoutLink url={`mailto:${enroll.user.login_id}`}>
                 <Icon type="mail" /> Email Student
               </PopoutLink>
-            )
+            ),
           ],
-          key: i
+          key: i,
         };
       });
 
@@ -248,12 +248,12 @@ function CourseOverview(props) {
         disabled={!dlEnrolls}
         placeholder="Joe Smith"
         value={filters.name}
-        onChange={e => dispatch(filterName(e.target.value))}
-        style={{ width: "40%" }}
+        onChange={(e) => dispatch(filterName(e.target.value))}
+        style={{ width: '40%' }}
         addonBefore={
           <Select
-            value={filters.nameType || "includes"}
-            onChange={type => dispatch(filterNameType(type))}
+            value={filters.nameType || 'includes'}
+            onChange={(type) => dispatch(filterNameType(type))}
             style={{ width: 125 }}
             disabled={!dlEnrolls}
           >
@@ -273,7 +273,7 @@ function CourseOverview(props) {
   );
 }
 
-const ConnectedCourseOverview = connect(state => ({
+const ConnectedCourseOverview = connect((state) => ({
   distanceLearningPairs: state.canvas.distanceLearningPairs,
   loadingDlGradesOverviews: state.canvas.loadingDistanceLearningGradesOverview,
   getDlGradesOverviewError: state.canvas.getDistanceLearningGradesOverviewError,
@@ -281,7 +281,7 @@ const ConnectedCourseOverview = connect(state => ({
   loadingEnrollments: state.canvas.courseEnrollmentsAreLoading,
   getCourseEnrollmentsError: state.canvas.getCourseEnrollmentsError,
   enrollments: state.canvas.enrollments,
-  filters: state.filters
+  filters: state.filters,
 }))(CourseOverview);
 
 export default ConnectedCourseOverview;

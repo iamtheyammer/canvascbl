@@ -1,16 +1,16 @@
-import { createStore, applyMiddleware, compose } from "redux";
-import createSagaMiddleware from "redux-saga";
-import env from "../util/env";
+import { createStore, applyMiddleware, compose } from 'redux';
+import createSagaMiddleware from 'redux-saga';
+import env from '../util/env';
 
-import reducers from "../reducers";
-import rootSaga from "../sagas";
+import reducers from '../reducers';
+import rootSaga from '../sagas';
 
 const sagaMiddleware = createSagaMiddleware();
 
 const middlewares = [sagaMiddleware];
 
 const composer =
-  env.nodeEnv === "development"
+  env.nodeEnv === 'development'
     ? window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose
     : compose;
 

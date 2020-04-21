@@ -1,3 +1,3 @@
-import env from "./env";
+import env from './env';
 
-export default env.defaultApiUri ? env.defaultApiUri : "";
+export default env.defaultApiUri ? env.defaultApiUri : '';

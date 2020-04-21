@@ -1,10 +1,10 @@
-import React, { Fragment } from "react";
-import { Col, Row, Skeleton, Typography } from "antd";
-import { connect } from "react-redux";
-import styled from "styled-components";
-import { Card } from "antd";
-import Padding from "../../Padding";
-import { chunk } from "lodash";
+import React, { Fragment } from 'react';
+import { Col, Row, Skeleton, Typography } from 'antd';
+import { connect } from 'react-redux';
+import styled from 'styled-components';
+import { Card } from 'antd';
+import Padding from '../../Padding';
+import { chunk } from 'lodash';
 
 const StyledCard = styled(Card)`
   width: 240px;
@@ -28,12 +28,12 @@ function Courses(props) {
         chunk(distanceLearningPairs, 4).map((ch, i) => (
           <Fragment key={i}>
             <Row type="flex" justify="start" gutter={24}>
-              {ch.map(p => {
+              {ch.map((p) => {
                 const dlCourse = courses.filter(
-                  c => c.id === p.distance_learning_course_id
+                  (c) => c.id === p.distance_learning_course_id
                 )[0];
                 const oriCourse = courses.filter(
-                  c => c.id === p.original_course_id
+                  (c) => c.id === p.original_course_id
                 )[0];
 
                 if (!dlCourse || !oriCourse) {
@@ -99,10 +99,10 @@ function Courses(props) {
   );
 }
 
-const ConnectedCourses = connect(state => ({
+const ConnectedCourses = connect((state) => ({
   coursesAreLoading: state.canvas.coursesAreLoading,
   courses: state.canvas.courses,
-  distanceLearningPairs: state.canvas.distanceLearningPairs
+  distanceLearningPairs: state.canvas.distanceLearningPairs,
 }))(Courses);
 
 export default ConnectedCourses;

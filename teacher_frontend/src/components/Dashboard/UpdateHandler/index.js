@@ -1,9 +1,9 @@
-import React, { useEffect } from "react";
-import { Typography, List, Modal, Avatar } from "antd";
+import React, { useEffect } from 'react';
+import { Typography, List, Modal, Avatar } from 'antd';
 
-import changelog from "../../../assets/changelog";
-import env from "../../../util/env";
-import PopoutLink from "../../PopoutLink";
+import changelog from '../../../assets/changelog';
+import env from '../../../util/env';
+import PopoutLink from '../../PopoutLink';
 
 function UpdateHandler() {
   useEffect(() => {
@@ -31,32 +31,32 @@ function UpdateHandler() {
     }
 
     function getIconByChangelogType(type) {
-      let iconType = "exclamation";
-      let color = "black";
+      let iconType = 'exclamation';
+      let color = 'black';
 
       switch (type) {
         case 0:
           // update
-          iconType = "info-circle";
-          color = "orange";
+          iconType = 'info-circle';
+          color = 'orange';
           break;
         case 1:
           // new feature
-          iconType = "plus-circle";
-          color = "green";
+          iconType = 'plus-circle';
+          color = 'green';
           break;
         default:
           break;
       }
 
       return (
-        <Avatar style={{ backgroundColor: "#FFFFFF", color }} icon={iconType} />
+        <Avatar style={{ backgroundColor: '#FFFFFF', color }} icon={iconType} />
       );
     }
 
     if (shouldShowChangelog) {
       const availableUpdates = changelog.filter(
-        cle => cle.timestamp > prevVersion
+        (cle) => cle.timestamp > prevVersion
       );
       if (availableUpdates.length < 1) {
         return;
@@ -65,7 +65,7 @@ function UpdateHandler() {
       Modal.info({
         title: (
           <Typography.Text>
-            New in version{" "}
+            New in version{' '}
             <Typography.Text code>{currentVersion}</Typography.Text>
           </Typography.Text>
         ),
@@ -78,7 +78,7 @@ function UpdateHandler() {
           <List
             itemLayout="horizontal"
             dataSource={availableUpdates}
-            renderItem={item => (
+            renderItem={(item) => (
               <List.Item>
                 <List.Item.Meta
                   avatar={getIconByChangelogType(item.type)}
@@ -97,7 +97,7 @@ function UpdateHandler() {
               </List.Item>
             )}
           />
-        )
+        ),
       });
     }
   }, []);

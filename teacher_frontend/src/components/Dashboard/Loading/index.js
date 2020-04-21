@@ -1,9 +1,9 @@
-import React from "react";
-import PropTypes from "prop-types";
-import { connect } from "react-redux";
-import { Spin, Typography } from "antd";
-import useInterval from "@use-hooks/interval";
-import { updateNumberOfDots } from "../../../actions/components/loading";
+import React from 'react';
+import PropTypes from 'prop-types';
+import { connect } from 'react-redux';
+import { Spin, Typography } from 'antd';
+import useInterval from '@use-hooks/interval';
+import { updateNumberOfDots } from '../../../actions/components/loading';
 
 function Loading(props) {
   const { dots, text, dispatch } = props;
@@ -18,15 +18,15 @@ function Loading(props) {
     dispatch(updateNumberOfDots(newNumDots));
   }, 500);
 
-  let dotStr = "";
+  let dotStr = '';
   for (let i = 0; i < dots; i++) {
-    dotStr += ".";
+    dotStr += '.';
   }
 
   return (
     <div align="center">
       <Spin />
-      <span style={{ paddingTop: "20px" }} />
+      <span style={{ paddingTop: '20px' }} />
       <Typography.Title
         level={3}
       >{`Loading ${text}${dotStr}`}</Typography.Title>
@@ -35,9 +35,9 @@ function Loading(props) {
 }
 
 Loading.propTypes = {
-  text: PropTypes.string
+  text: PropTypes.string,
 };
 
-export default connect(state => ({
-  dots: state.components.loading.dots
+export default connect((state) => ({
+  dots: state.components.loading.dots,
 }))(Loading);

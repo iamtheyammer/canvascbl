@@ -1,12 +1,12 @@
-import React, { useEffect } from "react";
-import { Switch, Route, Redirect } from "react-router-dom";
-import { connect } from "react-redux";
-import { Layout, Breadcrumb, Popover, Typography, Modal, Icon } from "antd";
-import DashboardNav from "./DashboardNav";
+import React, { useEffect } from 'react';
+import { Switch, Route, Redirect } from 'react-router-dom';
+import { connect } from 'react-redux';
+import { Layout, Breadcrumb, Popover, Typography, Modal, Icon } from 'antd';
+import DashboardNav from './DashboardNav';
 
-import env from "../../util/env";
-import * as loginReturnTo from "../../util/loginReturnTo";
-import getUrlPrefix from "../../util/getUrlPrefix";
+import env from '../../util/env';
+import * as loginReturnTo from '../../util/loginReturnTo';
+import getUrlPrefix from '../../util/getUrlPrefix';
 import {
   destinationNames,
   destinationTypes,
@@ -14,33 +14,33 @@ import {
   trackDashboardLoad,
   trackExternalLinkClickOther,
   TrackingLink,
-  vias
-} from "../../util/tracking";
-import UpdateHandler from "./UpdateHandler";
-import Courses from "./Courses";
-import { getCourses, getUserProfile } from "../../actions/canvas";
-import CourseOverview from "./Courses/CourseOverview";
-import PopoutLink from "../PopoutLink";
+  vias,
+} from '../../util/tracking';
+import UpdateHandler from './UpdateHandler';
+import Courses from './Courses';
+import { getCourses, getUserProfile } from '../../actions/canvas';
+import CourseOverview from './Courses/CourseOverview';
+import PopoutLink from '../PopoutLink';
 
 const { Content, Footer } = Layout;
 
 const getBreadcrumbNameMap = (courses = []) => {
   const routes = {
-    "/dashboard": "Dashboard",
-    "/dashboard/courses": "Courses"
+    '/dashboard': 'Dashboard',
+    '/dashboard/courses': 'Courses',
   };
 
   // courses.forEach(
   //   c => (routes[`/dashboard/grades/${c.id}`] = `Grade Breakdown for ${c.name}`)
   // );
 
-  courses.forEach(c => {
+  courses.forEach((c) => {
     routes[
       `/dashboard/courses/${c.original_course_id}_${c.distance_learning_course_id}`
     ] = c.course_name;
     routes[
       `/dashboard/courses/${c.original_course_id}_${c.distance_learning_course_id}/overview`
-    ] = "Overview";
+    ] = 'Overview';
   });
 
   return routes;
@@ -57,7 +57,7 @@ const routes = (
     <Route
       exact
       path="/dashboard/courses/:courseId"
-      render={() => <Redirect to={"/dashboard/courses"} />}
+      render={() => <Redirect to={'/dashboard/courses'} />}
     />
     <Route
       exact
@@ -78,7 +78,7 @@ function Dashboard(props) {
     courses,
     distanceLearningPairs,
     dispatch,
-    location
+    location,
   } = props;
 
   useEffect(() => {
@@ -106,7 +106,7 @@ function Dashboard(props) {
     loadingUserProfile,
     getUserProfileError,
     userProfile,
-    dispatch
+    dispatch,
   ]);
 
   useEffect(() => {
@@ -115,15 +115,15 @@ function Dashboard(props) {
     }
   }, [loggedOut, loadingCourses, getCoursesError, courses, dispatch]);
 
-  const pathSnippets = location.pathname.split("/").filter(i => i);
+  const pathSnippets = location.pathname.split('/').filter((i) => i);
   // const breadcrumbNameMap = getBreadcrumbNameMap(courses || []);
   const breadcrumbNameMap = getBreadcrumbNameMap(distanceLearningPairs || []);
   const breadcrumbItems = pathSnippets.map((_, index) => {
-    const url = `/${pathSnippets.slice(0, index + 1).join("/")}`;
+    const url = `/${pathSnippets.slice(0, index + 1).join('/')}`;
     const pageName = pageNameFromPath(url);
     return (
       <Breadcrumb.Item key={url}>
-        {!breadcrumbNameMap[url] && "..."}
+        {!breadcrumbNameMap[url] && '...'}
         <TrackingLink to={url} pageName={pageName} via={vias.breadcrumb}>
           {breadcrumbNameMap[url]}
         </TrackingLink>
@@ -135,12 +135,12 @@ function Dashboard(props) {
   useEffect(() => {
     if (courses) {
       let hasOpenedModal = false;
-      courses.forEach(c =>
-        c.enrollments.forEach(e => {
-          if (!hasOpenedModal && e.type !== "teacher") {
-            if (e.type === "student") {
+      courses.forEach((c) =>
+        c.enrollments.forEach((e) => {
+          if (!hasOpenedModal && e.type !== 'teacher') {
+            if (e.type === 'student') {
               Modal.error({
-                title: "My apologies, young grasshopper.",
+                title: 'My apologies, young grasshopper.',
                 content: "Students aren't able to use CanvasCBL for Teachers.",
                 onOk: () => {
                   trackExternalLinkClickOther(
@@ -156,13 +156,13 @@ function Dashboard(props) {
                     Go to CanvasCBL for Students <Icon type="arrow-right" />
                   </>
                 ),
-                maskClosable: false
+                maskClosable: false,
               });
             } else {
               Modal.error({
                 title: "You don't appear to be a teacher",
                 content:
-                  "Only teachers are able to use CanvasCBL for Teachers.",
+                  'Only teachers are able to use CanvasCBL for Teachers.',
                 onOk: () => {
                   trackExternalLinkClickOther(
                     env.canvascblUrl,
@@ -174,11 +174,11 @@ function Dashboard(props) {
                 },
                 okText: (
                   <>
-                    Go to CanvasCBL for Students and Parents{" "}
+                    Go to CanvasCBL for Students and Parents{' '}
                     <Icon type="arrow-right" />
                   </>
                 ),
-                maskClosable: false
+                maskClosable: false,
               });
             }
             hasOpenedModal = true;
@@ -194,7 +194,7 @@ function Dashboard(props) {
       const data = err;
       console.log(data);
       switch (data.action) {
-        case "redirect_to_oauth":
+        case 'redirect_to_oauth':
           // we'll be reauthing
           loginReturnTo.set(location);
           window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request?dest=teacher`;
@@ -204,16 +204,16 @@ function Dashboard(props) {
         //   return null;
         default:
           loginReturnTo.set(location);
-          if (data.error.includes("no session string")) {
-            window.location = env.canvascblUrl + "?dest=teacher";
-          } else if (data.error === "expired session") {
+          if (data.error.includes('no session string')) {
+            window.location = env.canvascblUrl + '?dest=teacher';
+          } else if (data.error === 'expired session') {
             window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request?intent=reauth&dest=teacher`;
             return null;
-          } else if (data.error === "invalid session string") {
-            window.location = env.canvascblUrl + "?dest=teacher";
+          } else if (data.error === 'invalid session string') {
+            window.location = env.canvascblUrl + '?dest=teacher';
           } else {
             return (
-              <Typography.Text type={"danger"}>
+              <Typography.Text type={'danger'}>
                 We're in unknown lands, captain. (We've encountered an
                 unexpected error.) Please try again later or contact us.
               </Typography.Text>
@@ -224,7 +224,7 @@ function Dashboard(props) {
       return (
         <Typography.Text type="danger">
           We seem to have encountered a bit of an unexpected error. If this
-          keeps happening, please{" "}
+          keeps happening, please{' '}
           <PopoutLink url="https://go.canvascbl.com/help/contact" addIcon>
             contact us.
           </PopoutLink>
@@ -242,31 +242,31 @@ function Dashboard(props) {
     <div className="dashboard">
       <Layout className="layout">
         <DashboardNav />
-        <Content style={{ padding: "0 50px" }}>
+        <Content style={{ padding: '0 50px' }}>
           <Breadcrumb style={{ marginTop: 12 }}>{breadcrumbItems}</Breadcrumb>
           <div
             style={{
-              background: "#fff",
+              background: '#fff',
               padding: 24,
               marginTop: 12,
-              minHeight: 280
+              minHeight: 280,
             }}
           >
             {routes}
           </div>
         </Content>
         <UpdateHandler />
-        <Footer style={{ textAlign: "center" }}>
+        <Footer style={{ textAlign: 'center' }}>
           <Popover
             trigger="click"
             content={
               <Typography.Text>
                 Version {env.currentVersion}
-                {env.nodeEnv === "development" && "-DEV"}
+                {env.nodeEnv === 'development' && '-DEV'}
               </Typography.Text>
             }
           >
-            CanvasCBL for Teachers Beta · Built by Sam Mendelson{" "}
+            CanvasCBL for Teachers Beta · Built by Sam Mendelson{' '}
             {new Date().getFullYear()}
           </Popover>
         </Footer>
@@ -275,7 +275,7 @@ function Dashboard(props) {
   );
 }
 
-const ConnectedDashboard = connect(state => ({
+const ConnectedDashboard = connect((state) => ({
   loggedOut: state.canvas.loggedOut,
   loadingUserProfile: state.canvas.loadingUserProfile,
   getUserProfileError: state.canvas.getUserProfileError,
@@ -283,7 +283,7 @@ const ConnectedDashboard = connect(state => ({
   loadingCourses: state.canvas.loadingCourses,
   getCoursesError: state.canvas.getCoursesError,
   courses: state.canvas.courses,
-  distanceLearningPairs: state.canvas.distanceLearningPairs
+  distanceLearningPairs: state.canvas.distanceLearningPairs,
 }))(Dashboard);
 
 export default ConnectedDashboard;

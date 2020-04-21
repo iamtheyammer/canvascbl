@@ -1,17 +1,17 @@
-import React from "react";
-import { connect } from "react-redux";
-import { Layout, Menu, Typography } from "antd";
-import styled from "styled-components";
-import logo from "../../../assets/banner-light.svg";
+import React from 'react';
+import { connect } from 'react-redux';
+import { Layout, Menu, Typography } from 'antd';
+import styled from 'styled-components';
+import logo from '../../../assets/banner-light.svg';
 import {
   destinationNames,
   destinationTypes,
   TrackingLink,
   trackLogout,
-  vias
-} from "../../../util/tracking";
-import PopoutLink from "../../PopoutLink";
-import { logout } from "../../../actions/canvas";
+  vias,
+} from '../../../util/tracking';
+import PopoutLink from '../../PopoutLink';
+import { logout } from '../../../actions/canvas';
 
 const { Header } = Layout;
 
@@ -57,7 +57,7 @@ function DashboardNav(props) {
               destinationName: destinationNames.googleForms,
               destinationType:
                 destinationTypes.canvascblForTeachersFeedbackForm,
-              via: vias.dashboardMenu
+              via: vias.dashboardMenu,
             }}
             addIcon
           >
@@ -71,9 +71,9 @@ function DashboardNav(props) {
             dispatch(logout());
           }}
         >
-          {!loggedOut && !loadingLogout && !logoutError && "Logout"}
-          {loggedOut && "Logged out"}
-          {loadingLogout && "Loading..."}
+          {!loggedOut && !loadingLogout && !logoutError && 'Logout'}
+          {loggedOut && 'Logged out'}
+          {loadingLogout && 'Loading...'}
           {logoutError && (
             <Typography.Text type="danger">
               Error logging you out
@@ -85,10 +85,10 @@ function DashboardNav(props) {
   );
 }
 
-const ConnectedDashboardNav = connect(state => ({
+const ConnectedDashboardNav = connect((state) => ({
   loggedOut: state.canvas.loggedOut,
   loadingLogout: state.canvas.loadingLogout,
-  logoutError: state.canvas.logoutError
+  logoutError: state.canvas.logoutError,
 }))(DashboardNav);
 
 export default ConnectedDashboardNav;

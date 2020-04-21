@@ -8,5 +8,5 @@ export function get() {
 }
 
 export function clear() {
-  localStorage.loginReturnTo = "";
+  localStorage.loginReturnTo = '';
 }
