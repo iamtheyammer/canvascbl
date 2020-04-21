@@ -36,17 +36,20 @@ function Courses(props) {
                   (c) => c.id === p.original_course_id
                 )[0];
 
+                const coverImgSrc =
+                  dlCourse.image_download_url || oriCourse.image_download_url;
+
                 if (!dlCourse || !oriCourse) {
                   return (
                     <Card
                       key={`${dlCourse.id}_${oriCourse.id}`}
                       hoverable
-                      cover={
-                        <img
-                          alt="example"
-                          src="https://os.alipayobjects.com/rmsportal/QBnOOoLaAfKPirc.png"
-                        />
-                      }
+                      // cover={
+                      //   <img
+                      //     alt="example"
+                      //     src="https://os.alipayobjects.com/rmsportal/QBnOOoLaAfKPirc.png"
+                      //   />
+                      // }
                     >
                       <Card.Meta
                         title={`Error loading ${p.course_name}`}
@@ -68,14 +71,9 @@ function Courses(props) {
                         )
                       }
                       cover={
-                        <img
-                          alt="example"
-                          src={
-                            dlCourse.image_download_url ||
-                            oriCourse.image_download_url ||
-                            null
-                          }
-                        />
+                        coverImgSrc && (
+                          <img alt={`${p.course_name}`} src={coverImgSrc} />
+                        )
                       }
                     >
                       <Card.Meta
