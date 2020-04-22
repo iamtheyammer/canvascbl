@@ -8,7 +8,7 @@ mixpanel.init(env.mixpanelToken);
 
 mixpanel.set_config({
   ignore_dnt: true,
-  debug: env.nodeEnv === 'development',
+  debug: env.nodeEnv === 'development'
 });
 
 const env_check = true;
@@ -39,14 +39,14 @@ const mp = {
   people: {
     set: (props) => {
       if (env_check) mixpanel.people.set(props);
-    },
-  },
+    }
+  }
 };
 
 export const pageNames = {
   profile: 'Profile',
   courses: 'Courses',
-  courseOverview: 'Course Overview',
+  courseOverview: 'Course Overview'
 };
 
 const courseOverviewRegex = /^\/dashboard\/courses\/[0-9]+_[0-9]+\/overview$/;
@@ -68,19 +68,19 @@ export const vias = {
   dashboardMenu: 'Dashboard Menu',
   breadcrumb: 'Breadcrumb',
   coursesCourseCard: 'Courses Course Card',
-  notATeacherPopup: 'Not a Teacher Popup',
+  notATeacherPopup: 'Not a Teacher Popup'
 };
 
 export const destinationNames = {
   courseOverview: 'Course Overview',
   canvascblForStudentsAndParents: 'CanvasCBL for Students and Parents',
-  googleForms: 'Google Forms',
+  googleForms: 'Google Forms'
 };
 
 export const destinationTypes = {
   canvascbl: 'CanvasCBL',
   canvascblLogout: 'CanvasCBL Logout',
-  canvascblForTeachersFeedbackForm: 'CanvasCBL for Teachers Feedback Form',
+  canvascblForTeachersFeedbackForm: 'CanvasCBL for Teachers Feedback Form'
 };
 
 export const tabImplementations = {};
@@ -114,21 +114,21 @@ export function trackDashboardLoad(
   mp.identify(userId);
 
   mp.register({
-    'Current Version': `${currentVersion}`,
+    'Current Version': `${currentVersion}`
   });
 
   mp.people.set({
     $name: name,
     $email: email,
     'CanvasCBL User ID': userId,
-    'Canvas User ID': canvasUserId,
+    'Canvas User ID': canvasUserId
   });
 
   mp.track('Dashboard Load', {
     $name: name,
     $email: email,
     'CanvasCBL User ID': userId,
-    'User Last Version': `${prevVersion}`,
+    'User Last Version': `${prevVersion}`
   });
 }
 
@@ -140,7 +140,7 @@ export function trackDashboardLoad(
 export function trackPageView(pageName, courseId) {
   mp.track('Page View', {
     'Page Name': pageName,
-    'Course ID': courseId,
+    'Course ID': courseId
   });
 }
 
@@ -152,7 +152,7 @@ export function trackPageView(pageName, courseId) {
 export function trackNavigation(to, via) {
   mp.track('Navigation', {
     To: to,
-    Via: via,
+    Via: via
   });
 }
 
@@ -175,7 +175,7 @@ export function trackExternalLinkClick(
     'Destination URL': destinationUrl,
     'Destination Name': destinationName,
     'Destination Type': destinationType,
-    Via: via,
+    Via: via
   });
 
   // mp.track('External Link Click', {
@@ -203,7 +203,7 @@ export function trackExternalLinkClickOther(
     'Destination URL': destinationUrl,
     'Destination Name': destinationName,
     'Destination Type': destinationType,
-    Via: via,
+    Via: via
   });
 }
 
@@ -213,7 +213,7 @@ export function trackExternalLinkClickOther(
  */
 export function trackLogout(via) {
   mp.track('Logout', {
-    Via: via,
+    Via: via
   });
 }
 
@@ -243,5 +243,5 @@ TrackingLink.propTypes = {
   pageName: PropTypes.oneOf(Object.values(pageNames)),
   via: PropTypes.oneOf(Object.values(vias)).isRequired,
   style: PropTypes.object,
-  children: PropTypes.any,
+  children: PropTypes.any
 };

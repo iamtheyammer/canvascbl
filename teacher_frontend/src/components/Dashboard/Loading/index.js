@@ -35,9 +35,9 @@ function Loading(props) {
 }
 
 Loading.propTypes = {
-  text: PropTypes.string,
+  text: PropTypes.string
 };
 
 export default connect((state) => ({
-  dots: state.components.loading.dots,
+  dots: state.components.loading.dots
 }))(Loading);

@@ -15,7 +15,7 @@ import {
   gotDistanceLearningGradesOverview,
   gotUserProfile,
   loggedOut,
-  logoutError,
+  logoutError
 } from '../actions/canvas';
 import makePlusRequest from '../util/plus/makePlusRequest';
 
@@ -33,7 +33,7 @@ function* getUserProfile() {
 function* getCourses() {
   try {
     const coursesResponse = yield makeApiRequest(`courses`, {
-      include: ['distance_learning_pairs'],
+      include: ['distance_learning_pairs']
     });
     yield put(
       gotCourses(
@@ -48,14 +48,14 @@ function* getCourses() {
 
 function* getDistanceLearningGradesOverview({
   originalCourseId,
-  distanceLearningCourseId,
+  distanceLearningCourseId
 }) {
   try {
     const dlgOverviewResponse = yield makeApiRequest(
       `grades/distance_learning/overview`,
       {
         original_course_id: originalCourseId,
-        distance_learning_course_id: distanceLearningCourseId,
+        distance_learning_course_id: distanceLearningCourseId
       }
     );
     yield put(

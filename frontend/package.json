@@ -34,8 +34,8 @@
     "build": "react-app-rewired build",
     "test": "react-app-rewired test",
     "eject": "react-scripts eject",
-    "format": "prettier --write \"src/**/*.js\" \"src/**/*.jsx\"",
-    "formatcheck": "prettier --check \"src/**/*.js\" \"src/**/*.jsx\""
+    "format": "prettier --config ../.prettierrc --write \"src/**/*.js\" \"src/**/*.jsx\"",
+    "formatcheck": "prettier --config ../.prettierrc --check \"src/**/*.js\" \"src/**/*.jsx\""
   },
   "eslintConfig": {
     "extends": "react-app"

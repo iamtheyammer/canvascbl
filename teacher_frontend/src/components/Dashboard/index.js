@@ -14,7 +14,7 @@ import {
   trackDashboardLoad,
   trackExternalLinkClickOther,
   TrackingLink,
-  vias,
+  vias
 } from '../../util/tracking';
 import UpdateHandler from './UpdateHandler';
 import Courses from './Courses';
@@ -27,7 +27,7 @@ const { Content, Footer } = Layout;
 const getBreadcrumbNameMap = (courses = []) => {
   const routes = {
     '/dashboard': 'Dashboard',
-    '/dashboard/courses': 'Courses',
+    '/dashboard/courses': 'Courses'
   };
 
   // courses.forEach(
@@ -78,7 +78,7 @@ function Dashboard(props) {
     courses,
     distanceLearningPairs,
     dispatch,
-    location,
+    location
   } = props;
 
   useEffect(() => {
@@ -106,7 +106,7 @@ function Dashboard(props) {
     loadingUserProfile,
     getUserProfileError,
     userProfile,
-    dispatch,
+    dispatch
   ]);
 
   useEffect(() => {
@@ -156,7 +156,7 @@ function Dashboard(props) {
                     Go to CanvasCBL for Students <Icon type="arrow-right" />
                   </>
                 ),
-                maskClosable: false,
+                maskClosable: false
               });
             } else {
               Modal.error({
@@ -178,7 +178,7 @@ function Dashboard(props) {
                     <Icon type="arrow-right" />
                   </>
                 ),
-                maskClosable: false,
+                maskClosable: false
               });
             }
             hasOpenedModal = true;
@@ -249,7 +249,7 @@ function Dashboard(props) {
               background: '#fff',
               padding: 24,
               marginTop: 12,
-              minHeight: 280,
+              minHeight: 280
             }}
           >
             {routes}
@@ -283,7 +283,7 @@ const ConnectedDashboard = connect((state) => ({
   loadingCourses: state.canvas.loadingCourses,
   getCoursesError: state.canvas.getCoursesError,
   courses: state.canvas.courses,
-  distanceLearningPairs: state.canvas.distanceLearningPairs,
+  distanceLearningPairs: state.canvas.distanceLearningPairs
 }))(Dashboard);
 
 export default ConnectedDashboard;

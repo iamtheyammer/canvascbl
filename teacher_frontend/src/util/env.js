@@ -6,5 +6,5 @@ export default {
   defaultSubdomain: process.env.REACT_APP_DEFAULT_SUBDOMAIN,
   mixpanelToken: process.env.REACT_APP_TEACHER_MIXPANEL_TOKEN,
   canvascblUrl: process.env.REACT_APP_TEACHER_CANVASCBL_URL,
-  nodeEnv: process.env.NODE_ENV,
+  nodeEnv: process.env.NODE_ENV
 };

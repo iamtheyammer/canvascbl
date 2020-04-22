@@ -5,7 +5,7 @@ export default function loading(state = {}, action) {
     case LOADING_UPDATE_NUMBER_OF_DOTS:
       return {
         ...state,
-        dots: action.numDots,
+        dots: action.numDots
       };
     default:
       return state;

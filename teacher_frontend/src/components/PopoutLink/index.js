@@ -48,8 +48,8 @@ PopoutLink.propTypes = {
   tracking: PropTypes.shape({
     destinationName: PropTypes.string.isRequired,
     destinationType: PropTypes.string,
-    via: PropTypes.string.isRequired,
-  }),
+    via: PropTypes.string.isRequired
+  })
 };
 
 export default PopoutLink;

@@ -10,18 +10,18 @@ import {
   Select,
   Skeleton,
   Table,
-  Typography,
+  Typography
 } from 'antd';
 import Padding from '../../../Padding';
 import {
   getCourseEnrollments,
-  getDistanceLearningGradesOverview,
+  getDistanceLearningGradesOverview
 } from '../../../../actions/canvas';
 import moment from 'moment';
 import {
   clearFilters,
   filterName,
-  filterNameType,
+  filterNameType
 } from '../../../../actions/filters';
 import { desc } from '../../../../util/sort';
 import PopoutLink from '../../../PopoutLink';
@@ -31,19 +31,19 @@ const gradeOverviewTableColumns = [
     title: 'Student Name',
     dataIndex: 'studentName',
     key: 'studentName',
-    sorter: (a, b) => desc(a.studentName, b.studentName),
+    sorter: (a, b) => desc(a.studentName, b.studentName)
   },
   {
     title: 'Grade',
     dataIndex: 'grade',
     key: 'grade',
-    render: (text) => <Typography.Text strong>{text}</Typography.Text>,
+    render: (text) => <Typography.Text strong>{text}</Typography.Text>
   },
   {
     title: 'Timestamp',
     dataIndex: 'timestamp',
     key: 'timestamp',
-    render: (text) => moment.utc(text).calendar(),
+    render: (text) => moment.utc(text).calendar()
   },
   {
     title: 'Actions',
@@ -55,8 +55,8 @@ const gradeOverviewTableColumns = [
           {a}
           {i !== items.length - 1 && <Divider type="vertical" />}
         </Fragment>
-      )),
-  },
+      ))
+  }
 ];
 
 const HalfWidthSkeleton = styled(Skeleton)`
@@ -74,7 +74,7 @@ function CourseOverview(props) {
     enrollments,
     filters,
     match,
-    dispatch,
+    dispatch
   } = props;
 
   const courseId = match.params.courseId;
@@ -108,7 +108,7 @@ function CourseOverview(props) {
     loadingDlGradesOverviews,
     getDlGradesOverviewError,
     overview,
-    dispatch,
+    dispatch
   ]);
 
   useEffect(() => {
@@ -125,7 +125,7 @@ function CourseOverview(props) {
     loadingEnrollments,
     getCourseEnrollmentsError,
     dlEnrolls,
-    dispatch,
+    dispatch
   ]);
 
   if (!dlPair && distanceLearningPairs) {
@@ -207,9 +207,9 @@ function CourseOverview(props) {
               <PopoutLink url={`mailto:${enroll.user.login_id}`}>
                 <Icon type="mail" /> Email Student
               </PopoutLink>
-            ),
+            )
           ],
-          key: i,
+          key: i
         };
       });
 
@@ -281,7 +281,7 @@ const ConnectedCourseOverview = connect((state) => ({
   loadingEnrollments: state.canvas.courseEnrollmentsAreLoading,
   getCourseEnrollmentsError: state.canvas.getCourseEnrollmentsError,
   enrollments: state.canvas.enrollments,
-  filters: state.filters,
+  filters: state.filters
 }))(CourseOverview);
 
 export default ConnectedCourseOverview;

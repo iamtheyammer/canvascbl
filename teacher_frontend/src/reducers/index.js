@@ -7,5 +7,5 @@ import components from './components';
 export default combineReducers({
   canvas,
   filters,
-  components,
+  components
 });

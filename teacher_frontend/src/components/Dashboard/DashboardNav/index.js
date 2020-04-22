@@ -8,7 +8,7 @@ import {
   destinationTypes,
   TrackingLink,
   trackLogout,
-  vias,
+  vias
 } from '../../../util/tracking';
 import PopoutLink from '../../PopoutLink';
 import { logout } from '../../../actions/canvas';
@@ -57,7 +57,7 @@ function DashboardNav(props) {
               destinationName: destinationNames.googleForms,
               destinationType:
                 destinationTypes.canvascblForTeachersFeedbackForm,
-              via: vias.dashboardMenu,
+              via: vias.dashboardMenu
             }}
             addIcon
           >
@@ -88,7 +88,7 @@ function DashboardNav(props) {
 const ConnectedDashboardNav = connect((state) => ({
   loggedOut: state.canvas.loggedOut,
   loadingLogout: state.canvas.loadingLogout,
-  logoutError: state.canvas.logoutError,
+  logoutError: state.canvas.logoutError
 }))(DashboardNav);
 
 export default ConnectedDashboardNav;

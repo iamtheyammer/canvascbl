@@ -6,5 +6,5 @@ export default (path, query = {}, method = 'get') =>
     method,
     url: `${getUrlPrefix}/api/plus/${path}`,
     params: query,
-    withCredentials: true,
+    withCredentials: true
   });

@@ -32,7 +32,7 @@
     "build": "react-app-rewired build",
     "test": "react-app-rewired test",
     "eject": "react-scripts eject",
-    "format": "prettier --write \"src/**/*.js\"",
+    "format": "prettier --config ../.prettierrc --write \"src/**/*.js\"",
     "formatcheck": "prettier --check \"src/**/*.js\""
   },
   "eslintConfig": {

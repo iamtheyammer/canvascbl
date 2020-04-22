@@ -100,7 +100,7 @@ function Courses(props) {
 const ConnectedCourses = connect((state) => ({
   coursesAreLoading: state.canvas.coursesAreLoading,
   courses: state.canvas.courses,
-  distanceLearningPairs: state.canvas.distanceLearningPairs,
+  distanceLearningPairs: state.canvas.distanceLearningPairs
 }))(Courses);
 
 export default ConnectedCourses;

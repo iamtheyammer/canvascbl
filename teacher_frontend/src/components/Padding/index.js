@@ -16,7 +16,7 @@ Padding.propTypes = {
   bottom: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   left: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   all: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  br: PropTypes.bool,
+  br: PropTypes.bool
 };
 
 Padding.defaultProps = {
@@ -24,7 +24,7 @@ Padding.defaultProps = {
   right: 0,
   bottom: 0,
   left: 0,
-  br: false,
+  br: false
 };
 
 export default Padding;

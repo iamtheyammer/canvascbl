@@ -24,34 +24,34 @@ export const CANVAS_LOGGED_OUT = 'CANVAS_LOGGED_OUT';
 
 export function getUserProfile() {
   return {
-    type: CANVAS_GET_USER_PROFILE,
+    type: CANVAS_GET_USER_PROFILE
   };
 }
 
 export function getUserProfileError(e) {
   return {
     type: CANVAS_GET_USER_PROFILE_ERROR,
-    e,
+    e
   };
 }
 
 export function gotUserProfile(profile) {
   return {
     type: CANVAS_GOT_USER_PROFILE,
-    profile,
+    profile
   };
 }
 
 export function getCourses() {
   return {
-    type: CANVAS_GET_COURSES,
+    type: CANVAS_GET_COURSES
   };
 }
 
 export function getCoursesError(e) {
   return {
     type: CANVAS_GET_COURSES_ERROR,
-    e,
+    e
   };
 }
 
@@ -59,7 +59,7 @@ export function gotCourses(courses, distanceLearningPairs) {
   return {
     type: CANVAS_GOT_COURSES,
     courses,
-    distanceLearningPairs,
+    distanceLearningPairs
   };
 }
 
@@ -70,14 +70,14 @@ export function getDistanceLearningGradesOverview(
   return {
     type: CANVAS_GET_DISTANCE_LEARNING_GRADES_OVERVIEW,
     originalCourseId,
-    distanceLearningCourseId,
+    distanceLearningCourseId
   };
 }
 
 export function getDistanceLearningGradesOverviewError(e) {
   return {
     type: CANVAS_GET_DISTANCE_LEARNING_GRADES_OVERVIEW_ERROR,
-    e,
+    e
   };
 }
 
@@ -90,21 +90,21 @@ export function gotDistanceLearningGradesOverview(
     type: CANVAS_GOT_DISTANCE_LEARNING_GRADES_OVERVIEW,
     originalCourseId,
     distanceLearningCourseId,
-    overview,
+    overview
   };
 }
 
 export function getCourseEnrollments(courseId) {
   return {
     type: CANVAS_GET_COURSE_ENROLLMENTS,
-    courseId,
+    courseId
   };
 }
 
 export function getCourseEnrollmentsError(e) {
   return {
     type: CANVAS_GET_COURSE_ENROLLMENTS_ERROR,
-    e,
+    e
   };
 }
 
@@ -112,25 +112,25 @@ export function gotCourseEnrollments(courseId, enrollments) {
   return {
     type: CANVAS_GOT_COURSE_ENROLLMENTS,
     courseId,
-    enrollments,
+    enrollments
   };
 }
 
 export function logout() {
   return {
-    type: CANVAS_LOGOUT,
+    type: CANVAS_LOGOUT
   };
 }
 
 export function logoutError(e) {
   return {
     type: CANVAS_LOGOUT_ERROR,
-    e,
+    e
   };
 }
 
 export function loggedOut() {
   return {
-    type: CANVAS_LOGGED_OUT,
+    type: CANVAS_LOGGED_OUT
   };
 }

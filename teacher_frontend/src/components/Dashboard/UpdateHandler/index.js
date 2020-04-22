@@ -97,7 +97,7 @@ function UpdateHandler() {
               </List.Item>
             )}
           />
-        ),
+        )
       });
     }
   }, []);

@@ -7,5 +7,5 @@ export default (path, query = {}, method = 'get', body) =>
     url: `${getUrlPrefix}/api/v1/${path}`,
     params: query,
     withCredentials: true,
-    data: body,
+    data: body
   });
