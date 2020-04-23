@@ -371,7 +371,7 @@ func calculateDistanceLearningGrades(courses []canvasCourse, grades map[uint64]c
 	}
 
 	// finally, compute grades
-	var dlGrades []distanceLearningGrade
+	dlGrades := make([]distanceLearningGrade, 0)
 
 	for _, pair := range coursePairs {
 		grade := distanceLearningGrade{

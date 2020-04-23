@@ -801,6 +801,11 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 			for uID, cs := range resp.DetailedGrades {
 				// range thru courses
 				for cID, c := range cs {
+					// skip courses we handled above
+					if _, ok := excludeCourses[cID]; ok {
+						continue
+					}
+
 					// if a previous grade exists for user
 					if uPrev, ok := studentPrevGrades[uID]; ok {
 						// prev grade for course?
