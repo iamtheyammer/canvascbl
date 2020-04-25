@@ -62,6 +62,6 @@ function OAuth2Response(props) {
   return <Redirect to={'/'} />;
 }
 
-const ConnectedOAuth2Response = connect(state => ({}))(OAuth2Response);
+const ConnectedOAuth2Response = connect((state) => ({}))(OAuth2Response);
 
 export default ConnectedOAuth2Response;

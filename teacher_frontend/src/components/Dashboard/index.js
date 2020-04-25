@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
-import { Switch, Route, Redirect } from 'react-router-dom';
+import { Redirect, Route, Switch } from 'react-router-dom';
 import { connect } from 'react-redux';
-import { Layout, Breadcrumb, Popover, Typography, Modal, Icon } from 'antd';
+import { Breadcrumb, Icon, Layout, Modal, Popover, Typography } from 'antd';
 import DashboardNav from './DashboardNav';
 
 import env from '../../util/env';
@@ -134,91 +134,75 @@ function Dashboard(props) {
   // handle non-teachers
   useEffect(() => {
     if (courses) {
-      let hasOpenedModal = false;
+      let foundTeacher = false;
+      let isStudent = false;
       courses.forEach((c) =>
         c.enrollments.forEach((e) => {
-          if (!hasOpenedModal && e.type !== 'teacher') {
-            if (e.type === 'student') {
-              Modal.error({
-                title: 'My apologies, young grasshopper.',
-                content: "Students aren't able to use CanvasCBL for Teachers.",
-                onOk: () => {
-                  trackExternalLinkClickOther(
-                    env.canvascblUrl,
-                    destinationTypes.canvascbl,
-                    destinationNames.canvascblForStudentsAndParents,
-                    vias.notATeacherPopup
-                  );
-                  window.location = env.canvascblUrl;
-                },
-                okText: (
-                  <>
-                    Go to CanvasCBL for Students <Icon type="arrow-right" />
-                  </>
-                ),
-                maskClosable: false
-              });
-            } else {
-              Modal.error({
-                title: "You don't appear to be a teacher",
-                content:
-                  'Only teachers are able to use CanvasCBL for Teachers.',
-                onOk: () => {
-                  trackExternalLinkClickOther(
-                    env.canvascblUrl,
-                    destinationTypes.canvascbl,
-                    destinationNames.canvascblForStudentsAndParents,
-                    vias.notATeacherPopup
-                  );
-                  window.location = env.canvascblUrl;
-                },
-                okText: (
-                  <>
-                    Go to CanvasCBL for Students and Parents{' '}
-                    <Icon type="arrow-right" />
-                  </>
-                ),
-                maskClosable: false
-              });
-            }
-            hasOpenedModal = true;
+          if (e.type === 'teacher') {
+            foundTeacher = true;
+          } else if (e.type === 'student') {
+            isStudent = true;
           }
         })
       );
+
+      if (!foundTeacher) {
+        if (isStudent) {
+          Modal.error({
+            title: 'My apologies, young grasshopper.',
+            content: "Students aren't able to use CanvasCBL for Teachers.",
+            onOk: () => {
+              trackExternalLinkClickOther(
+                env.canvascblUrl,
+                destinationTypes.canvascbl,
+                destinationNames.canvascblForStudentsAndParents,
+                vias.notATeacherPopup
+              );
+              window.location = env.canvascblUrl;
+            },
+            okText: (
+              <>
+                Go to CanvasCBL for Students <Icon type="arrow-right" />
+              </>
+            ),
+            maskClosable: false
+          });
+        } else {
+          Modal.error({
+            title: "You don't appear to be a teacher",
+            content: 'Only teachers are able to use CanvasCBL for Teachers.',
+            onOk: () => {
+              trackExternalLinkClickOther(
+                env.canvascblUrl,
+                destinationTypes.canvascbl,
+                destinationNames.canvascblForStudentsAndParents,
+                vias.notATeacherPopup
+              );
+              window.location = env.canvascblUrl;
+            },
+            okText: (
+              <>
+                Go to CanvasCBL for Students and Parents{' '}
+                <Icon type="arrow-right" />
+              </>
+            ),
+            maskClosable: false
+          });
+        }
+      }
     }
   }, [courses]);
 
   const err = getUserProfileError;
   if (err) {
+    loginReturnTo.set(location);
     if (err.error) {
-      const data = err;
-      console.log(data);
-      switch (data.action) {
-        case 'redirect_to_oauth':
-          // we'll be reauthing
-          loginReturnTo.set(location);
-          window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request?dest=teacher`;
-          return null;
-        // case "retry":
-        //   dispatch(getInitialData(id));
-        //   return null;
-        default:
-          loginReturnTo.set(location);
-          if (data.error.includes('no session string')) {
-            window.location = env.canvascblUrl + '?dest=teacher';
-          } else if (data.error === 'expired session') {
-            window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request?intent=reauth&dest=teacher`;
-            return null;
-          } else if (data.error === 'invalid session string') {
-            window.location = env.canvascblUrl + '?dest=teacher';
-          } else {
-            return (
-              <Typography.Text type={'danger'}>
-                We're in unknown lands, captain. (We've encountered an
-                unexpected error.) Please try again later or contact us.
-              </Typography.Text>
-            );
-          }
+      if (err.action === 'redirect_to_oauth') {
+        loginReturnTo.set(location);
+        window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request?dest=teacher`;
+        return null;
+      } else {
+        window.location = env.accountUrl + '?dest=teacher';
       }
     } else {
       return (

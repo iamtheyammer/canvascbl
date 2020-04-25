@@ -18,10 +18,6 @@ export const CANVAS_GET_COURSE_ENROLLMENTS_ERROR =
   'CANVAS_GET_COURSE_ENROLLMENTS_ERROR';
 export const CANVAS_GOT_COURSE_ENROLLMENTS = 'CANVAS_GOT_COURSE_ENROLLMENTS';
 
-export const CANVAS_LOGOUT = 'CANVAS_LOGOUT';
-export const CANVAS_LOGOUT_ERROR = 'CANVAS_LOGOUT_ERROR';
-export const CANVAS_LOGGED_OUT = 'CANVAS_LOGGED_OUT';
-
 export function getUserProfile() {
   return {
     type: CANVAS_GET_USER_PROFILE
@@ -113,24 +109,5 @@ export function gotCourseEnrollments(courseId, enrollments) {
     type: CANVAS_GOT_COURSE_ENROLLMENTS,
     courseId,
     enrollments
-  };
-}
-
-export function logout() {
-  return {
-    type: CANVAS_LOGOUT
-  };
-}
-
-export function logoutError(e) {
-  return {
-    type: CANVAS_LOGOUT_ERROR,
-    e
-  };
-}
-
-export function loggedOut() {
-  return {
-    type: CANVAS_LOGGED_OUT
   };
 }

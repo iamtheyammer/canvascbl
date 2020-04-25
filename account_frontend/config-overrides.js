@@ -1,9 +1,12 @@
 const {
   override,
   fixBabelImports,
-  addWebpackPlugin
+  addWebpackPlugin,
+  addBabelPlugin
 } = require('customize-cra');
 const Dotenv = require('dotenv-webpack');
+
+const isDev = process.env.NODE_ENV === 'development';
 
 module.exports = override(
   fixBabelImports('import-antd', {
@@ -15,6 +18,10 @@ module.exports = override(
     libraryName: 'antd-mobile',
     style: 'css'
   }),
+  addBabelPlugin([
+    'babel-plugin-styled-components',
+    { ssr: false, displayName: isDev }
+  ]),
   // fixBabelImports("import-lodash", {
   //   libraryName: "lodash",
   //   libraryDirectory: "",

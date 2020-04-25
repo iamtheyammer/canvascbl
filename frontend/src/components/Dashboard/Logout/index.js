@@ -1,15 +1,13 @@
 import React from 'react';
-import { connect } from 'react-redux';
 import { Redirect } from 'react-router-dom';
-
-import { logout } from '../../../actions/canvas';
+import env from '../../../util/env';
 
 function Logout(props) {
-  const { dispatch } = props;
-  dispatch(logout());
+  window.location = `${env.accountUrl}logout`;
+
   return <Redirect to="/" />;
 }
 
-const ConnectedLogout = connect(state => ({}))(Logout);
+// const ConnectedLogout = connect(state => ({}))(Logout);
 
-export default ConnectedLogout;
+export default Logout;

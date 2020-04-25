@@ -1,8 +1,6 @@
 export const CANVAS_GET_INITIAL_DATA = 'CANVAS_GET_INITIAL_DATA';
 export const CANVAS_GOT_INITIAL_DATA = 'CANVAS_GOT_INITIAL_DATA';
 
-export const CANVAS_LOGOUT = 'CANVAS_LOGOUT';
-
 export const CANVAS_GET_ASSIGNMENTS_FOR_COURSE =
   'CANVAS_GET_ASSIGNMENTS_FOR_COURSE';
 export const CANVAS_GOT_ASSIGNMENTS_FOR_COURSE =
@@ -56,27 +54,6 @@ export function gotInitialData(
     grades,
     gpa,
     distanceLearning
-  };
-}
-
-export function loggedOut() {
-  // even that localstorage is deprecated, we'll keep it here to flush old stuff
-  const prevVersion = localStorage.prevVersion;
-  localStorage.clear();
-  localStorage.prevVersion = prevVersion;
-
-  // super duper clear everything.
-  window.location.reload();
-
-  return {
-    type: CANVAS_LOGOUT
-  };
-}
-
-export function logout(id) {
-  return {
-    type: CANVAS_LOGOUT,
-    id
   };
 }
 

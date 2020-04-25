@@ -10,18 +10,21 @@ install:
   - ./backend/ci.sh install
   - ./frontend/ci.sh install
   - ./teacher_frontend/ci.sh install
+  - ./account_frontend/ci.sh install
   - ./lambda_grades_fetcher/ci.sh install
 
 script:
   - ./backend/ci.sh build
   - ./frontend/ci.sh build
   - ./teacher_frontend/ci.sh build
+  - ./account_frontend.ci.sh build
   - ./lambda_grades_fetcher/ci.sh build
 
 # sets the CNAME file so github continues serving canvascbl.com
 before_deploy:
   - ./frontend/ci.sh before_deploy
   - ./teacher_frontend/ci.sh before_deploy
+  - ./account_frontend/ci.sh before_deploy
 
 deploy:
   - provider: script

@@ -23,7 +23,6 @@ import {
 
 import { gradeMapByGrade } from '../../../util/canvas/gradeMapByGrade';
 import getActiveCourses from '../../../util/canvas/getActiveCourses';
-import ErrorModal from '../ErrorModal';
 
 import env from '../../../util/env';
 import { ReactComponent as PopOutIcon } from '../../../assets/pop_out.svg';
@@ -166,7 +165,7 @@ const tableColumns = [
     key: 'grade',
     sorter: (a, b) => desc(a.grade, b.grade),
     defaultSortOrder: 'desc',
-    render: text => <Typography.Text strong>{text}</Typography.Text>
+    render: (text) => <Typography.Text strong>{text}</Typography.Text>
   },
   {
     title: (
@@ -390,9 +389,12 @@ function Grades(props) {
   }, [loaded]);
 
   if (err) {
-    return <ErrorModal error={err} />;
+    return (
+      <Typography.Text type={'danger'}>
+        There was an unknown error getting your grades. Please try again later.
+      </Typography.Text>
+    );
   }
-
   if (!activeUser || !plus.session || !courses) {
     return <Loading text="grades" />;
   }
@@ -403,9 +405,9 @@ function Grades(props) {
   const previousGrades =
     plus &&
     plus.previousGrades &&
-    plus.previousGrades.filter(pg => pg.canvasUserId === activeUserId);
+    plus.previousGrades.filter((pg) => pg.canvasUserId === activeUserId);
 
-  const data = activeCourses.map(c => {
+  const data = activeCourses.map((c) => {
     const detailedGrade = grades[activeUserId][c.id]
       ? grades[activeUserId][c.id]
       : 'Error, try reloading';
@@ -429,21 +431,21 @@ function Grades(props) {
         : plus &&
           plus.previousGrades &&
           !error[getPrevGradeId] &&
-          previousGrades.filter(pg => pg.courseId === c.id)[0] &&
-          previousGrades.filter(pg => pg.courseId === c.id)[0]
+          previousGrades.filter((pg) => pg.courseId === c.id)[0] &&
+          previousGrades.filter((pg) => pg.courseId === c.id)[0]
     };
   });
 
-  const distanceLearningData = distanceLearning[activeUserId].map(dl => {
+  const distanceLearningData = distanceLearning[activeUserId].map((dl) => {
     const dlCourse = courses.filter(
-      c => c.id === dl.distance_learning_course_id
+      (c) => c.id === dl.distance_learning_course_id
     )[0];
     // const dlCourseData = data.filter(
     //   d => d.id === dl.distance_learning_course_id
     // )[0];
 
-    const oriCourse = courses.filter(c => c.id === dl.original_course_id)[0];
-    const oriCourseData = data.filter(d => d.id === dl.original_course_id)[0];
+    const oriCourse = courses.filter((c) => c.id === dl.original_course_id)[0];
+    const oriCourseData = data.filter((d) => d.id === dl.original_course_id)[0];
 
     return {
       key: dl.course_name,
@@ -476,7 +478,7 @@ function Grades(props) {
     setLoaded(true);
   }
 
-  const showData = data.filter(d => !d.hide);
+  const showData = data.filter((d) => !d.hide);
 
   function handleChangeViewType(newTypeName) {
     trackChangedGradesViewType(viewType || '', newTypeName);
@@ -535,7 +537,7 @@ function Grades(props) {
               Pass/Incomplete Grades
             </Typography.Title>
             <MobileAccordion>
-              {distanceLearningData.map(dld => (
+              {distanceLearningData.map((dld) => (
                 <MobileAccordion.Panel
                   key={dld.key}
                   style={{ padding: '5px 5px 5px 0px' }}
@@ -626,7 +628,7 @@ function Grades(props) {
               Individual Course Grades
             </Typography.Title>
             <MobileAccordion>
-              {showData.map(d => (
+              {showData.map((d) => (
                 <MobileAccordion.Panel
                   key={d.key}
                   style={{ padding: '5px 5px 5px 0px' }}
@@ -687,8 +689,9 @@ function Grades(props) {
                     )}
                     <MobileList.Item>
                       <PopoutLink
-                        url={`https://${subdomain ||
-                          'canvas'}.instructure.com/courses/${d.id}`}
+                        url={`https://${
+                          subdomain || 'canvas'
+                        }.instructure.com/courses/${d.id}`}
                         tracking={{
                           destinationName: destinationNames.canvas,
                           destinationType: destinationTypes.course,
@@ -805,7 +808,7 @@ function Grades(props) {
       <Padding br />
       <Padding all={5} />
       <Radio.Group
-        onChange={e => handleChangeViewType(e.target.value)}
+        onChange={(e) => handleChangeViewType(e.target.value)}
         value={viewType || 'passIncomplete'}
       >
         <Radio.Button value="passIncomplete">
@@ -846,7 +849,7 @@ function Grades(props) {
           <Table
             columns={tableColumns}
             dataSource={showData}
-            expandedRowRender={record => <CourseSettings record={record} />}
+            expandedRowRender={(record) => <CourseSettings record={record} />}
             onExpand={(expanded, record) => {
               trackTableRowExpansion(
                 tableNames.grades.grades,
@@ -949,7 +952,7 @@ function Grades(props) {
   );
 }
 
-const ConnectedGrades = connect(state => ({
+const ConnectedGrades = connect((state) => ({
   courses: state.canvas.courses,
   plus: state.plus,
   gradedUsers: state.canvas.gradedUsers,

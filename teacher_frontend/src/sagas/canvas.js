@@ -5,7 +5,6 @@ import {
   CANVAS_GET_COURSES,
   CANVAS_GET_DISTANCE_LEARNING_GRADES_OVERVIEW,
   CANVAS_GET_USER_PROFILE,
-  CANVAS_LOGOUT,
   getCourseEnrollmentsError,
   getCoursesError,
   getDistanceLearningGradesOverviewError,
@@ -13,11 +12,8 @@ import {
   gotCourseEnrollments,
   gotCourses,
   gotDistanceLearningGradesOverview,
-  gotUserProfile,
-  loggedOut,
-  logoutError
+  gotUserProfile
 } from '../actions/canvas';
-import makePlusRequest from '../util/plus/makePlusRequest';
 
 function* getUserProfile() {
   try {
@@ -90,15 +86,6 @@ function* getCourseEnrollments({ courseId }) {
   }
 }
 
-function* logout() {
-  try {
-    yield makePlusRequest('session', {}, 'delete');
-    yield put(loggedOut());
-  } catch (e) {
-    put(logoutError(e.response ? e.response.data : "can't connect"));
-  }
-}
-
 function* watcher() {
   yield takeLeading(CANVAS_GET_USER_PROFILE, getUserProfile);
   yield takeLeading(CANVAS_GET_COURSES, getCourses);
@@ -107,7 +94,6 @@ function* watcher() {
     getDistanceLearningGradesOverview
   );
   yield takeEvery(CANVAS_GET_COURSE_ENROLLMENTS, getCourseEnrollments);
-  yield takeLeading(CANVAS_LOGOUT, logout);
 }
 
 export default function* canvasRootSaga() {

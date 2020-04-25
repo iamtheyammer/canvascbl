@@ -24,7 +24,6 @@ import ConnectedLogout from './Logout';
 import UpdateHandler from './UpdateHandler';
 import env from '../../util/env';
 import { getInitialData } from '../../actions/canvas';
-import ConnectedErrorModal from './ErrorModal';
 import './index.css';
 import ConnectedRedeem from './Upgrades/Redeem';
 import Loading from './Loading';
@@ -53,7 +52,8 @@ const getBreadcrumbNameMap = (courses = []) => {
   };
 
   courses.forEach(
-    c => (routes[`/dashboard/grades/${c.id}`] = `Grade Breakdown for ${c.name}`)
+    (c) =>
+      (routes[`/dashboard/grades/${c.id}`] = `Grade Breakdown for ${c.name}`)
   );
 
   return routes;
@@ -112,8 +112,8 @@ function Dashboard(props) {
   useEffect(() => {
     if (courses) {
       let modalShown = false;
-      courses.forEach(c =>
-        c.enrollments.map(e => {
+      courses.forEach((c) =>
+        c.enrollments.map((e) => {
           if (!modalShown && e.type === 'teacher') {
             Modal.confirm({
               title: 'Are you in the right place?',
@@ -131,7 +131,7 @@ function Dashboard(props) {
     }
   });
 
-  const pathSnippets = location.pathname.split('/').filter(i => i);
+  const pathSnippets = location.pathname.split('/').filter((i) => i);
   const breadcrumbNameMap = getBreadcrumbNameMap(props.courses || []);
   const breadcrumbItems = pathSnippets.map((_, index) => {
     const url = `/${pathSnippets.slice(0, index + 1).join('/')}`;
@@ -162,34 +162,17 @@ function Dashboard(props) {
   let errData;
 
   const err = error[getInitialDataId];
-  if (err) {
-    if (err.res) {
-      const data = err.res.data;
-      switch (data.action) {
-        case 'redirect_to_oauth':
-          // we'll be reauthing
-          loginReturnTo.set(location);
-          window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request`;
-          return null;
-        case 'retry':
-          const id = v4();
-          dispatch(getInitialData(id));
-          setGetInitialDataId(id);
-          return null;
-        default:
-          loginReturnTo.set(location);
-          if (data.error.includes('no session string')) {
-            return <Redirect to={'/'} />;
-          } else if (data.error === 'expired session') {
-            window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request?intent=reauth`;
-            return null;
-          } else if (data.error === 'invalid session string') {
-            return <Redirect to="/" />;
-          }
-          return <ConnectedErrorModal error={err} />;
+  if (err && err.res && err.res.data) {
+    if (err.res.data.error) {
+      if (err.res.data.error.action === 'redirect_to_oauth') {
+        loginReturnTo.set(location);
+        window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request`;
+        return null;
+      } else {
+        window.location = env.accountUrl + '?dest=canvascbl';
       }
     } else {
-      errData = (
+      return (
         <Typography.Text type="danger">
           We seem to have encountered a bit of an unexpected error. If this
           keeps happening, please{' '}
@@ -305,7 +288,7 @@ function Dashboard(props) {
   );
 }
 
-const ConnectedDashboard = connect(state => ({
+const ConnectedDashboard = connect((state) => ({
   token: state.canvas.token,
   subdomain: state.canvas.subdomain,
   courses: state.canvas.courses,
