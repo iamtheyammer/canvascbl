@@ -87,7 +87,7 @@ export default function canvas(state = {}, action) {
       return {
         ...state,
         courses: state.courses
-          ? state.courses.map((c) =>
+          ? state.courses.map(c =>
               c.id === action.courseId ? { ...c, ...action.newStatus } : c
             )
           : state.courses

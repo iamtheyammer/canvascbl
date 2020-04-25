@@ -17,7 +17,7 @@ script:
   - ./backend/ci.sh build
   - ./frontend/ci.sh build
   - ./teacher_frontend/ci.sh build
-  - ./account_frontend.ci.sh build
+  - ./account_frontend/ci.sh build
   - ./lambda_grades_fetcher/ci.sh build
 
 # sets the CNAME file so github continues serving canvascbl.com
@@ -81,6 +81,28 @@ deploy:
     committer_from_gh: true
     target_branch: gh-pages
     repo: iamtheyammer/canvascbl-teacher
+    edge: true
+    on:
+      branch: master
+  - provider: pages
+    cleanup: false
+    github_token: $GITHUB_TOKEN
+    keep_history: false
+    local_dir: account_frontend/build
+    committer_from_gh: true
+    target_branch: gh-pages
+    repo: iamtheyammer/canvascbl-account-stg
+    edge: true
+    on:
+      branch: staging
+  - provider: pages
+    cleanup: false
+    github_token: $GITHUB_TOKEN
+    keep_history: false
+    local_dir: account_frontend/build
+    committer_from_gh: true
+    target_branch: gh-pages
+    repo: iamtheyammer/canvascbl-account
     edge: true
     on:
       branch: master

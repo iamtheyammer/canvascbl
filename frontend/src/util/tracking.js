@@ -18,13 +18,13 @@ const env_check = true;
  * @param {boolean} b The boolean to stringify.
  * @returns {string} A string, like "true" or "false".
  */
-const bts = (b) => `${b}`;
+const bts = b => `${b}`;
 
 const mp = {
-  identify: (id) => {
+  identify: id => {
     if (env_check) mixpanel.identify(id);
   },
-  alias: (id) => {
+  alias: id => {
     if (env_check) mixpanel.alias(id);
   },
   track: (name, props, callback) => {
@@ -33,11 +33,11 @@ const mp = {
   track_links: (query, event_name, properties) => {
     if (env_check) mixpanel.track_links(query, event_name, properties);
   },
-  register: (props) => {
+  register: props => {
     if (env_check) mixpanel.register(props);
   },
   people: {
-    set: (props) => {
+    set: props => {
       if (env_check) mixpanel.people.set(props);
     }
   }

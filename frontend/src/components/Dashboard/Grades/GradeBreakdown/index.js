@@ -62,7 +62,7 @@ const outcomeTableColumns = [
     dataIndex: 'name',
     key: 'name',
     sorter: (a, b) => desc(a.name, b.name),
-    render: (text) => (
+    render: text => (
       <div>
         <Typography.Text>{text}</Typography.Text>
         <span style={{ width: '7px', display: 'inline-block' }} />
@@ -79,7 +79,7 @@ const outcomeTableColumns = [
     title: 'Lowest Score Dropped',
     dataIndex: 'worstScoreDropped',
     key: 'worstScoreDropped',
-    render: (didDrop) => (
+    render: didDrop => (
       <Tag color={didDrop ? 'green' : 'red'}>{didDrop ? 'Yes' : 'No'}</Tag>
     ),
     sorter: (a, b) => {
@@ -118,7 +118,7 @@ const assignmentTableOutcomes = [
     title: 'Score',
     dataIndex: 'score',
     key: 'score',
-    render: (score) => `${score.score}/${score.possible} (${score.percent}%)`
+    render: score => `${score.score}/${score.possible} (${score.percent}%)`
   },
   {
     title: 'Last Submission',
@@ -129,7 +129,7 @@ const assignmentTableOutcomes = [
     title: 'Mastery Reached',
     dataIndex: 'masteryReached',
     key: 'masteryReached',
-    render: (mastery) => (
+    render: mastery => (
       <div style={{ margin: 'auto' }}>
         {mastery === true ? <Icon type="check" /> : <Icon type="close" />}
       </div>
@@ -186,8 +186,7 @@ function GradeBreakdown(props) {
   } = props;
 
   const err =
-    error[getOutcomeAlignmentsId] ||
-    getOutcomesIds.filter((id) => error[id])[0];
+    error[getOutcomeAlignmentsId] || getOutcomesIds.filter(id => error[id])[0];
 
   const courseId = parseInt(props.match.params.courseId);
 
@@ -211,14 +210,14 @@ function GradeBreakdown(props) {
         setGetPlusAverageId(id);
       }
 
-      const course = props.courses.filter((c) => c.id === courseId)[0];
+      const course = props.courses.filter(c => c.id === courseId)[0];
 
       if (!course) {
         return;
       }
 
       const courseGradedUsers = course.enrollments.map(
-        (e) => e.associated_user_id || e.user_id
+        e => e.associated_user_id || e.user_id
       );
 
       if (!courseGradedUsers.includes(activeUserId)) {
@@ -249,12 +248,12 @@ function GradeBreakdown(props) {
         activeUser &&
         courses &&
         !getOutcomesIds.length &&
-        !getOutcomesIds.some((oId) => loading.includes(oId)) &&
+        !getOutcomesIds.some(oId => loading.includes(oId)) &&
         !neededOutcomes.every(
-          (id) => allOutcomes && allOutcomes.some((o) => o.id === parseInt(id))
+          id => allOutcomes && allOutcomes.some(o => o.id === parseInt(id))
         )
       ) {
-        neededOutcomes.forEach((noId) => {
+        neededOutcomes.forEach(noId => {
           const id = v4();
           dispatch(getIndividualOutcome(id, noId));
           setLoadingText('outcomes');
@@ -325,10 +324,10 @@ function GradeBreakdown(props) {
   }
 
   if (activeUser && users && courses) {
-    const course = courses.filter((c) => c.id === courseId)[0];
+    const course = courses.filter(c => c.id === courseId)[0];
     if (course) {
       const courseGradedUsers = course.enrollments.map(
-        (e) => e.associated_user_id || e.user_id
+        e => e.associated_user_id || e.user_id
       );
       if (!courseGradedUsers.includes(activeUserId)) {
         return (
@@ -340,7 +339,7 @@ function GradeBreakdown(props) {
               However, the students below are-- click to switch to them:
             </Typography.Text>
             <ul>
-              {courseGradedUsers.map((uId) => (
+              {courseGradedUsers.map(uId => (
                 <li key={uId}>
                   <Button
                     type="link"
@@ -392,7 +391,7 @@ function GradeBreakdown(props) {
     return <Loading text={loadingText} />;
   }
 
-  const course = props.courses.filter((c) => c.id === courseId)[0];
+  const course = props.courses.filter(c => c.id === courseId)[0];
   if (!course) {
     notification.error({
       message: 'Unknown Course',
@@ -410,9 +409,7 @@ function GradeBreakdown(props) {
     const rollupScore = Object.entries(rollupScores).sort(
       (a, b) => a[1].average - b[1].average
     )[0];
-    const outcome = outcomes.filter(
-      (o) => o.id === parseInt(rollupScore[0])
-    )[0];
+    const outcome = outcomes.filter(o => o.id === parseInt(rollupScore[0]))[0];
     return {
       rollupScore: rollupScore[1],
       outcome
@@ -423,7 +420,7 @@ function GradeBreakdown(props) {
 
   const outcomeTableData = Object.entries(rollupScores)
     .map(([oId, avg]) => {
-      const outcome = outcomes.filter((o) => o.id === parseInt(oId))[0];
+      const outcome = outcomes.filter(o => o.id === parseInt(oId))[0];
       if (!outcome) {
         return {};
       }
@@ -436,7 +433,7 @@ function GradeBreakdown(props) {
         lastAssignmentResult.links.assignment.split('_')[1]
       );
       const lastAssignment = lastAssignmentResult
-        ? assignments[courseId].filter((a) => a.id === lastAssignmentId)[0]
+        ? assignments[courseId].filter(a => a.id === lastAssignmentId)[0]
         : {};
 
       // use alignments to figure out things like lastAssignment and timesAssessed
@@ -450,13 +447,13 @@ function GradeBreakdown(props) {
         id: outcome.id,
         // can be reworked to use the new outcome_alignments
         assignmentTableData: results
-          .filter((or) => parseInt(or.links.learning_outcome) === outcome.id)
-          .map((r) => {
+          .filter(or => parseInt(or.links.learning_outcome) === outcome.id)
+          .map(r => {
             const linkedAssignmentId = parseInt(
               r.links.assignment.split('_')[1]
             );
             const assignment = assignments[courseId].filter(
-              (a) => a.id === linkedAssignmentId
+              a => a.id === linkedAssignmentId
             )[0];
             return {
               assignmentName: assignment ? assignment.name : 'unavailable',
@@ -473,7 +470,7 @@ function GradeBreakdown(props) {
           })
       };
     })
-    .filter((otd) => !!otd.key);
+    .filter(otd => !!otd.key);
 
   const assignmentsByOutcome =
     outcomeAlignments &&
@@ -481,9 +478,9 @@ function GradeBreakdown(props) {
     outcomes.reduce((acc = {}, o) => {
       acc[o.id] = flatten(
         outcomeAlignments[courseId]
-          .filter((oa) => oa.learning_outcome_id === o.id)
-          .map((oa) =>
-            assignments[courseId].filter((a) => a.id === oa.assignment_id)
+          .filter(oa => oa.learning_outcome_id === o.id)
+          .map(oa =>
+            assignments[courseId].filter(a => a.id === oa.assignment_id)
           )
       );
 
@@ -495,7 +492,7 @@ function GradeBreakdown(props) {
     if (openKeys.length > mobileOutcomesTablePrevOpenKeys.length) {
       // they opened one. which?
       const newKey = openKeys.filter(
-        (ok) => !mobileOutcomesTablePrevOpenKeys.includes(ok)
+        ok => !mobileOutcomesTablePrevOpenKeys.includes(ok)
       )[0];
       if (newKey) {
         trackTableRowExpansion(
@@ -511,7 +508,7 @@ function GradeBreakdown(props) {
     if (mobileOutcomesTablePrevOpenKeys.length > openKeys.length) {
       // they closed one. which?
       const closedKey = mobileOutcomesTablePrevOpenKeys.filter(
-        (ok) => !openKeys.includes(ok)
+        ok => !openKeys.includes(ok)
       )[0];
       if (closedKey) {
         trackTableRowExpansion(
@@ -553,7 +550,7 @@ function GradeBreakdown(props) {
         <MobileWhiteSpace />
         <Typography.Title level={3}>Outcomes</Typography.Title>
         <MobileAccordion onChange={handleMobileOutcomesTableChange}>
-          {outcomeTableData.map((d) => (
+          {outcomeTableData.map(d => (
             <MobileAccordion.Panel header={d.name} key={d.key}>
               <MobileList>
                 <MobileList.Item multipleLine wrap>
@@ -585,7 +582,7 @@ function GradeBreakdown(props) {
                 )}
                 <MobileAccordion>
                   <MobileAccordion.Panel header="Assignments">
-                    {d.assignmentTableData.map((atd) => (
+                    {d.assignmentTableData.map(atd => (
                       <MobileAccordion key={atd.key}>
                         <MobileAccordion.Panel
                           header={atd.assignmentName}
@@ -667,7 +664,7 @@ function GradeBreakdown(props) {
             courseId
           );
         }}
-        expandedRowRender={(record) =>
+        expandedRowRender={record =>
           record.assignmentTableData.length > 0 ? (
             <div>
               <Typography.Title level={4}>
@@ -701,7 +698,7 @@ function GradeBreakdown(props) {
   );
 }
 
-const ConnectedGradeBreakdown = connect((state) => ({
+const ConnectedGradeBreakdown = connect(state => ({
   loading: state.loading,
   error: state.error,
   courses: state.canvas.courses,
