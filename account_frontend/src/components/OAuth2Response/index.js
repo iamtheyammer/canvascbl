@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { connect } from 'react-redux';
 import destToUrl from '../../util/destToUrl';
 import MainCard from '../MainCard';
 import { parse } from 'qs';
@@ -68,9 +69,9 @@ function OAuth2Response(props) {
   );
 }
 
-// const ConnectedOAuth2Response = connect((state) => ({
-//   destination: state.home.destination,
-//   redirectOk: state.home.redirectOk
-// }));
+const ConnectedOAuth2Response = connect((state) => ({
+  destination: state.home.destination,
+  redirectOk: state.home.redirectOk
+}))(OAuth2Response);
 
-export default OAuth2Response;
+export default ConnectedOAuth2Response;
