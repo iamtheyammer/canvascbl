@@ -77,7 +77,7 @@ function App(props) {
   });
 
   useEffect(() => {
-    if (redirectOk === true) {
+    if (redirectOk === true && destination) {
       window.location = destToUrl(destination);
     }
   }, [redirectOk, destination]);

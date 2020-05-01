@@ -15,9 +15,11 @@ function OAuth2Response(props) {
   );
   const destUrl = destToUrl(dest);
 
+  console.log(destUrl, name, dest, error, destination);
+
   useEffect(() => {
-    if (!destination && dest) {
-      dispatch(setDestination(destination));
+    if (!destination) {
+      dispatch(setDestination(dest || 'canvascbl'));
     }
   });
 
