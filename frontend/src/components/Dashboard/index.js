@@ -24,7 +24,6 @@ import ConnectedLogout from './Logout';
 import UpdateHandler from './UpdateHandler';
 import env from '../../util/env';
 import { getInitialData } from '../../actions/canvas';
-import ConnectedErrorModal from './ErrorModal';
 import './index.css';
 import ConnectedRedeem from './Upgrades/Redeem';
 import Loading from './Loading';
@@ -162,34 +161,17 @@ function Dashboard(props) {
   let errData;
 
   const err = error[getInitialDataId];
-  if (err) {
-    if (err.res) {
-      const data = err.res.data;
-      switch (data.action) {
-        case 'redirect_to_oauth':
-          // we'll be reauthing
-          loginReturnTo.set(location);
-          window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request`;
-          return null;
-        case 'retry':
-          const id = v4();
-          dispatch(getInitialData(id));
-          setGetInitialDataId(id);
-          return null;
-        default:
-          loginReturnTo.set(location);
-          if (data.error.includes('no session string')) {
-            return <Redirect to={'/'} />;
-          } else if (data.error === 'expired session') {
-            window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request?intent=reauth`;
-            return null;
-          } else if (data.error === 'invalid session string') {
-            return <Redirect to="/" />;
-          }
-          return <ConnectedErrorModal error={err} />;
+  if (err && err.res && err.res.data) {
+    if (err.res.data.error) {
+      if (err.res.data.error.action === 'redirect_to_oauth') {
+        loginReturnTo.set(location);
+        window.location.href = `${getUrlPrefix}/api/canvas/oauth2/request`;
+        return null;
+      } else {
+        window.location = env.accountUrl + '?dest=canvascbl';
       }
     } else {
-      errData = (
+      return (
         <Typography.Text type="danger">
           We seem to have encountered a bit of an unexpected error. If this
           keeps happening, please{' '}

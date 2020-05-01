@@ -23,7 +23,6 @@ import {
 
 import { gradeMapByGrade } from '../../../util/canvas/gradeMapByGrade';
 import getActiveCourses from '../../../util/canvas/getActiveCourses';
-import ErrorModal from '../ErrorModal';
 
 import env from '../../../util/env';
 import { ReactComponent as PopOutIcon } from '../../../assets/pop_out.svg';
@@ -390,9 +389,12 @@ function Grades(props) {
   }, [loaded]);
 
   if (err) {
-    return <ErrorModal error={err} />;
+    return (
+      <Typography.Text type={'danger'}>
+        There was an unknown error getting your grades. Please try again later.
+      </Typography.Text>
+    );
   }
-
   if (!activeUser || !plus.session || !courses) {
     return <Loading text="grades" />;
   }

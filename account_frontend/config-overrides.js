@@ -14,18 +14,18 @@ module.exports = override(
     libraryDirectory: 'es',
     style: 'css'
   }),
+  fixBabelImports('import-mobile', {
+    libraryName: 'antd-mobile',
+    style: 'css'
+  }),
   addBabelPlugin([
     'babel-plugin-styled-components',
     { ssr: false, displayName: isDev }
   ]),
-  // fixBabelImports("import-mobile", {
-  //   libraryName: "antd-mobile",
-  //   style: "css"
+  // fixBabelImports("import-lodash", {
+  //   libraryName: "lodash",
+  //   libraryDirectory: "",
+  //   camel2DashComponentName: false // default: true
   // }),
-  fixBabelImports('import-lodash', {
-    libraryName: 'lodash',
-    libraryDirectory: '',
-    camel2DashComponentName: false // default: true
-  }),
   addWebpackPlugin(new Dotenv())
 );

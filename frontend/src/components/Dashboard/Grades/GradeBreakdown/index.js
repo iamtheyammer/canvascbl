@@ -34,7 +34,6 @@ import {
 import { dateAsc } from '../../../../util/sort';
 
 import { desc } from '../../../../util/sort';
-import ConnectedErrorModal from '../../ErrorModal';
 import { ReactComponent as PopOutIcon } from '../../../../assets/pop_out.svg';
 import { ReactComponent as PlusIcon } from '../../../../assets/plus.svg';
 
@@ -249,10 +248,10 @@ function GradeBreakdown(props) {
         activeUser &&
         courses &&
         !getOutcomesIds.length &&
-        (!getOutcomesIds.some(oId => loading.includes(oId)) &&
-          !neededOutcomes.every(
-            id => allOutcomes && allOutcomes.some(o => o.id === parseInt(id))
-          ))
+        !getOutcomesIds.some(oId => loading.includes(oId)) &&
+        !neededOutcomes.every(
+          id => allOutcomes && allOutcomes.some(o => o.id === parseInt(id))
+        )
       ) {
         neededOutcomes.forEach(noId => {
           const id = v4();
@@ -315,6 +314,15 @@ function GradeBreakdown(props) {
     return <Redirect to="/dashboard/grades" />;
   }
 
+  if (err) {
+    return (
+      <Typography.Text type={'danger'}>
+        There was an unknown error getting outcome alignments and/or
+        assignments. Please try again later.
+      </Typography.Text>
+    );
+  }
+
   if (activeUser && users && courses) {
     const course = courses.filter(c => c.id === courseId)[0];
     if (course) {
@@ -346,10 +354,6 @@ function GradeBreakdown(props) {
         );
       }
     }
-  }
-
-  if (err) {
-    return <ConnectedErrorModal error={err} />;
   }
 
   if (

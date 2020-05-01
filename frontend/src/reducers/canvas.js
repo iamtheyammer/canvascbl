@@ -1,5 +1,4 @@
 import {
-  CANVAS_LOGOUT,
   CANVAS_GOT_ASSIGNMENTS_FOR_COURSE,
   CANVAS_GOT_OUTCOME_ALIGNMENTS_FOR_COURSE,
   CANVAS_GOT_OBSERVEES,
@@ -12,8 +11,6 @@ import {
 
 export default function canvas(state = {}, action) {
   switch (action.type) {
-    case CANVAS_LOGOUT:
-      return {};
     case CANVAS_GOT_INITIAL_DATA:
       return {
         ...state,
