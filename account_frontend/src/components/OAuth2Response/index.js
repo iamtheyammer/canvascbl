@@ -15,8 +15,6 @@ function OAuth2Response(props) {
   );
   const destUrl = destToUrl(dest);
 
-  console.log(destUrl, name, dest, error, destination);
-
   useEffect(() => {
     if (!destination) {
       dispatch(setDestination(dest || 'canvascbl'));
