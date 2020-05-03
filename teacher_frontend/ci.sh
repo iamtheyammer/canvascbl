@@ -8,15 +8,9 @@ nvm use
 
 case "$1" in
 "install")
-#  frontend has installed nvm
   yarn install
   ;;
 "build")
-  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.2/install.sh | bash
-  export NVM_DIR="$HOME/.nvm"
-  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-  nvm install "$(cat .nvmrc)"
-  nvm use
   yarn run formatcheck || exit 2
 	yarn run build || exit 2
 	echo "Built frontend. Output is in ./build"
