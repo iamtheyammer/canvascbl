@@ -12,7 +12,7 @@ before_install:
   - |
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
   - mkdir -p ~/aws/cli-install ~/aws/cli-files ~/aws/cli-bin
-  - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "~/aws/awscliv2.zip" # AWS CLI
+  - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o ~/aws/awscliv2.zip # AWS CLI
   - unzip ~/awscliv2.zip -d ~/aws/cli-install
   - ~/aws/cli-files/install --install-dir ~/aws/cli-files --bin-dir ~/aws/cli-bin
   - export PATH=$PATH:~/aws/cli-bin
