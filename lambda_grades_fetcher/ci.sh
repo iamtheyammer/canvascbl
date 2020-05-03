@@ -15,12 +15,6 @@ case "$1" in
   LAMBDA_GRADES_FETCHER_FUNCTION_NAME=$4
   TRAVIS_COMMIT=$5
 
-  mkdir aws
-  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o aws/awscliv2.zip
-  # pipe output to null
-  unzip aws/awscliv2.zip > /dev/null
-  ./aws/install -i ~/awscli -b ~/bin --update
-  export PATH=~/bin:$PATH
   aws lambda update-function-code \
     --function-name "$LAMBDA_GRADES_FETCHER_FUNCTION_NAME" \
     --zip-file fileb://bin/lambda_grades_fetcher.zip
