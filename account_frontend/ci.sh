@@ -25,7 +25,7 @@ case "$1" in
   export AWS_SECRET_ACCESS_KEY=$3
   BUCKET_NAME=$4
 
-  aws s3 sync ./build s3://$("$BUCKET_NAME") --delete
+  aws s3 sync ./build s3://"$BUCKET_NAME" --delete
   ;;
 *)
   echo "Usage: ./ci.sh <command>"
