@@ -8,7 +8,6 @@ nvm use
 
 case "$1" in
 "install")
-  aws --version
   yarn install
   ;;
 "build")
