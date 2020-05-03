@@ -9,7 +9,7 @@ services:
 before_install:
   - curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.2/install.sh | bash # NVM
   - export NVM_DIR="$HOME/.nvm"
-  - [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+  - "[ -s \"$NVM_DIR/nvm.sh\" ] && \. \"$NVM_DIR/nvm.sh\""  # This loads nvm
   - mkdir -p ~/aws/cli-install ~/aws/cli-files ~/aws/cli-bin
   - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "~/aws/awscliv2.zip" # AWS CLI
   - unzip ~/awscliv2.zip -d ~/aws/cli-install
