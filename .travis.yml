@@ -42,14 +42,20 @@ deploy:
   - provider: script
     script: |
       ./backend/ci.sh deploy $HEROKU_API_KEY $HEROKU_APP_NAME $HEROKU_PROCESS_NAME &&
-      ./lambda_grades_fetcher/ci.sh deploy $AWS_ACCESS_KEY_ID $AWS_SECRET_ACCESS_KEY $LAMBDA_GRADES_FETCHER_FUNCTION_NAME $TRAVIS_COMMIT
+      ./lambda_grades_fetcher/ci.sh deploy $AWS_ACCESS_KEY_ID $AWS_SECRET_ACCESS_KEY $LAMBDA_GRADES_FETCHER_FUNCTION_NAME $TRAVIS_COMMIT &&
+      ./frontend/ci.sh deploy $AWS_ACCESS_KEY_ID $AWS_SECRET_ACCESS_KEY $FRONTEND_S3_BUCKET_NAME &&
+      ./teacher_frontend/ci.sh deploy $AWS_ACCESS_KEY_ID $AWS_SECRET_ACCESS_KEY $TEACHER_FRONTEND_S3_BUCKET_NAME &&
+      ./account_frontend/ci.sh deploy $AWS_ACCESS_KEY_ID $AWS_SECRET_ACCESS_KEY $ACCOUNT_FRONTEND_S3_BUCKET_NAME
     edge: true
     on:
       branch: staging
   - provider: script
     script: |
       ./backend/ci.sh deploy $HEROKU_API_KEY $HEROKU_APP_NAME $HEROKU_PROCESS_NAME &&
-      ./lambda_grades_fetcher/ci.sh deploy $AWS_ACCESS_KEY_ID $AWS_SECRET_ACCESS_KEY $LAMBDA_GRADES_FETCHER_FUNCTION_NAME $TRAVIS_COMMIT
+      ./lambda_grades_fetcher/ci.sh deploy $AWS_ACCESS_KEY_ID $AWS_SECRET_ACCESS_KEY $LAMBDA_GRADES_FETCHER_FUNCTION_NAME $TRAVIS_COMMIT &&
+      ./frontend/ci.sh deploy $AWS_ACCESS_KEY_ID $AWS_SECRET_ACCESS_KEY $FRONTEND_S3_BUCKET_NAME &&
+      ./teacher_frontend/ci.sh deploy $AWS_ACCESS_KEY_ID $AWS_SECRET_ACCESS_KEY $TEACHER_FRONTEND_S3_BUCKET_NAME &&
+      ./account_frontend/ci.sh deploy $AWS_ACCESS_KEY_ID $AWS_SECRET_ACCESS_KEY $ACCOUNT_FRONTEND_S3_BUCKET_NAME
     edge: true
     on:
       branch: master
