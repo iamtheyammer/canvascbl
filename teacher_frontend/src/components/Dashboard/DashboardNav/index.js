@@ -49,6 +49,7 @@ function DashboardNav(props) {
         <Menu.Item key="/dashboard/feedback">
           <PopoutLink
             url="https://go.canvascbl.com/teacher-feedback"
+            id="provide-feedback-popoutlink"
             tracking={{
               destinationName: destinationNames.googleForms,
               destinationType:

@@ -136,18 +136,21 @@ function Dashboard(props) {
     if (courses) {
       let foundTeacher = false;
       let isStudent = false;
+      let isOther = false;
       courses.forEach((c) =>
         c.enrollments.forEach((e) => {
-          if (e.type === 'teacher') {
+          if (e.type === 'teacher' || e.role === 'TeacherEnrollment') {
             foundTeacher = true;
-          } else if (e.type === 'student') {
+          } else if (e.type === 'student' || e.role === 'StudentEnrollment') {
             isStudent = true;
+          } else {
+            isOther = true;
           }
         })
       );
 
       if (!foundTeacher) {
-        if (isStudent) {
+        if (isStudent && !isOther) {
           Modal.error({
             title: 'My apologies, young grasshopper.',
             content: "Students aren't able to use CanvasCBL for Teachers.",
