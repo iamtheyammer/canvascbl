@@ -34,8 +34,8 @@
     "build": "react-app-rewired build",
     "test": "react-app-rewired test",
     "eject": "react-scripts eject",
-    "format": "prettier --config ../.prettierrc --write \"src/**/*.js\" \"src/**/*.jsx\"",
-    "formatcheck": "prettier --config ../.prettierrc --check \"src/**/*.js\" \"src/**/*.jsx\""
+    "format": "prettier --config ../.prettierrc --write \"src/**/*.js\"",
+    "formatcheck": "prettier --config ../.prettierrc --check \"src/**/*.js\""
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -54,6 +54,6 @@
   },
   "devDependencies": {
     "dotenv-webpack": "^1.7.0",
-    "prettier": "1.18.2"
+    "prettier": "2.0.5"
   }
 }
