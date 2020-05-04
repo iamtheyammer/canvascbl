@@ -761,6 +761,11 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 					if prev, ok := uPrev[cID]; ok {
 						// are they different?
 						if g.Grade.Grade != prev.Grade {
+							// if not the student will get infinite emails for grade -> NA
+							if g.Grade == naGrade {
+								continue
+							}
+
 							courseName := courseNames[cID]
 							if len(courseName) < 1 {
 								courseName = excludedCourseNames[cID]
@@ -812,6 +817,11 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 						if prev, ok := uPrev[cID]; ok {
 							// are they different?
 							if c.Grade.Grade != prev.Grade {
+								// if not the student will get infinite emails for grade -> NA
+								if c.Grade == naGrade {
+									continue
+								}
+
 								if userIsObserver {
 									var studentName string
 									for _, o := range *resp.Observees {
