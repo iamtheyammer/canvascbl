@@ -30,7 +30,7 @@ function Index(props) {
         >
           <MobileList>
             {observees.map(
-              o =>
+              (o) =>
                 o.id !== activeUserId && (
                   <MobileList.Item
                     type="link"
@@ -54,7 +54,7 @@ function Index(props) {
   const menu = (
     <Menu>
       {observees.map(
-        o =>
+        (o) =>
           o.id !== activeUserId && (
             <Menu.Item
               key={o.id}
@@ -79,7 +79,7 @@ function Index(props) {
   );
 }
 
-const ConnectedObserveeHandler = connect(state => ({
+const ConnectedObserveeHandler = connect((state) => ({
   observees: state.canvas.observees,
   activeUserId: state.canvas.activeUserId,
   users: state.canvas.users

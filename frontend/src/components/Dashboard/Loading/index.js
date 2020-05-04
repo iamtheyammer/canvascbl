@@ -38,6 +38,6 @@ Loading.propTypes = {
   text: PropTypes.string
 };
 
-export default connect(state => ({
+export default connect((state) => ({
   dots: state.components.loading.dots
 }))(Loading);

@@ -169,7 +169,7 @@ function OAuth2Consent(props) {
               itemLayout="horizontal"
               bordered
               dataSource={consentInfo.scopes}
-              renderItem={scope => (
+              renderItem={(scope) => (
                 <List.Item key={scope.short_name}>
                   <List.Item.Meta
                     title={scope.name}
@@ -215,7 +215,7 @@ function OAuth2Consent(props) {
   );
 }
 
-export default connect(state => ({
+export default connect((state) => ({
   loading: state.loading,
   consentCode: state.oauth2.consentCode,
   getConsentInfoId: state.components.oauth2consent.getConsentInfoId,

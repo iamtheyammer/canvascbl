@@ -112,7 +112,7 @@ function Settings(props) {
           </Typography.Text>
         </>
       ) : !notificationSettingsStatus.loading ? (
-        notifications.types.map(t => (
+        notifications.types.map((t) => (
           <Fragment key={t.short_name}>
             <Typography.Title level={4}>{t.name}</Typography.Title>
             <Typography.Text>{t.description}</Typography.Text>
@@ -128,13 +128,13 @@ function Settings(props) {
             )}
             <Switch
               onChange={throttle(
-                checked => toggleNotification(t.id, t.short_name, checked),
+                (checked) => toggleNotification(t.id, t.short_name, checked),
                 2000
               )}
               checked={
                 notifications &&
                 !!notifications.settings.filter(
-                  ns => ns.notification_type_id === t.id
+                  (ns) => ns.notification_type_id === t.id
                 )[0]
               }
               loading={
@@ -173,7 +173,7 @@ function Settings(props) {
       </Typography.Text>
       <Padding all={5} />
       <Switch
-        onChange={toggle => {
+        onChange={(toggle) => {
           dispatch(toggledShowHiddenCourses(toggle));
           trackChangedHiddenCourseVisibility(toggle);
         }}
@@ -183,7 +183,7 @@ function Settings(props) {
   );
 }
 
-export default connect(state => ({
+export default connect((state) => ({
   settingsAndTypesId:
     state.components.settings.getNotificationSettingsAndTypesId,
   settingsAndTypesError: state.settings.getNotificationSettingsAndTypesError,

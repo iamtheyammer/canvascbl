@@ -139,7 +139,7 @@ function Redeem(props) {
           <Input
             style={{ width: 75, textAlign: 'center' }}
             placeholder="A1CD"
-            onChange={e =>
+            onChange={(e) =>
               dispatch(updateGiftCardField1(e.target.value.toUpperCase()))
             }
             value={giftCardField1}
@@ -160,7 +160,7 @@ function Redeem(props) {
           <Input
             style={{ width: 75, textAlign: 'center', borderLeft: 0 }}
             placeholder="EF2H"
-            onChange={e =>
+            onChange={(e) =>
               dispatch(updateGiftCardField2(e.target.value.toUpperCase()))
             }
             value={giftCardField2}
@@ -180,7 +180,7 @@ function Redeem(props) {
           <Input
             style={{ width: 75, textAlign: 'center', borderLeft: 0 }}
             placeholder="IJK3"
-            onChange={e =>
+            onChange={(e) =>
               dispatch(updateGiftCardField3(e.target.value.toUpperCase()))
             }
             value={giftCardField3}
@@ -208,7 +208,7 @@ function Redeem(props) {
         <List
           itemLayout="horizontal"
           dataSource={giftCards}
-          renderItem={item => (
+          renderItem={(item) => (
             <List.Item
               actions={[
                 <Button
@@ -252,7 +252,7 @@ function Redeem(props) {
   );
 }
 
-const ConnectedRedeem = connect(state => ({
+const ConnectedRedeem = connect((state) => ({
   session: state.plus.session,
   loading: state.loading,
   error: state.error,

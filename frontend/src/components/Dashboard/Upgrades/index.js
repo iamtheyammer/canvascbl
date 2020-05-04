@@ -93,7 +93,7 @@ function Upgrades(props) {
   // );
 }
 
-const ConnectedUpgrades = connect(state => ({
+const ConnectedUpgrades = connect((state) => ({
   loading: state.loading,
   error: state.error,
   checkout: state.checkout,

@@ -56,7 +56,7 @@ function UpdateHandler() {
 
     if (shouldShowChangelog) {
       const availableUpdates = changelog.filter(
-        cle => cle.timestamp > prevVersion
+        (cle) => cle.timestamp > prevVersion
       );
       if (availableUpdates.length < 1) {
         return;
@@ -78,7 +78,7 @@ function UpdateHandler() {
           <List
             itemLayout="horizontal"
             dataSource={availableUpdates}
-            renderItem={item => (
+            renderItem={(item) => (
               <List.Item>
                 <List.Item.Meta
                   avatar={getIconByChangelogType(item.type)}

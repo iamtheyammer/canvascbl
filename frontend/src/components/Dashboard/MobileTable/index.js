@@ -9,10 +9,10 @@ function MobileTable(props) {
 
   return (
     <MobileAccordion {...accordionProps}>
-      {dataSource.map(d => (
+      {dataSource.map((d) => (
         <MobileAccordion.Panel key={d.key} header={d.rowHeader}>
           <MobileList>
-            {columns.map(c =>
+            {columns.map((c) =>
               c.mobileRender ? (
                 c.mobileRender(d[c.dataIndex], d)
               ) : c.render ? (

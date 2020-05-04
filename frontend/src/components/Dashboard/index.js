@@ -52,7 +52,8 @@ const getBreadcrumbNameMap = (courses = []) => {
   };
 
   courses.forEach(
-    c => (routes[`/dashboard/grades/${c.id}`] = `Grade Breakdown for ${c.name}`)
+    (c) =>
+      (routes[`/dashboard/grades/${c.id}`] = `Grade Breakdown for ${c.name}`)
   );
 
   return routes;
@@ -111,8 +112,8 @@ function Dashboard(props) {
   useEffect(() => {
     if (courses) {
       let modalShown = false;
-      courses.forEach(c =>
-        c.enrollments.map(e => {
+      courses.forEach((c) =>
+        c.enrollments.map((e) => {
           if (!modalShown && e.type === 'teacher') {
             Modal.confirm({
               title: 'Are you in the right place?',
@@ -130,7 +131,7 @@ function Dashboard(props) {
     }
   });
 
-  const pathSnippets = location.pathname.split('/').filter(i => i);
+  const pathSnippets = location.pathname.split('/').filter((i) => i);
   const breadcrumbNameMap = getBreadcrumbNameMap(props.courses || []);
   const breadcrumbItems = pathSnippets.map((_, index) => {
     const url = `/${pathSnippets.slice(0, index + 1).join('/')}`;
@@ -287,7 +288,7 @@ function Dashboard(props) {
   );
 }
 
-const ConnectedDashboard = connect(state => ({
+const ConnectedDashboard = connect((state) => ({
   token: state.canvas.token,
   subdomain: state.canvas.subdomain,
   courses: state.canvas.courses,

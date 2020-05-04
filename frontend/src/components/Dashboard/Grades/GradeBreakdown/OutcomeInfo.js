@@ -35,7 +35,7 @@ const tabList = [
   }
 ];
 
-const mobileTabList = tabList.map(t => ({ title: t.tab, sub: t.key }));
+const mobileTabList = tabList.map((t) => ({ title: t.tab, sub: t.key }));
 
 function OutcomeInfo(props) {
   const [activeTabKey, setActiveTabKey] = useState(tabList[0].key);
@@ -49,7 +49,7 @@ function OutcomeInfo(props) {
 
   const { min: AMin, max: AMax } = gradeMapByGrade['A'];
   const outcomeScores = Object.values(outcomeRollupScores)
-    .map(or => or.average)
+    .map((or) => or.average)
     .sort((a, b) => a - b);
   const seventyFivePercentOfOutcomes = Math.floor(
     (75 * outcomeScores.length) / 100
@@ -61,10 +61,9 @@ function OutcomeInfo(props) {
         return (
           <CenteredStatisticWithText
             stat={+lowestOutcome.rollupScore.average.toFixed(2)}
-            text={`Your lowest outcome is ${lowestOutcome.outcome
-              .display_name ||
-              lowestOutcome.outcome
-                .title}, with a score of ${+lowestOutcome.rollupScore.average.toFixed(
+            text={`Your lowest outcome is ${
+              lowestOutcome.outcome.display_name || lowestOutcome.outcome.title
+            }, with a score of ${+lowestOutcome.rollupScore.average.toFixed(
               2
             )}.`}
           />
@@ -72,7 +71,7 @@ function OutcomeInfo(props) {
       case 'averageOutcomeScore':
         const meanOutcomeScore = roundNumberToDigits(
           calculateMeanAverage(
-            Object.values(outcomeRollupScores).map(or => or.average)
+            Object.values(outcomeRollupScores).map((or) => or.average)
           ),
           3
         );
@@ -121,14 +120,14 @@ function OutcomeInfo(props) {
                   >
                     {seventyFivePercentOfOutcomes}/{outcomeScores.length}{' '}
                     outcomes are above {AMax} (currently,{' '}
-                    {outcomeScores.filter(o => o < AMax).length} outcomes are
+                    {outcomeScores.filter((o) => o < AMax).length} outcomes are
                     not above {AMax})
                   </Typography.Text>
                 </li>
                 <li>
                   <Typography.Text delete={outcomeScores[0] >= AMin}>
                     No outcomes are below {AMin} (currently,{' '}
-                    {outcomeScores.filter(o => o < AMin).length} outcomes are
+                    {outcomeScores.filter((o) => o < AMin).length} outcomes are
                     below {AMin})
                   </Typography.Text>
                 </li>
@@ -139,7 +138,7 @@ function OutcomeInfo(props) {
           );
         }
       case 'moreInfo':
-        const cardWithContent = content => (
+        const cardWithContent = (content) => (
           <Card.Grid key={v4()} hoverable="false">
             {content}
           </Card.Grid>
@@ -166,17 +165,17 @@ function OutcomeInfo(props) {
         tabs={mobileTabList}
         initialPage={activeTabKey}
         className="mobile-tabs"
-        renderTabBar={props => (
+        renderTabBar={(props) => (
           <MobileTabs.DefaultTabBar {...props} page={1.65} />
         )}
-        onChange={data => {
+        onChange={(data) => {
           trackTabChange(
             tabImplementations.outcomeInfo.name,
             tabImplementations.outcomeInfo.tabNames[data.sub]
           );
         }}
       >
-        {mobileTabList.map(t => (
+        {mobileTabList.map((t) => (
           <div key={t.sub}>{generateCardContent(t.sub)}</div>
         ))}
       </MobileTabs>
@@ -187,7 +186,7 @@ function OutcomeInfo(props) {
     <Card
       tabList={tabList}
       activeTabKey={activeTabKey}
-      onTabChange={newTabKey => {
+      onTabChange={(newTabKey) => {
         setActiveTabKey(newTabKey);
         trackTabChange(
           tabImplementations.outcomeInfo.name,

@@ -42,7 +42,7 @@ export default function redeem(state = {}, action) {
         ...state,
         giftCards:
           state.giftCards &&
-          state.giftCards.filter(gc => gc !== action.claimCode)
+          state.giftCards.filter((gc) => gc !== action.claimCode)
       };
     case REDEEM_UPDATE_GIFT_CARD_ENTRY_ERROR:
       return {
