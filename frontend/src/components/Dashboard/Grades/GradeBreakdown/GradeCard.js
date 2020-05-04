@@ -24,7 +24,7 @@ const tabList = [
   }
 ];
 
-const mobileTabList = tabList.map(t => ({ title: t.tab, sub: t.key }));
+const mobileTabList = tabList.map((t) => ({ title: t.tab, sub: t.key }));
 
 function GradeCard(props) {
   const [activeTabKey, setActiveTabKey] = useState(tabList[0].key);
@@ -99,14 +99,14 @@ function GradeCard(props) {
       <MobileTabs
         tabs={mobileTabList}
         initialPage={activeTabKey}
-        onChange={data => {
+        onChange={(data) => {
           trackTabChange(
             tabImplementations.gradeCard.name,
             tabImplementations.gradeCard.tabNames[data.sub]
           );
         }}
       >
-        {mobileTabList.map(t => (
+        {mobileTabList.map((t) => (
           <div key={t.sub}>{generateCardContent(t.sub)}</div>
         ))}
       </MobileTabs>
@@ -117,7 +117,7 @@ function GradeCard(props) {
     <Card
       tabList={tabList}
       activeTabKey={activeTabKey}
-      onTabChange={newTabKey => {
+      onTabChange={(newTabKey) => {
         setActiveTabKey(newTabKey);
         trackTabChange(
           tabImplementations.gradeCard.name,

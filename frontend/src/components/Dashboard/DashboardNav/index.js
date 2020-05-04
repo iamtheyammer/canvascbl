@@ -184,10 +184,7 @@ function DashboardNav(props) {
         mode="horizontal"
         defaultSelectedKeys={['profile']}
         selectedKeys={[
-          `/${props.location.pathname
-            .split('/')
-            .slice(1, 3)
-            .join('/')}`
+          `/${props.location.pathname.split('/').slice(1, 3).join('/')}`
         ]}
         style={{ lineHeight: '64px', float: 'left' }}
       >
@@ -316,7 +313,7 @@ function DashboardNav(props) {
   );
 }
 
-const ConnectedDashboardNav = connect(state => ({
+const ConnectedDashboardNav = connect((state) => ({
   session: state.plus.session,
   observees: state.canvas.observees
 }))(DashboardNav);

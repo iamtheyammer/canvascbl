@@ -20,7 +20,7 @@ export function gotSessionInformation(sessionInformation) {
 }
 
 export function getSessionInformation(id) {
-  return async dispatch => {
+  return async (dispatch) => {
     dispatch(startLoading(id));
     try {
       const sessionRequest = await makePlusRequest('session');
@@ -41,7 +41,7 @@ function gotAverageGradeForCourse(courseId, averageGrade) {
 }
 
 export function getAverageGradeForCourse(id, courseId) {
-  return async dispatch => {
+  return async (dispatch) => {
     dispatch(startLoading(id));
     try {
       const avgGradeRequest = await makePlusRequest(`courses/${courseId}/avg`);
@@ -62,7 +62,7 @@ function gotAverageScoreForOutcome(outcomeId, avg) {
 }
 
 export function getAverageScoreForOutcome(id, outcomeId) {
-  return async dispatch => {
+  return async (dispatch) => {
     dispatch(startLoading(id));
     try {
       const avgOutcomeResponse = await makePlusRequest(
@@ -84,7 +84,7 @@ function gotPreviousGrades(previousGrades) {
 }
 
 export function getPreviousGrades(id) {
-  return async dispatch => {
+  return async (dispatch) => {
     dispatch(startLoading(id));
     try {
       const prevGradesResponse = await makePlusRequest('grades/previous');

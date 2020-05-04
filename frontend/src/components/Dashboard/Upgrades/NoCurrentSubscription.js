@@ -99,14 +99,14 @@ function NoCurrentSubscription(props) {
   }
 
   const product = checkout.products.filter(
-    p => p.id === env.upgradesPurchasableProductId
+    (p) => p.id === env.upgradesPurchasableProductId
   )[0];
 
   if (checkout && checkout.session) {
     setGetCheckoutSessionId('');
     stripe
       .redirectToCheckout({ sessionId: checkout.session.session })
-      .catch(e =>
+      .catch((e) =>
         Modal.error({
           title: 'Error redirecting to checkout',
           content: `There was an error from stripe redirecting to checkout: ${e}`
@@ -122,7 +122,7 @@ function NoCurrentSubscription(props) {
           Take CanvasCBL to a whole new level with CanvasCBL+.
         </Typography.Text>
         <Typography.Title level={3}>Benefits</Typography.Title>
-        {benefits.map(b => (
+        {benefits.map((b) => (
           <div key={b.title}>
             <MobileCard>
               <MobileCard.Header title={b.title} />
@@ -174,10 +174,10 @@ function NoCurrentSubscription(props) {
       </Typography.Text>
       <Typography.Title level={3}>Benefits</Typography.Title>
       {/* using v4() as keys here because there will be no updates */}
-      {chunkedBenefits.map(bs => (
+      {chunkedBenefits.map((bs) => (
         <div key={v4()}>
           <Row gutter={20}>
-            {bs.map(b => (
+            {bs.map((b) => (
               <Col span={8} key={b.title}>
                 <Card title={b.title} cover={<img src={b.img} alt={b.title} />}>
                   <Typography.Text>{b.content}</Typography.Text>
@@ -218,7 +218,7 @@ function NoCurrentSubscription(props) {
   );
 }
 
-const ConnectedNoCurrentSubscription = connect(state => ({
+const ConnectedNoCurrentSubscription = connect((state) => ({
   checkout: state.checkout,
   loading: state.loading,
   error: state.error

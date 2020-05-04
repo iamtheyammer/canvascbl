@@ -1,1 +1,2 @@
-export default arr => arr.reduce((acc, currVal) => acc + currVal) / arr.length;
+export default (arr) =>
+  arr.reduce((acc, currVal) => acc + currVal) / arr.length;

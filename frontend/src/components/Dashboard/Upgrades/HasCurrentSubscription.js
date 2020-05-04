@@ -132,7 +132,7 @@ function HasCurrentSubscription(props) {
   );
 }
 
-const ConnectedHasValidSubscription = connect(state => ({
+const ConnectedHasValidSubscription = connect((state) => ({
   checkout: state.checkout,
   user: state.canvas.user,
   loading: state.loading,

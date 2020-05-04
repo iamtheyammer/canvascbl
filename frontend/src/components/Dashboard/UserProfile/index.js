@@ -94,7 +94,7 @@ function UserProfile(props) {
             <Padding br />
             <Typography.Title level={3}>My Observees</Typography.Title>
             <MobileList>
-              {observees.map(o => (
+              {observees.map((o) => (
                 <MobileList.Item key={o.id}>{o.name}</MobileList.Item>
               ))}
             </MobileList>
@@ -110,7 +110,7 @@ function UserProfile(props) {
         ) : !getAuthorizedAppsError ? (
           !loadingApps ? (
             <MobileAccordion>
-              {authorizedApps.grants.map(grant =>
+              {authorizedApps.grants.map((grant) =>
                 revokedGrantIds && revokedGrantIds.includes(grant.id) ? (
                   <Fragment key={grant.id} />
                 ) : (
@@ -182,7 +182,7 @@ function UserProfile(props) {
           </Typography.Text>
           <Padding br />
           <ul>
-            {observees.map(o => (
+            {observees.map((o) => (
               <li key={o.id}>{o.name}</li>
             ))}
           </ul>
@@ -200,7 +200,7 @@ function UserProfile(props) {
           <List
             itemLayout="horizontal"
             dataSource={authorizedApps.grants}
-            renderItem={grant =>
+            renderItem={(grant) =>
               revokedGrantIds && revokedGrantIds.includes(grant.id) ? (
                 <Fragment key={grant.id} />
               ) : (
@@ -255,7 +255,7 @@ function UserProfile(props) {
   );
 }
 
-const ConnectedUserProfile = connect(state => ({
+const ConnectedUserProfile = connect((state) => ({
   user: state.canvas.user,
   observees: state.canvas.observees,
   loading: state.loading,

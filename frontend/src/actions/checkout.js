@@ -17,7 +17,7 @@ function gotProducts(products) {
 }
 
 export function getProducts(id) {
-  return async dispatch => {
+  return async (dispatch) => {
     dispatch(startLoading(id));
     try {
       const products = await makeCheckoutRequest('products');
@@ -37,7 +37,7 @@ function gotCheckoutSession(session) {
 }
 
 export function getCheckoutSession(id, productId) {
-  return async dispatch => {
+  return async (dispatch) => {
     dispatch(startLoading(id));
     try {
       const session = await makeCheckoutRequest('session', {
@@ -59,7 +59,7 @@ function gotSubscriptions(subscriptions) {
 }
 
 export function getSubscriptions(id) {
-  return async dispatch => {
+  return async (dispatch) => {
     startLoading(id);
     try {
       const subsRequest = await makeCheckoutRequest('subscriptions');
@@ -78,7 +78,7 @@ function canceledSubscription() {
 }
 
 export function cancelSubscription(id) {
-  return async dispatch => {
+  return async (dispatch) => {
     startLoading(id);
     try {
       await makeCheckoutRequest('subscriptions', {}, 'delete');

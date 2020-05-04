@@ -37,7 +37,7 @@ const tableColumns = [
       )),
     mobileRender: (text, record) => (
       <MobileList>
-        {record.actions.map(a => (
+        {record.actions.map((a) => (
           <MobileList.Item key={v4()}>{a}</MobileList.Item>
         ))}
       </MobileList>
@@ -49,10 +49,10 @@ function FutureAssignmentsForOutcome(props) {
   const { outcomeAssignments } = props;
 
   const futureAssignments = outcomeAssignments.filter(
-    a => a.due_at && moment(a.due_at).isAfter()
+    (a) => a.due_at && moment(a.due_at).isAfter()
   );
 
-  const data = futureAssignments.map(fa => ({
+  const data = futureAssignments.map((fa) => ({
     name: fa.name,
     dueDate: moment(fa.due_at).calendar(),
     dueAt: fa.due_at,
@@ -83,7 +83,7 @@ function FutureAssignmentsForOutcome(props) {
   }
 
   if (isMobile) {
-    return data.sort(sort.dateAsc).map(a => (
+    return data.sort(sort.dateAsc).map((a) => (
       <MobileAccordion key={a.key}>
         <MobileAccordion.Panel header={a.name} style={{ paddingLeft: 10 }}>
           <MobileList style={{ paddingLeft: 10 }}>

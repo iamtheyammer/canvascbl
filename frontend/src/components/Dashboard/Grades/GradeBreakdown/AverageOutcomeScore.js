@@ -76,7 +76,7 @@ function AverageOutcomeScore(props) {
   );
 }
 
-const ConnectedAverageOutcomeScore = connect(state => ({
+const ConnectedAverageOutcomeScore = connect((state) => ({
   loading: state.loading,
   error: state.error,
   plus: state.plus

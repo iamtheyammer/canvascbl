@@ -44,7 +44,7 @@ function CourseSettings(props) {
   }
 
   const switchState = record.canvascblHidden;
-  const switchOnChange = throttle(toggle => toggleVisibility(toggle), 2000, {
+  const switchOnChange = throttle((toggle) => toggleVisibility(toggle), 2000, {
     leading: true
   });
   const switchDisabled = !!toggleVisibilityErr;
@@ -56,7 +56,7 @@ function CourseSettings(props) {
   if (isMobile) {
     return (
       <MobileAccordion
-        onChange={open =>
+        onChange={(open) =>
           trackTableRowExpansion(
             tableNames.grades.grades,
             record.id,
@@ -152,7 +152,7 @@ function CourseSettings(props) {
   );
 }
 
-export default connect(state => ({
+export default connect((state) => ({
   loading: state.loading,
   courses: state.canvas.courses,
   toggleVisibilityIds: state.components.coursesettings.toggleVisibilityIds,
