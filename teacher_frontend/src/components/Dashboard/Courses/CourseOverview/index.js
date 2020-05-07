@@ -73,6 +73,8 @@ function getGradeTagColor(grade) {
       return 'red';
     case 'n/a':
       return '#666666';
+    default:
+      return '';
   }
 }
 
