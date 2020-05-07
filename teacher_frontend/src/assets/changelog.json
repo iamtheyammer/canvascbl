@@ -1,1 +1,8 @@
-[]
+[
+  {
+    "timestamp": 1588824011615,
+    "type": 1,
+    "title": "Grades are now color-coded",
+    "content": "Grades go from red to green based on how well a student is doing."
+  }
+]

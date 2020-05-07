@@ -10,6 +10,7 @@ import {
   Select,
   Skeleton,
   Table,
+  Tag,
   Typography
 } from 'antd';
 import Padding from '../../../Padding';
@@ -37,7 +38,12 @@ const gradeOverviewTableColumns = [
     title: 'Grade',
     dataIndex: 'grade',
     key: 'grade',
-    render: (text) => <Typography.Text strong>{text}</Typography.Text>
+    render: (text, record) =>
+      record.tagColor ? (
+        <Tag color={record.tagColor}>{text}</Tag>
+      ) : (
+        <Typography.Text strong>{text}</Typography.Text>
+      )
   },
   {
     title: 'Timestamp',
@@ -58,6 +64,17 @@ const gradeOverviewTableColumns = [
       ))
   }
 ];
+
+function getGradeTagColor(grade) {
+  switch (grade.toLowerCase()) {
+    case 'p':
+      return 'green';
+    case 'i':
+      return 'red';
+    case 'n/a':
+      return '#666666';
+  }
+}
 
 const HalfWidthSkeleton = styled(Skeleton)`
   width: 50%;
@@ -209,6 +226,7 @@ function CourseOverview(props) {
               </PopoutLink>
             )
           ],
+          tagColor: getGradeTagColor(o.grade.grade),
           key: i
         };
       });
