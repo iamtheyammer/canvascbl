@@ -147,6 +147,46 @@ func getCanvasUserObservees(rd requestDetails, userID string) (*canvasUserObserv
 	return &observees, nil
 }
 
+func getCanvasCourseSubmissions(rd requestDetails, courseID string, studentIDs []string, submittedSince *time.Time) (*canvasSubmissionsResponse, error) {
+	q := url.Values{}
+	q.Add("per_page", canvasPerPage)
+	for _, id := range studentIDs {
+		q.Add("student_ids[]", id)
+	}
+
+	if submittedSince != nil {
+		// time is ISO8601 (per Canvas's spec)
+		q.Add("submitted_since", (*submittedSince).Format("2006-01-02T15:04:05Z"))
+	}
+
+	var (
+		allSubmissions canvasSubmissionsResponse
+		u              = "api/v1/courses/" + courseID + "/students/submissions?" + q.Encode()
+	)
+
+	for {
+		var submissions canvasSubmissionsResponse
+		resp, err := makeCanvasGetRequest(
+			u,
+			rd,
+			&submissions,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error getting canvas submissions for course "+
+				"%s and for students %v: %w", courseID, studentIDs, err)
+		}
+
+		allSubmissions = append(allSubmissions, submissions...)
+
+		nu := nextPageUrl(resp.Header.Get("link"))
+		if nu == nil {
+			return &allSubmissions, nil
+		} else {
+			u = *nu
+		}
+	}
+}
+
 // getCanvasOutcomeAlignments is not currently needed, but may be useful in the future.
 //func getCanvasOutcomeAlignments(rd requestDetails, courseID string, studentID string) (*canvasOutcomeAlignmentsResponse, error) {
 //	var alignments canvasOutcomeAlignmentsResponse

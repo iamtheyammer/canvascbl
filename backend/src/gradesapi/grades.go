@@ -15,6 +15,7 @@ import (
 	gradessvc "github.com/iamtheyammer/canvascbl/backend/src/db/services/grades"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/notifications"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/sessions"
+	"github.com/iamtheyammer/canvascbl/backend/src/db/services/submissions"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/users"
 	"github.com/iamtheyammer/canvascbl/backend/src/email"
 	"github.com/iamtheyammer/canvascbl/backend/src/env"
@@ -159,6 +160,8 @@ type UserGradesDBRequests struct {
 	GPA                    *[]gpas.InsertRequest
 	DistanceLearningGrades *[]gradessvc.InsertDistanceLearningRequest
 	Enrollments            []enrollments.UpsertRequest
+	Submissions            []submissions.UpsertRequest
+	SubmissionAttachments  []submissions.AttachmentUpsertRequest
 }
 
 // GradesErrorResponse represents an error from GradesForUser.
@@ -1556,6 +1559,7 @@ func AllGradesForTeacher(req *UserGradesRequest) (*UserGradesResponse, *UserGrad
 	// map[courseID]map[userID]map[outcomeID][]canvasOutcomeResult
 	results := processedOutcomeResults{}
 	enrolls := make(map[uint64][]canvasFullEnrollment, len(*allCourses))
+	submits := make(map[uint64]canvasSubmissionsResponse, len(*allCourses))
 	var (
 		allEnrolls  []canvasFullEnrollment
 		dlCourseIDs []uint64
@@ -1623,6 +1627,31 @@ func AllGradesForTeacher(req *UserGradesRequest) (*UserGradesResponse, *UserGrad
 			allEnrolls = append(allEnrolls, *es...)
 			mutex.Unlock()
 		}(c.ID)
+
+		// fetch submissions
+		wg.Add(1)
+		go func(courseID uint64) {
+			defer wg.Done()
+
+			// since ever, basically
+			since := time.Date(2010, time.January, 01, 00, 00, 00, 00, time.UTC)
+			ss, sErr := getCanvasCourseSubmissions(
+				rd,
+				fmt.Sprintf("%d", courseID),
+				[]string{"all"},
+				&since,
+			)
+			if sErr != nil {
+				mutex.Lock()
+				err = sErr
+				mutex.Unlock()
+				return
+			}
+
+			mutex.Lock()
+			submits[courseID] = *ss
+			mutex.Unlock()
+		}(c.ID)
 	}
 
 	// wait for data
@@ -1664,9 +1693,26 @@ func AllGradesForTeacher(req *UserGradesRequest) (*UserGradesResponse, *UserGrad
 
 			dbReqs.Enrollments = append(dbReqs.Enrollments, *prepareEnrollmentsForDB(allEnrolls)...)
 		}()
+
+		dbReqsWg.Add(1)
+		go func() {
+			defer dbReqsWg.Done()
+
+			for cID, ss := range submits {
+				ss, as := prepareSubmissionsForDB(ss, cID)
+				dbReqs.Submissions = append(dbReqs.Submissions, *ss...)
+				dbReqs.SubmissionAttachments = append(dbReqs.SubmissionAttachments, *as...)
+			}
+
+		}()
 	} else {
 		go saveOutcomeResultsToDB(results)
 		go saveEnrollmentsToDB(allEnrolls)
+		for cID, ss := range submits {
+			go func(courseID uint64, subs canvasSubmissionsResponse) {
+				saveSubmissionsToDB(subs, courseID)
+			}(cID, ss)
+		}
 	}
 
 	// calculate grades
