@@ -59,7 +59,7 @@ type UpsertRequest struct {
 	GraderID         int
 	GradedAt         time.Time
 	Type             string
-	SubmittedAt      *time.Time
+	SubmittedAt      time.Time
 	HTMLURL          string
 	Late             bool
 	Excused          bool
@@ -68,7 +68,7 @@ type UpsertRequest struct {
 	PointsDeducted   float64
 	SecondsLate      uint64
 	ExtraAttempts    uint64
-	PostedAt         *time.Time
+	PostedAt         time.Time
 }
 
 // AttachmentUpsertRequest represents all the data required to upsert an attachment.
@@ -120,6 +120,7 @@ func Upsert(db services.DB, req *[]UpsertRequest) error {
 			"submission_type = EXCLUDED.submission_type, " +
 			"submitted_at = EXCLUDED.submitted_at, " +
 			"late = EXCLUDED.late, " +
+			"excused = EXCLUDED.excused, " +
 			"missing = EXCLUDED.missing, " +
 			"late_policy_status = EXCLUDED.late_policy_status, " +
 			"points_deducted = EXCLUDED.points_deducted, " +
@@ -129,7 +130,22 @@ func Upsert(db services.DB, req *[]UpsertRequest) error {
 		)
 
 	for _, r := range *req {
-		var score, graderID, gradedAt, submissionType, submittedAt, htmlURL, latePolicyStatus, pointsDeducted, extraAttempts interface{}
+		var attempt,
+			score,
+			graderID,
+			gradedAt,
+			submissionType,
+			submittedAt,
+			htmlURL,
+			latePolicyStatus,
+			pointsDeducted,
+			secondsLate,
+			extraAttempts,
+			postedAt interface{}
+
+		if r.Attempt != 0 {
+			attempt = r.Attempt
+		}
 
 		if r.Score != 0 {
 			score = r.Score
@@ -147,7 +163,7 @@ func Upsert(db services.DB, req *[]UpsertRequest) error {
 			submissionType = r.Type
 		}
 
-		if r.SubmittedAt != nil && !(*r.SubmittedAt).IsZero() {
+		if !r.SubmittedAt.IsZero() {
 			submittedAt = r.SubmittedAt
 		}
 
@@ -163,8 +179,16 @@ func Upsert(db services.DB, req *[]UpsertRequest) error {
 			pointsDeducted = r.PointsDeducted
 		}
 
+		if r.SecondsLate != 0 {
+			secondsLate = r.SecondsLate
+		}
+
 		if r.ExtraAttempts != 0 {
 			extraAttempts = r.ExtraAttempts
+		}
+
+		if !r.PostedAt.IsZero() {
+			postedAt = r.PostedAt
 		}
 
 		q = q.Values(
@@ -172,7 +196,7 @@ func Upsert(db services.DB, req *[]UpsertRequest) error {
 			r.CourseID,
 			r.AssignmentID,
 			r.UserCanvasID,
-			r.Attempt,
+			attempt,
 			score,
 			graderID,
 			gradedAt,
@@ -184,9 +208,9 @@ func Upsert(db services.DB, req *[]UpsertRequest) error {
 			r.Missing,
 			latePolicyStatus,
 			pointsDeducted,
-			r.SecondsLate,
+			secondsLate,
 			extraAttempts,
-			r.PostedAt,
+			postedAt,
 		)
 	}
 
@@ -203,7 +227,7 @@ func Upsert(db services.DB, req *[]UpsertRequest) error {
 	return nil
 }
 
-// AttachmentsUpsertChunkSize is the number of attachments that can go in a chunk.
+// AttachmentsUpsertChunkSize represents the max number of attachments per upsert.
 var AttachmentsUpsertChunkSize = services.CalculateChunkSize(8)
 
 func UpsertAttachments(db services.DB, req *[]AttachmentUpsertRequest) error {
