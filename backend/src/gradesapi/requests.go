@@ -41,6 +41,9 @@ type requestDetails struct {
 	Token string
 	// RefreshToken represents the user's Canvas refresh token
 	RefreshToken string
+	// ScopeVersion represents the scopes that the token has.
+	// Learn more at https://go.canvascbl.com/internal/scope-versions
+	ScopeVersion uint64
 }
 
 /*
