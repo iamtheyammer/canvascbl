@@ -1721,7 +1721,6 @@ func AllGradesForTeacher(req *UserGradesRequest) (*UserGradesResponse, *UserGrad
 				rd,
 				&getCanvasCourseEnrollmentsRequest{
 					courseID: fmt.Sprintf("%d", courseID),
-					userID:   "",
 					types:    []string{"StudentEnrollment"},
 					states:   []string{"active"},
 					includes: []string{"avatar_url"},

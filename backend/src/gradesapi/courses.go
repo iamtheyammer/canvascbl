@@ -252,7 +252,7 @@ func CourseSubmissionSummaryHandler(w http.ResponseWriter, r *http.Request, ps h
 
 	rd := *rdP
 
-	if !useCache && !rd.hasScopeVersion(2) {
+	if !rd.hasScopeVersion(2) {
 		handleError(w, GradesErrorResponse{
 			Error:      gradesErrorMissingCanvasScope,
 			Action:     gradesErrorActionRedirectToOAuth,
@@ -286,6 +286,7 @@ func CourseSubmissionSummaryHandler(w http.ResponseWriter, r *http.Request, ps h
 			courseID: courseID,
 			userID:   "self",
 			states:   []string{"active"},
+			includes: []string{"observed_users"},
 		})
 		if outErr != nil {
 			return fmt.Errorf("error getting assignments for course %s: %w", cID, outErr)
@@ -329,7 +330,7 @@ func CourseSubmissionSummaryHandler(w http.ResponseWriter, r *http.Request, ps h
 	// get allowed users
 	var (
 		permittedUserIDsMap = make(map[uint64]struct{})
-		userSpecifiedIDs    = len(uIDs) > 0
+		userDidSpecifyIDs   = len(uIDs) > 0
 		requestedUserIDs    = uIDs
 	)
 
@@ -337,25 +338,16 @@ func CourseSubmissionSummaryHandler(w http.ResponseWriter, r *http.Request, ps h
 		// nothing
 	} else if callingUserEnrollmentType == enrollments.TypeStudent {
 		permittedUserIDsMap[user.CanvasUserID] = struct{}{}
-		if !userSpecifiedIDs {
+		if !userDidSpecifyIDs {
 			requestedUserIDs = append(requestedUserIDs, user.CanvasUserID)
 		}
 	} else if callingUserEnrollmentType == enrollments.TypeObserver {
-		// must go fetch observees
-		obs, err := userssvc.ListObservees(db, &userssvc.ListObserveesRequest{
-			ObserverCanvasUserID: user.CanvasUserID,
-			ActiveOnly:           true,
-		})
-		if err != nil {
-			handleISE(w, fmt.Errorf("error fetching observees in submission summary: %w", err))
-			return
-		}
-
-		for _, o := range *obs {
-			permittedUserIDsMap[o.CanvasUserID] = struct{}{}
-
-			if !userSpecifiedIDs {
-				requestedUserIDs = append(requestedUserIDs, o.CanvasUserID)
+		for _, o := range ces {
+			if o.ObservedUser != nil {
+				permittedUserIDsMap[o.ObservedUser.ID] = struct{}{}
+				if !userDidSpecifyIDs {
+					requestedUserIDs = append(requestedUserIDs, o.ObservedUser.ID)
+				}
 			}
 		}
 	}
@@ -371,7 +363,7 @@ func CourseSubmissionSummaryHandler(w http.ResponseWriter, r *http.Request, ps h
 	}
 
 	// force cache for entire class
-	if callingUserEnrollmentType == enrollments.TypeTeacher && len(uIDsMap) < 1 {
+	if callingUserEnrollmentType == enrollments.TypeTeacher && userDidSpecifyIDs {
 		useCache = true
 	}
 

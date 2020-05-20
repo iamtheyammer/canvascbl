@@ -154,7 +154,7 @@ func Upsert(db services.DB, req *[]UpsertRequest) error {
 			gradedAt,
 			submissionType,
 			submittedAt,
-			htmlURL,
+			HTMLURL,
 			latePolicyStatus,
 			pointsDeducted,
 			secondsLate,
@@ -186,7 +186,7 @@ func Upsert(db services.DB, req *[]UpsertRequest) error {
 		}
 
 		if len(r.HTMLURL) > 0 {
-			htmlURL = r.HTMLURL
+			HTMLURL = r.HTMLURL
 		}
 
 		if len(r.LatePolicyStatus) > 0 {
@@ -221,7 +221,7 @@ func Upsert(db services.DB, req *[]UpsertRequest) error {
 			gradedAt,
 			submissionType,
 			submittedAt,
-			htmlURL,
+			HTMLURL,
 			r.Late,
 			r.Excused,
 			r.Missing,

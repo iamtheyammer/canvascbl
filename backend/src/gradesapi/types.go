@@ -136,20 +136,55 @@ type canvasFullEnrollment struct {
 	LastActivityAt                 string      `json:"last_activity_at,omitempty"`
 	LastAttendedAt                 interface{} `json:"last_attended_at,omitempty"`
 	LimitPrivilegesToCourseSection bool        `json:"limit_privileges_to_course_section,omitempty"`
-	Role                           string      `json:"role,omitempty"`
-	RoleID                         uint64      `json:"role_id,omitempty"`
-	RootAccountID                  uint64      `json:"root_account_id,omitempty"`
-	SectionIntegrationID           interface{} `json:"section_integration_id,omitempty"`
-	SisAccountID                   interface{} `json:"sis_account_id,omitempty"`
-	SisCourseID                    interface{} `json:"sis_course_id,omitempty"`
-	SisImportID                    interface{} `json:"sis_import_id,omitempty"`
-	SisSectionID                   interface{} `json:"sis_section_id,omitempty"`
-	SisUserID                      interface{} `json:"sis_user_id,omitempty"`
-	StartAt                        interface{} `json:"start_at,omitempty"`
-	TotalActivityTime              uint64      `json:"total_activity_time,omitempty"`
-	Type                           string      `json:"type,omitempty"`
-	UpdatedAt                      string      `json:"updated_at,omitempty"`
-	User                           struct {
+	ObservedUser                   *struct {
+		CreatedAt   string `json:"created_at,omitempty"`
+		Enrollments []struct {
+			AssociatedUserID interface{} `json:"associated_user_id,omitempty"`
+			CourseID         uint64      `json:"course_id,omitempty"`
+			CourseSectionID  uint64      `json:"course_section_id,omitempty"`
+			CreatedAt        string      `json:"created_at,omitempty"`
+			EndAt            interface{} `json:"end_at,omitempty"`
+			EnrollmentState  string      `json:"enrollment_state,omitempty"`
+			Grades           struct {
+				CurrentGrade string  `json:"current_grade,omitempty"`
+				CurrentScore float64 `json:"current_score,omitempty"`
+				FinalGrade   string  `json:"final_grade,omitempty"`
+				FinalScore   float64 `json:"final_score,omitempty"`
+				HTMLURL      string  `json:"html_url,omitempty"`
+			} `json:"grades,omitempty"`
+			HTMLURL                        string      `json:"html_url,omitempty"`
+			ID                             uint64      `json:"id,omitempty"`
+			LastActivityAt                 string      `json:"last_activity_at,omitempty"`
+			LastAttendedAt                 interface{} `json:"last_attended_at,omitempty"`
+			LimitPrivilegesToCourseSection bool        `json:"limit_privileges_to_course_section,omitempty"`
+			Role                           string      `json:"role,omitempty"`
+			RoleID                         uint64      `json:"role_id,omitempty"`
+			RootAccountID                  uint64      `json:"root_account_id,omitempty"`
+			StartAt                        interface{} `json:"start_at,omitempty"`
+			TotalActivityTime              uint64      `json:"total_activity_time,omitempty"`
+			Type                           string      `json:"type,omitempty"`
+			UpdatedAt                      string      `json:"updated_at,omitempty"`
+			UserID                         uint64      `json:"user_id,omitempty"`
+		} `json:"enrollments,omitempty"`
+		ID           uint64 `json:"id,omitempty"`
+		Name         string `json:"name,omitempty"`
+		ShortName    string `json:"short_name,omitempty"`
+		SortableName string `json:"sortable_name,omitempty"`
+	} `json:"observed_user,omitempty"`
+	Role                 string      `json:"role,omitempty"`
+	RoleID               uint64      `json:"role_id,omitempty"`
+	RootAccountID        uint64      `json:"root_account_id,omitempty"`
+	SectionIntegrationID interface{} `json:"section_integration_id,omitempty"`
+	SisAccountID         interface{} `json:"sis_account_id,omitempty"`
+	SisCourseID          interface{} `json:"sis_course_id,omitempty"`
+	SisImportID          interface{} `json:"sis_import_id,omitempty"`
+	SisSectionID         interface{} `json:"sis_section_id,omitempty"`
+	SisUserID            interface{} `json:"sis_user_id,omitempty"`
+	StartAt              interface{} `json:"start_at,omitempty"`
+	TotalActivityTime    uint64      `json:"total_activity_time,omitempty"`
+	Type                 string      `json:"type,omitempty"`
+	UpdatedAt            string      `json:"updated_at,omitempty"`
+	User                 struct {
 		CreatedAt     string      `json:"created_at,omitempty"`
 		ID            uint64      `json:"id,omitempty"`
 		IntegrationID interface{} `json:"integration_id,omitempty"`
