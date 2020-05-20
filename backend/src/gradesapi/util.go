@@ -177,6 +177,7 @@ func rdFromUserID(uID uint64) (requestDetails, error) {
 		TokenID:      token.ID,
 		Token:        token.Token,
 		RefreshToken: token.RefreshToken,
+		ScopeVersion: token.ScopeVersion,
 	}, nil
 }
 

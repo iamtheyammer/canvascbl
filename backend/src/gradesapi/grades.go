@@ -1214,12 +1214,10 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *UserGradesDBRe
 
 				}
 
-				ss, sErr := getCanvasCourseSubmissions(
-					rd,
-					fmt.Sprintf("%d", courseID),
-					submissionsFor,
-					nil,
-				)
+				ss, sErr := getCanvasCourseSubmissions(rd, &getCanvasCourseSubmissionsRequest{
+					courseID:   fmt.Sprintf("%d", courseID),
+					studentIDs: submissionsFor,
+				})
 				if sErr != nil {
 					mutex.Lock()
 					err = sErr
@@ -1721,10 +1719,13 @@ func AllGradesForTeacher(req *UserGradesRequest) (*UserGradesResponse, *UserGrad
 
 			es, eErr := getCanvasCourseEnrollments(
 				rd,
-				fmt.Sprintf("%d", courseID),
-				[]string{"StudentEnrollment"},
-				[]string{"active"},
-				[]string{"avatar_url"},
+				&getCanvasCourseEnrollmentsRequest{
+					courseID: fmt.Sprintf("%d", courseID),
+					userID:   "",
+					types:    []string{"StudentEnrollment"},
+					states:   []string{"active"},
+					includes: []string{"avatar_url"},
+				},
 			)
 			if eErr != nil {
 				mutex.Lock()
@@ -1766,12 +1767,10 @@ func AllGradesForTeacher(req *UserGradesRequest) (*UserGradesResponse, *UserGrad
 		go func(courseID uint64) {
 			defer wg.Done()
 
-			ss, sErr := getCanvasCourseSubmissions(
-				rd,
-				fmt.Sprintf("%d", courseID),
-				[]string{"all"},
-				nil,
-			)
+			ss, sErr := getCanvasCourseSubmissions(rd, &getCanvasCourseSubmissionsRequest{
+				courseID:   fmt.Sprintf("%d", courseID),
+				studentIDs: []string{"all"},
+			})
 			if sErr != nil {
 				mutex.Lock()
 				err = sErr

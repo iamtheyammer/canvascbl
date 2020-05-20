@@ -7,15 +7,30 @@ import (
 	"time"
 )
 
+// WorkflowState represents the state of a submission.
+type WorkflowState string
+
+const (
+	// WorkflowStateUnsubmitted indicates that the user has not submitted this assignment yet.
+	WorkflowStateUnsubmitted = "unsubmitted"
+	// WorkflowStateSubmitted indicates that th e user has submitted this assignment, but an instructor has not graded it.
+	WorkflowStateSubmitted = "submitted"
+	// WorkflowStatePendingReview indicates that the user has submitted the assignment, but it is pending review.
+	WorkflowStatePendingReview = "pending_review"
+	// WorkflowStateGraded indicates that an instructor has graded the user's submission.
+	WorkflowStateGraded = "graded"
+)
+
 // Submission represents the metadata for a Canvas Submission.
 type Submission struct {
-	ID           uint64
-	CanvasID     uint64
-	CourseID     uint64
-	AssignmentID uint64
-	UserCanvasID uint64
-	Attempt      uint64
-	Score        float64
+	ID            uint64
+	CanvasID      uint64
+	CourseID      uint64
+	AssignmentID  uint64
+	UserCanvasID  uint64
+	Attempt       uint64
+	Score         float64
+	WorkflowState WorkflowState
 	// GraderID represents the ID of the user that graded it. If it was automatically graded, this value is negative.
 	GraderID         int
 	GradedAt         *time.Time
@@ -49,12 +64,13 @@ type Attachment struct {
 
 // UpsertRequest represents all the data required to upsert a Submission.
 type UpsertRequest struct {
-	CanvasID     uint64
-	CourseID     uint64
-	AssignmentID uint64
-	UserCanvasID uint64
-	Attempt      uint64
-	Score        float64
+	CanvasID      uint64
+	CourseID      uint64
+	AssignmentID  uint64
+	UserCanvasID  uint64
+	Attempt       uint64
+	Score         float64
+	WorkflowState WorkflowState
 	// GraderID represents the ID of the user that graded it. If it was automatically graded, this value is negative.
 	GraderID         int
 	GradedAt         time.Time
@@ -85,7 +101,7 @@ type AttachmentUpsertRequest struct {
 
 // UpsertChunkSize represents the number of size of each upsert chunk.
 // If your number of upserts is less than UpsertChunkSize, chunking is not necessary.
-var UpsertChunkSize = services.CalculateChunkSize(19)
+var UpsertChunkSize = services.CalculateChunkSize(20)
 
 // Upsert upserts Submissions.
 func Upsert(db services.DB, req *[]UpsertRequest) error {
@@ -98,6 +114,7 @@ func Upsert(db services.DB, req *[]UpsertRequest) error {
 			"user_canvas_id",
 			"attempt",
 			"score",
+			"workflow_state",
 			"grader_id",
 			"graded_at",
 			"submission_type",
@@ -115,6 +132,7 @@ func Upsert(db services.DB, req *[]UpsertRequest) error {
 		Suffix("ON CONFLICT (canvas_id) DO UPDATE SET " +
 			"attempt = EXCLUDED.attempt, " +
 			"score = EXCLUDED.score, " +
+			"workflow_state = EXCLUDED.workflow_state, " +
 			"grader_id = EXCLUDED.grader_id, " +
 			"graded_at = EXCLUDED.graded_at, " +
 			"submission_type = EXCLUDED.submission_type, " +
@@ -198,6 +216,7 @@ func Upsert(db services.DB, req *[]UpsertRequest) error {
 			r.UserCanvasID,
 			attempt,
 			score,
+			r.WorkflowState,
 			graderID,
 			gradedAt,
 			submissionType,

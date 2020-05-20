@@ -580,6 +580,7 @@ func prepareSubmissionsForDB(req []canvasSubmission, courseID uint64) (*[]submis
 			UserCanvasID:     s.UserID,
 			Attempt:          s.Attempt,
 			Score:            s.Score,
+			WorkflowState:    submissions.WorkflowState(s.WorkflowState),
 			GraderID:         s.GraderID,
 			GradedAt:         s.GradedAt,
 			Type:             s.SubmissionType,

@@ -150,21 +150,27 @@ func getCanvasUserObservees(rd requestDetails, userID string) (*canvasUserObserv
 	return &observees, nil
 }
 
-func getCanvasCourseSubmissions(rd requestDetails, courseID string, studentIDs []string, submittedSince *time.Time) (*canvasSubmissionsResponse, error) {
+type getCanvasCourseSubmissionsRequest struct {
+	courseID       string
+	studentIDs     []string
+	submittedSince *time.Time
+}
+
+func getCanvasCourseSubmissions(rd requestDetails, req *getCanvasCourseSubmissionsRequest) (*canvasSubmissionsResponse, error) {
 	q := url.Values{}
 	q.Add("per_page", canvasPerPage)
-	for _, id := range studentIDs {
+	for _, id := range req.studentIDs {
 		q.Add("student_ids[]", id)
 	}
 
-	if submittedSince != nil {
+	if req.submittedSince != nil {
 		// time is ISO8601 (per Canvas's spec)
-		q.Add("submitted_since", (*submittedSince).Format("2006-01-02T15:04:05Z"))
+		q.Add("submitted_since", (*req.submittedSince).Format("2006-01-02T15:04:05Z"))
 	}
 
 	var (
 		allSubmissions canvasSubmissionsResponse
-		u              = "api/v1/courses/" + courseID + "/students/submissions?" + q.Encode()
+		u              = "api/v1/courses/" + req.courseID + "/students/submissions?" + q.Encode()
 	)
 
 	for {
@@ -176,7 +182,7 @@ func getCanvasCourseSubmissions(rd requestDetails, courseID string, studentIDs [
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error getting canvas submissions for course "+
-				"%s and for students %v: %w", courseID, studentIDs, err)
+				"%s and for students %v: %w", req.courseID, req.studentIDs, err)
 		}
 
 		allSubmissions = append(allSubmissions, submissions...)
@@ -303,34 +309,46 @@ func getCanvasCourseAssignments(rd requestDetails, courseID string, assignmentID
 	}
 }
 
+type getCanvasCourseEnrollmentsRequest struct {
+	courseID string
+	userID   string
+	types    []string
+	states   []string
+	includes []string
+}
+
 // getCanvasCourseEnrollments gets all enrollments for a course. This request can be performed by
 // any user, but only teachers get grades.
-func getCanvasCourseEnrollments(rd requestDetails, courseID string, types []string, states []string, includes []string) (*canvasEnrollmentsResponse, error) {
+func getCanvasCourseEnrollments(rd requestDetails, req *getCanvasCourseEnrollmentsRequest) (*canvasEnrollmentsResponse, error) {
 	q := url.Values{}
 	q.Add("per_page", canvasPerPage)
 
-	for _, t := range types {
+	if len(req.userID) > 0 {
+		q.Add("user_id", req.userID)
+	}
+
+	for _, t := range req.types {
 		q.Add("type[]", t)
 	}
 
-	for _, s := range states {
+	for _, s := range req.states {
 		q.Add("state[]", s)
 	}
 
-	for _, in := range includes {
+	for _, in := range req.includes {
 		q.Add("include[]", in)
 	}
 
 	var (
 		allEnrollments canvasEnrollmentsResponse
-		u              = "api/v1/courses/" + courseID + "/enrollments?" + q.Encode()
+		u              = "api/v1/courses/" + req.courseID + "/enrollments?" + q.Encode()
 	)
 
 	for {
 		var enrollments canvasEnrollmentsResponse
 		resp, err := makeCanvasGetRequest(u, rd, &enrollments)
 		if err != nil {
-			return nil, fmt.Errorf("error getting canvas enrollments for course %s: %w", courseID, err)
+			return nil, fmt.Errorf("error getting canvas enrollments for course %s: %w", req.courseID, err)
 		}
 
 		allEnrollments = append(allEnrollments, enrollments...)
