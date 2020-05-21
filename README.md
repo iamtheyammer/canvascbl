@@ -11,6 +11,6 @@ All images and assets have been moved to [Google Drive](https://drive.google.com
 ## Current Stack
 
 - Backend on Heroku (canvas-grade-calculator.herokuapp.com)
-- Web hosting with GitHub Pages (canvascbl.com)
-- SSLification on the web hosting with Cloudflare (canvascbl.com)
+- Web hosting with S3 & CloudFront (canvascbl.com)
+- CDN (cost savings) on the web hosting with Cloudflare
 - RDS for PostgreSQL on AWS for database (connects to backend)
