@@ -623,12 +623,15 @@ func saveSubmissionsToDB(req []canvasSubmission, courseID uint64) {
 		}
 	}()
 
-	go func() {
-		err := submissions.UpsertAttachments(db, as)
-		if err != nil {
-			util.HandleError(fmt.Errorf("error inserting submission attachments to db: %w", err))
-		}
-	}()
+	if len(*as) > 0 {
+		go func() {
+			err := submissions.UpsertAttachments(db, as)
+			if err != nil {
+				util.HandleError(fmt.Errorf("error inserting submission attachments to db: %w", err))
+			}
+		}()
+	}
+
 }
 
 // handleBatchGradesDBRequests handles tons of UserGradesDBRequests from fetch_all. It handles chunking and more.
