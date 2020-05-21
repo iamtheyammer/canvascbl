@@ -69,7 +69,10 @@ func UpsertMultiple(db services.DB, c *[]UpsertRequest) error {
 	return nil
 }
 
-// Upserts multiple assignments (name and due_at).
+// MultipleAssignmentsChunkSize is the number of attachments that can go in a chunk.
+var MultipleAssignmentsChunkSize = services.CalculateChunkSize(5)
+
+// UpsertMultipleAssignments Upserts multiple assignments (name and due_at).
 func UpsertMultipleAssignments(db services.DB, req *[]AssignmentUpsertRequest) error {
 	q := util.Sq.
 		Insert("assignments").

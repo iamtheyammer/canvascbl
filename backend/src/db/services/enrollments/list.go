@@ -39,6 +39,55 @@ func (r Role) ToType() Type {
 // Type represents an enrollment type. Constants are provided for all possible enrollment types in Canvas.
 type Type string
 
+// toComparable turns a Type into a comparableType.
+func (t Type) toComparable() comparableType {
+	switch t {
+	case TypeTeacher:
+		return comparableTypeTeacher
+	case TypeTA:
+		return comparableTypeTA
+	case TypeDesigner:
+		return comparableTypeDesigner
+	case TypeStudent:
+		return comparableTypeStudent
+	case TypeObserver:
+		return comparableTypeObserver
+	default:
+		return comparableTypeInvalid
+	}
+}
+
+// CompareTo compares the Type to another Type. True if the passed in type is more permissive than the calling type.
+func (t Type) CompareTo(b Type) bool {
+	// true if b is lower (more permissive)
+	return t.toComparable() > b.toComparable()
+}
+
+// Valid returns true if the receiver Type is valid and false if it is invalid.
+func (t Type) Valid() bool {
+	switch t {
+	case TypeTeacher:
+	case TypeTA:
+	case TypeDesigner:
+	case TypeStudent:
+	case TypeObserver:
+	default:
+		return false
+	}
+	return true
+}
+
+// OneOf returns true if the type is one of the specified types.
+func (t Type) OneOf(types ...Type) bool {
+	for _, check := range types {
+		if t == check {
+			return true
+		}
+	}
+
+	return false
+}
+
 // State represents an enrollment state. Constants are provided for all possible enrollment states in Canvas.
 type State string
 
@@ -63,6 +112,8 @@ const (
 	TypeStudent = "student"
 	// TypeObserver represents the enrollment type of observer.
 	TypeObserver = "observer"
+	// TypeInvalid represents an invalid or missing Type.
+	TypeInvalid = ""
 	// StateActive represents an active enrollment.
 	StateActive = "active"
 	// StateInvitedOrPending represents an enrollment that is pending or that the user has been invited to.
@@ -70,6 +121,65 @@ const (
 	// StateCompleted represents a completed enrollment.
 	StateCompleted = "completed"
 )
+
+// comparableType provides an easy way to compare types. Lower numbers are better: betterType < worseType.
+type comparableType int
+
+const (
+	comparableTypeTeacher = comparableType(iota + 1)
+	comparableTypeTA
+	comparableTypeDesigner
+	comparableTypeStudent
+	comparableTypeObserver
+	comparableTypeInvalid
+)
+
+func (ct comparableType) toType() Type {
+	switch ct {
+	case comparableTypeTeacher:
+		return TypeTeacher
+	case comparableTypeTA:
+		return TypeTA
+	case comparableTypeDesigner:
+		return TypeDesigner
+	case comparableTypeStudent:
+		return TypeStudent
+	case comparableTypeObserver:
+		return TypeObserver
+	default:
+		return TypeInvalid
+	}
+}
+
+// MostPermissiveType returns the type with the most permissions.
+func MostPermissiveType(types ...Type) Type {
+	mpt := comparableTypeInvalid
+
+	for _, t := range types {
+		ct := t.toComparable()
+		if ct < mpt {
+			mpt = ct
+		}
+	}
+
+	return mpt.toType()
+}
+
+// MostPermissiveEnrollment returns the enrollment with the highest permissions, based on the enrollment's Type.
+func MostPermissiveEnrollment(enrollments ...Enrollment) Enrollment {
+	mpt := comparableTypeInvalid
+	var en Enrollment
+
+	for _, e := range enrollments {
+		ct := e.Type.toComparable()
+		if ct < mpt {
+			mpt = ct
+			en = e
+		}
+	}
+
+	return en
+}
 
 // Enrollment represents an enrollment.
 type Enrollment struct {

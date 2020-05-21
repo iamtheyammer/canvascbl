@@ -8,6 +8,7 @@ import (
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/gpas"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/grades"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/outcomes"
+	"github.com/iamtheyammer/canvascbl/backend/src/db/services/submissions"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/users"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"strconv"
@@ -272,15 +273,73 @@ func saveOutcomeResultsToDB(results processedOutcomeResults) {
 		return
 	}
 
-	if len(*req) < 1 {
+	numReqs := len(*req)
+
+	if numReqs < 1 {
 		return
 	}
 
-	err = courses.InsertMultipleOutcomeResults(db, req)
-	if err != nil {
-		util.HandleError(fmt.Errorf("error inserting multiple outcome rollups: %w", err))
+	// chunking required? if NO:
+	if numReqs < courses.MultipleOutcomeResultsUpsertChunkSize {
+		err = courses.InsertMultipleOutcomeResults(db, req)
+		if err != nil {
+			util.HandleError(fmt.Errorf("error inserting multiple outcome rollups: %w", err))
+			return
+		}
 		return
 	}
+
+	// chunking
+	chunked := [][]courses.OutcomeResultInsertRequest{{}}
+	curChunk := 0
+	chunkLen := 0
+
+	for _, r := range *req {
+		// if we are over the max per chunk, move to next chunk
+		if chunkLen > courses.MultipleOutcomeResultsUpsertChunkSize {
+			curChunk++
+			chunked = append(chunked, []courses.OutcomeResultInsertRequest{})
+			chunkLen = 0
+		}
+
+		// add to the current chunk
+		chunked[curChunk] = append(chunked[curChunk], r)
+
+		// add to the number in the current chunk
+		chunkLen++
+	}
+
+	trx, err := db.Begin()
+	if err != nil {
+		util.HandleError(fmt.Errorf("error beginning insert multiple outcome results trx: %w", err))
+		return
+	}
+
+	for i, ch := range chunked {
+		err := courses.InsertMultipleOutcomeResults(trx, &ch)
+		if err != nil {
+			util.HandleError(fmt.Errorf("error inserting multiple outcome results (chunk %d): %w", i, err))
+
+			rbErr := trx.Rollback()
+			if rbErr != nil {
+				util.HandleError(fmt.Errorf("error rolling back insert multiple outcome results trx (chunk %d): %w", i, err))
+			}
+			return
+		}
+	}
+
+	err = trx.Commit()
+	if err != nil {
+		util.HandleError(fmt.Errorf("error committing multiple outcome results trx: %w", err))
+
+		rbErr := trx.Rollback()
+		if rbErr != nil {
+			util.HandleError(fmt.Errorf("error rolling back insert multiple outcome results trx at commit: %w", err))
+		}
+		return
+	}
+
+	return
 }
 
 func prepareGradesForDB(
@@ -510,6 +569,68 @@ func saveEnrollmentsToDB(req []canvasFullEnrollment) {
 	}
 }
 
+func prepareSubmissionsForDB(req []canvasSubmission, courseID uint64) (*[]submissions.UpsertRequest, *[]submissions.AttachmentUpsertRequest) {
+	var ss []submissions.UpsertRequest
+	var as []submissions.AttachmentUpsertRequest
+	for _, s := range req {
+		ss = append(ss, submissions.UpsertRequest{
+			CanvasID:         s.ID,
+			CourseID:         courseID,
+			AssignmentID:     s.AssignmentID,
+			UserCanvasID:     s.UserID,
+			Attempt:          s.Attempt,
+			Score:            s.Score,
+			WorkflowState:    submissions.WorkflowState(s.WorkflowState),
+			GraderID:         s.GraderID,
+			GradedAt:         s.GradedAt,
+			Type:             s.SubmissionType,
+			SubmittedAt:      s.SubmittedAt,
+			HTMLURL:          s.URL,
+			Late:             s.Late,
+			Excused:          s.Excused,
+			Missing:          s.Missing,
+			LatePolicyStatus: s.LatePolicyStatus,
+			PointsDeducted:   s.PointsDeducted,
+			SecondsLate:      s.SecondsLate,
+			ExtraAttempts:    s.ExtraAttempts,
+			PostedAt:         s.PostedAt,
+		})
+
+		for _, a := range s.Attachments {
+			as = append(as, submissions.AttachmentUpsertRequest{
+				CanvasID:     a.ID,
+				SubmissionID: s.ID,
+				DisplayName:  a.DisplayName,
+				Filename:     a.Filename,
+				ContentType:  a.ContentType,
+				URL:          a.URL,
+				Size:         a.Size,
+				CreatedAt:    &a.CreatedAt,
+			})
+		}
+	}
+
+	return &ss, &as
+}
+
+func saveSubmissionsToDB(req []canvasSubmission, courseID uint64) {
+	ss, as := prepareSubmissionsForDB(req, courseID)
+
+	go func() {
+		err := submissions.Upsert(db, ss)
+		if err != nil {
+			util.HandleError(fmt.Errorf("error inserting submissions to db: %w", err))
+		}
+	}()
+
+	go func() {
+		err := submissions.UpsertAttachments(db, as)
+		if err != nil {
+			util.HandleError(fmt.Errorf("error inserting submission attachments to db: %w", err))
+		}
+	}()
+}
+
 // handleBatchGradesDBRequests handles tons of UserGradesDBRequests from fetch_all. It handles chunking and more.
 func handleBatchGradesDBRequests(dbReqs []UserGradesDBRequests) {
 	go func() {
@@ -546,6 +667,21 @@ func handleBatchGradesDBRequests(dbReqs []UserGradesDBRequests) {
 			currentEnrollmentsChunkLength = 0
 			// enrollmentsCache makes sure we don't get the "can't DO UPDATE more than once" error
 			enrollmentsCache = make(map[uint64]map[uint64]struct{})
+
+			chunkedAssignments            = [][]courses.AssignmentUpsertRequest{{}}
+			currentAssignmentsChunk       = 0
+			currentAssignmentsChunkLength = 0
+			assignmentsCache              = make(map[uint64]struct{})
+
+			chunkedSubmissions            = [][]submissions.UpsertRequest{{}}
+			currentSubmissionsChunk       = 0
+			currentSubmissionsChunkLength = 0
+			submissionsCache              = map[uint64]struct{}{}
+
+			chunkedAttachments            = [][]submissions.AttachmentUpsertRequest{{}}
+			currentAttachmentsChunk       = 0
+			currentAttachmentsChunkLength = 0
+			attachmentsCache              = map[uint64]struct{}{}
 		)
 
 		for _, r := range dbReqs {
@@ -663,6 +799,78 @@ func handleBatchGradesDBRequests(dbReqs []UserGradesDBRequests) {
 					currentEnrollmentsChunkLength++
 				}
 			}
+
+			if r.Assignments != nil {
+				for _, a := range r.Assignments {
+					if _, ok := assignmentsCache[a.CanvasID]; ok {
+						continue
+					} else {
+						assignmentsCache[a.CanvasID] = struct{}{}
+					}
+
+					// if we are over the max per chunk, move to next chunk
+					if currentAssignmentsChunkLength >= courses.MultipleAssignmentsChunkSize {
+						currentAssignmentsChunk++
+						chunkedAssignments = append(chunkedAssignments, []courses.AssignmentUpsertRequest{})
+						currentAssignmentsChunkLength = 0
+					}
+
+					// add to the current chunk
+					chunkedAssignments[currentAssignmentsChunk] =
+						append(chunkedAssignments[currentAssignmentsChunk], a)
+
+					// add to the number in the current chunk
+					currentAssignmentsChunkLength++
+				}
+			}
+
+			if r.Submissions != nil {
+				for _, s := range r.Submissions {
+					if _, ok := submissionsCache[s.CanvasID]; ok {
+						continue
+					} else {
+						submissionsCache[s.CanvasID] = struct{}{}
+					}
+
+					// if we are over the max per chunk, move to next chunk
+					if currentSubmissionsChunkLength >= submissions.UpsertChunkSize {
+						currentSubmissionsChunk++
+						chunkedSubmissions = append(chunkedSubmissions, []submissions.UpsertRequest{})
+						currentSubmissionsChunkLength = 0
+					}
+
+					// add to the current chunk
+					chunkedSubmissions[currentSubmissionsChunk] =
+						append(chunkedSubmissions[currentSubmissionsChunk], s)
+
+					// add to the number in the current chunk
+					currentSubmissionsChunkLength++
+				}
+			}
+
+			if r.SubmissionAttachments != nil {
+				for _, a := range r.SubmissionAttachments {
+					if _, ok := attachmentsCache[a.CanvasID]; ok {
+						continue
+					} else {
+						attachmentsCache[a.CanvasID] = struct{}{}
+					}
+
+					// if we are over the max per chunk, move to next chunk
+					if currentAttachmentsChunk >= submissions.AttachmentsUpsertChunkSize {
+						currentAttachmentsChunk++
+						chunkedAttachments = append(chunkedAttachments, []submissions.AttachmentUpsertRequest{})
+						currentAttachmentsChunkLength = 0
+					}
+
+					// add to the current chunk
+					chunkedAttachments[currentAttachmentsChunk] =
+						append(chunkedAttachments[currentAttachmentsChunk], a)
+
+					// add to the number in the current chunk
+					currentAttachmentsChunkLength++
+				}
+			}
 		}
 
 		// we'll request one at a time-- these are big, big requests
@@ -763,11 +971,56 @@ func handleBatchGradesDBRequests(dbReqs []UserGradesDBRequests) {
 				continue
 			}
 
-			err = enrollments.Upsert(db, &req)
+			err = enrollments.Upsert(trx, &req)
 			if err != nil {
 				rb("enrollments")
 				util.HandleError(
 					fmt.Errorf("error inserting multiple enrollments in insert fetch_all data (chunk %d): %w", i, err),
+				)
+				return
+			}
+		}
+
+		for i, req := range chunkedAssignments {
+			if len(req) < 1 {
+				continue
+			}
+
+			err = courses.UpsertMultipleAssignments(trx, &req)
+			if err != nil {
+				rb("assignments")
+				util.HandleError(
+					fmt.Errorf("error inserting multiple assignments in insert fetch_all data (chunk %d): %w", i, err),
+				)
+				return
+			}
+		}
+
+		for i, req := range chunkedSubmissions {
+			if len(req) < 1 {
+				continue
+			}
+
+			err = submissions.Upsert(trx, &req)
+			if err != nil {
+				rb("submissions")
+				util.HandleError(
+					fmt.Errorf("error inserting multiple submissions in insert fetch_all data (chunk %d): %w", i, err),
+				)
+				return
+			}
+		}
+
+		for i, req := range chunkedAttachments {
+			if len(req) < 1 {
+				continue
+			}
+
+			err = submissions.UpsertAttachments(trx, &req)
+			if err != nil {
+				rb("submission attachments")
+				util.HandleError(
+					fmt.Errorf("error inserting multiple submission attachments in insert fetch_all data (chunk %d): %w", i, err),
 				)
 				return
 			}

@@ -42,6 +42,11 @@ func (rd *requestDetails) refreshAccessToken() error {
 	return nil
 }
 
+// hasScopeVersion ensures that the token has at least v.
+func (rd requestDetails) hasScopeVersion(v uint64) bool {
+	return rd.ScopeVersion >= v
+}
+
 // getGradedUsersAndValidCourses gets graded users (users enrolled as a student in a course)
 // and a list of courses that have either an observer enrollment or a student enrollment, as any other
 // enrollment type can't get grades. Valid courses also have not ended.
@@ -172,6 +177,7 @@ func rdFromUserID(uID uint64) (requestDetails, error) {
 		TokenID:      token.ID,
 		Token:        token.Token,
 		RefreshToken: token.RefreshToken,
+		ScopeVersion: token.ScopeVersion,
 	}, nil
 }
 
@@ -181,6 +187,7 @@ func rdFromToken(tok canvas_tokens.CanvasToken) requestDetails {
 		TokenID:      tok.ID,
 		Token:        tok.Token,
 		RefreshToken: tok.RefreshToken,
+		ScopeVersion: tok.ScopeVersion,
 	}
 }
 

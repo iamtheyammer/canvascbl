@@ -14,6 +14,7 @@ type CanvasToken struct {
 	CanvasUserID uint64
 	Token        string
 	RefreshToken string
+	ScopeVersion uint64
 	ExpiresAt    time.Time
 	InsertedAt   time.Time
 }
@@ -24,6 +25,7 @@ type ListRequest struct {
 	CanvasUserID uint64
 	Token        string
 	RefreshToken string
+	ScopeVersion uint64
 
 	Limit      uint64
 	Offset     uint64
@@ -44,6 +46,7 @@ func List(db services.DB, req *ListRequest) (*[]CanvasToken, error) {
 			"canvas_tokens.canvas_user_id",
 			"canvas_tokens.token",
 			"canvas_tokens.refresh_token",
+			"canvas_tokens.scope_version",
 			"canvas_tokens.expires_at",
 			"canvas_tokens.inserted_at",
 		).
@@ -68,6 +71,10 @@ func List(db services.DB, req *ListRequest) (*[]CanvasToken, error) {
 
 	if len(req.RefreshToken) > 0 {
 		q = q.Where(sq.Eq{"refresh_token": req.Token})
+	}
+
+	if req.ScopeVersion > 0 {
+		q = q.Where(sq.Eq{"scope_version": req.ScopeVersion})
 	}
 
 	if req.Limit > 0 {
@@ -111,6 +118,7 @@ func List(db services.DB, req *ListRequest) (*[]CanvasToken, error) {
 			&ct.CanvasUserID,
 			&ct.Token,
 			&ct.RefreshToken,
+			&ct.ScopeVersion,
 			&expiresAt,
 			&ct.InsertedAt,
 		)

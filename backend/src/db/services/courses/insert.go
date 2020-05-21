@@ -72,6 +72,9 @@ func InsertMultipleOutcomeRollups(db services.DB, req *[]OutcomeRollupInsertRequ
 	return nil
 }
 
+// MultipleOutcomeResultsUpsertChunkSize represents the number of outcome results per chunk.
+var MultipleOutcomeResultsUpsertChunkSize = services.CalculateChunkSize(9)
+
 func InsertMultipleOutcomeResults(db services.DB, req *[]OutcomeResultInsertRequest) error {
 	q := util.Sq.
 		Insert("outcome_results").
