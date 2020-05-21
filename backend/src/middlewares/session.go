@@ -53,14 +53,15 @@ func Session(w http.ResponseWriter, req *http.Request, shouldRespond bool) *sess
 		return nil
 	}
 
-	if _, ok := env.ProxyAllowedCORSOrigins[req.Header.Get("Origin")]; !ok {
-		if shouldRespond {
-			util.SendBadRequest(w, "csrf detected-- if you're trying to use this as an api, either remove "+
-				"the Origin and Referer headers or set them to the value of the Access-Control-Allow-Origin header "+
-				"from this request")
-		}
+	origin := req.Header.Get("Origin")
+	if len(origin) > 0 {
+		if _, ok := env.ProxyAllowedCORSOrigins[origin]; !ok {
+			if shouldRespond {
+				util.SendBadRequest(w, "csrf detected! if you are legit, remove the Origin header.")
+			}
 
-		return nil
+			return nil
+		}
 	}
 
 	if !util.ValidateUUIDString(sessionString) {
