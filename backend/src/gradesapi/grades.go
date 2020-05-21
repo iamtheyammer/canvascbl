@@ -1852,15 +1852,15 @@ func AllGradesForTeacher(req *UserGradesRequest) (*UserGradesResponse, *UserGrad
 	} else {
 		go saveOutcomeResultsToDB(results)
 		go saveEnrollmentsToDB(allEnrolls)
-		for cID, ss := range submits {
-			go func(courseID uint64, subs canvasSubmissionsResponse) {
-				saveSubmissionsToDB(subs, courseID)
-			}(cID, ss)
-		}
 		for cID, as := range assignments {
-			go func(courseID uint64, ass canvasAssignmentsResponse) {
+			go func(courseID uint64, ass canvasAssignmentsResponse, subs canvasSubmissionsResponse) {
 				saveAssignmentsToDB(ass, fmt.Sprintf("%d", courseID))
-			}(cID, as)
+
+				// should be fine, but just in case
+				if subs != nil {
+					saveSubmissionsToDB(subs, courseID)
+				}
+			}(cID, as, submits[cID])
 		}
 	}
 

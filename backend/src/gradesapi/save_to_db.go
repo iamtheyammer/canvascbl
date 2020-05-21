@@ -623,7 +623,7 @@ func saveSubmissionsToDB(req []canvasSubmission, courseID uint64) {
 		}
 	}()
 
-	if len(*as) > 1 {
+	if len(*as) > 0 {
 		go func() {
 			err := submissions.UpsertAttachments(db, as)
 			if err != nil {
