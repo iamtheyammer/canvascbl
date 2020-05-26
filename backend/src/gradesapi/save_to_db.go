@@ -430,6 +430,10 @@ func saveAssignmentsToDB(ass []canvasAssignment, courseID string) {
 		return
 	}
 
+	if len(*req) < 1 {
+		return
+	}
+
 	err = courses.UpsertMultipleAssignments(db, req)
 	if err != nil {
 		util.HandleError(fmt.Errorf("error inserting multiple assignments for course %s: %w", courseID, err))
@@ -616,20 +620,20 @@ func prepareSubmissionsForDB(req []canvasSubmission, courseID uint64) (*[]submis
 func saveSubmissionsToDB(req []canvasSubmission, courseID uint64) {
 	ss, as := prepareSubmissionsForDB(req, courseID)
 
-	go func() {
+	if len(*ss) > 0 {
 		err := submissions.Upsert(db, ss)
 		if err != nil {
 			util.HandleError(fmt.Errorf("error inserting submissions to db: %w", err))
+			return
 		}
-	}()
+	}
 
 	if len(*as) > 0 {
-		go func() {
-			err := submissions.UpsertAttachments(db, as)
-			if err != nil {
-				util.HandleError(fmt.Errorf("error inserting submission attachments to db: %w", err))
-			}
-		}()
+		err := submissions.UpsertAttachments(db, as)
+		if err != nil {
+			util.HandleError(fmt.Errorf("error inserting submission attachments to db: %w", err))
+			return
+		}
 	}
 
 }

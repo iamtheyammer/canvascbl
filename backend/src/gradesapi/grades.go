@@ -1304,16 +1304,14 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *UserGradesDBRe
 	} else {
 		go saveOutcomeResultsToDB(results)
 		for cID, as := range assignments {
-			go func(courseID uint64, ass canvasAssignmentsResponse) {
+			go func(courseID uint64, ass canvasAssignmentsResponse, subs canvasSubmissionsResponse) {
 				saveAssignmentsToDB(ass, fmt.Sprintf("%d", courseID))
-			}(cID, as)
-		}
-		if rd.hasScopeVersion(2) {
-			for cID, ss := range submits {
-				go func(courseID uint64, subs canvasSubmissionsResponse) {
+
+				// should be fine, but just in case
+				if subs != nil {
 					saveSubmissionsToDB(subs, courseID)
-				}(cID, ss)
-			}
+				}
+			}(cID, as, submits[cID])
 		}
 	}
 
