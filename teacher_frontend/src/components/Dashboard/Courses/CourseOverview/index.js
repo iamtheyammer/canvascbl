@@ -49,7 +49,7 @@ const gradeOverviewTableColumns = [
     title: 'Timestamp',
     dataIndex: 'timestamp',
     key: 'timestamp',
-    render: (text) => moment.utc(text).calendar()
+    render: (text) => moment(text).calendar()
   },
   {
     title: 'Actions',
