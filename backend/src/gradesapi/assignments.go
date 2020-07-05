@@ -26,13 +26,16 @@ func AssignmentsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 		}
 	}
 
-	userID, rdP, sess := authorizer(w, r, []oauth2.Scope{oauth2.ScopeAssignments}, &oauth2.AuthorizerAPICall{
+	userID, rdP, sess, errCtx := authorizer(w, r, []oauth2.Scope{oauth2.ScopeAssignments}, &oauth2.AuthorizerAPICall{
 		Method:    "GET",
 		RoutePath: "courses/:courseID/assignments",
 	})
-	if (userID == nil || rdP == nil) && sess == nil {
+	if (userID == nil || rdP == nil || errCtx == nil) && sess == nil {
 		return
 	}
+
+	errCtx.AddCustomField("course_id", cID)
+	errCtx.AddCustomField("assignment_ids", aIDs)
 
 	var ass *canvasAssignmentsResponse
 	_, err := handleRequestWithTokenRefresh(func(reqD *requestDetails) error {
@@ -54,7 +57,7 @@ func AssignmentsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 		handleError(w, gradesErrorUnknownCanvasErrorResponse, util.CanvasProxyErrorCode)
 		return
 	} else if err != nil {
-		handleISE(w, fmt.Errorf("error getting assignments for course %s: %w", cID, err))
+		handleISE(w, errCtx.Apply(fmt.Errorf("error getting assignments for course %s: %w", cID, err)))
 		return
 	}
 
@@ -62,7 +65,7 @@ func AssignmentsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 
 	jAss, err := json.Marshal(&ass)
 	if err != nil {
-		handleISE(w, fmt.Errorf("error marshaling assignments for course ID %s: %w", cID, err))
+		handleISE(w, errCtx.Apply(fmt.Errorf("error marshaling assignments for course ID %s: %w", cID, err)))
 	}
 
 	util.SendJSONResponse(w, jAss)

@@ -6,7 +6,9 @@ import (
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/sessions"
 	"github.com/iamtheyammer/canvascbl/backend/src/middlewares"
 	"github.com/iamtheyammer/canvascbl/backend/src/oauth2"
+	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"net/http"
+	"strings"
 )
 
 /*
@@ -25,28 +27,47 @@ func authorizer(
 	*uint64,
 	*requestDetails,
 	*sessions.VerifiedSession,
+	*util.APIErrorContext,
 ) {
 	var (
 		at, tokenIsOK = middlewares.Bearer(w, r, false)
 		session       *sessions.VerifiedSession
 		rd            requestDetails
 		userID        uint64
+		errCtx        util.APIErrorContext
 	)
 
 	if !tokenIsOK {
 		handleError(w, GradesErrorResponse{
 			Error: gradesErrorInvalidAccessToken,
 		}, http.StatusUnauthorized)
-		return nil, nil, nil
+		return nil, nil, nil, nil
+	}
+
+	// copy headers
+	for n, v := range r.Header {
+		if errCtx.RequestHeaders == nil {
+			errCtx.RequestHeaders = make(map[string][]string, len(r.Header))
+		}
+
+		switch strings.ToLower(n) {
+		case "cookie":
+			errCtx.RequestHeaders[n] = []string{"<REDACTED>"}
+		case "authorization":
+			errCtx.RequestHeaders[n] = []string{"<REDACTED>"}
+		default:
+			errCtx.RequestHeaders[n] = v
+		}
 	}
 
 	if len(at) < 1 {
 		// session time
 		session = middlewares.Session(w, r, true)
 		if session == nil {
-			return nil, nil, nil
+			return nil, nil, nil, nil
 		}
 
+		errCtx.AuthorizationMethod = "session"
 		userID = session.UserID
 	} else {
 		// oauth2
@@ -56,27 +77,29 @@ func authorizer(
 				handleError(w, GradesErrorResponse{
 					Error: gradesErrorUnauthorizedScope,
 				}, http.StatusUnauthorized)
-				return nil, nil, nil
+				return nil, nil, nil, nil
 			}
 
 			if errors.Is(err, oauth2.InvalidAccessTokenError) {
 				handleError(w, GradesErrorResponse{
 					Error: oauth2.InvalidAccessTokenError.Error(),
 				}, http.StatusForbidden)
-				return nil, nil, nil
+				return nil, nil, nil, nil
 			}
 
 			handleISE(w, fmt.Errorf("error using oauth2.Authorizer: %w", err))
-			return nil, nil, nil
+			return nil, nil, nil, nil
 		}
 
+		errCtx.AuthorizationMethod = "oauth2_bearer"
+		errCtx.AddCustomField("oauth2_grant_id", grant.ID)
 		userID = grant.UserID
 	}
 
 	rd, err := rdFromUserID(userID)
 	if err != nil {
 		handleISE(w, fmt.Errorf("error getting rd from user id: %w", err))
-		return nil, nil, nil
+		return nil, nil, nil, nil
 	}
 
 	if rd.TokenID < 1 {
@@ -84,8 +107,22 @@ func authorizer(
 			Error:  gradesErrorNoTokens,
 			Action: gradesErrorActionRedirectToOAuth,
 		}, http.StatusForbidden)
-		return nil, nil, nil
+		return nil, nil, nil, nil
 	}
 
-	return &userID, &rd, session
+	if call != nil {
+		errCtx.Path = call.RoutePath
+		errCtx.Method = call.Method
+		if call.Query != nil {
+			errCtx.Query = *call.Query
+		}
+	}
+
+	for _, s := range scopes {
+		errCtx.Scopes = append(errCtx.Scopes, string(s))
+	}
+
+	errCtx.UserID = userID
+
+	return &userID, &rd, session, &errCtx
 }

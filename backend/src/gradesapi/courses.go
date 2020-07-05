@@ -48,12 +48,12 @@ type courseUserSubmissionSummaryResponse struct {
 
 // ListCoursesHandler lists courses for a user.
 func ListCoursesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	userID, rdP, sess := authorizer(w, r, []oauth2.Scope{oauth2.ScopeCourses}, &oauth2.AuthorizerAPICall{
+	userID, rdP, sess, errCtx := authorizer(w, r, []oauth2.Scope{oauth2.ScopeCourses}, &oauth2.AuthorizerAPICall{
 		Method:    "GET",
 		RoutePath: "courses",
 		Query:     &r.URL.RawQuery,
 	})
-	if (userID == nil || rdP == nil) && sess == nil {
+	if (userID == nil || rdP == nil || errCtx == nil) && sess == nil {
 		return
 	}
 
@@ -82,7 +82,7 @@ func ListCoursesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Par
 		handleError(w, gradesErrorUnknownCanvasErrorResponse, util.CanvasProxyErrorCode)
 		return
 	} else if err != nil {
-		handleISE(w, fmt.Errorf("error getting courses: %w", err))
+		handleISE(w, errCtx.Apply(fmt.Errorf("error getting courses: %w", err)))
 		return
 	}
 
@@ -98,7 +98,7 @@ func ListCoursesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Par
 		DistanceLearningPairs: dlPairs,
 	})
 	if err != nil {
-		handleISE(w, fmt.Errorf("error marshaling list courses response to json: %w", err))
+		handleISE(w, errCtx.Apply(fmt.Errorf("error marshaling list courses response to json: %w", err)))
 		return
 	}
 
@@ -147,14 +147,20 @@ func CourseEnrollmentsHandler(w http.ResponseWriter, r *http.Request, ps httprou
 		}
 	}
 
-	userID, rdP, sess := authorizer(w, r, []oauth2.Scope{oauth2.ScopeEnrollments, oauth2.ScopeGrades}, &oauth2.AuthorizerAPICall{
+	userID, rdP, sess, errCtx := authorizer(w, r, []oauth2.Scope{oauth2.ScopeEnrollments, oauth2.ScopeGrades}, &oauth2.AuthorizerAPICall{
 		Method:    "GET",
 		RoutePath: "courses/:courseID/enrollments",
 		Query:     &r.URL.RawQuery,
 	})
-	if (userID == nil || rdP == nil) && sess == nil {
+	if (userID == nil || rdP == nil || errCtx == nil) && sess == nil {
 		return
 	}
+
+	errCtx.AddCustomFields(map[string]interface{}{
+		"course_id": courseID,
+		"types":     types,
+		"states":    states,
+	})
 
 	var es canvasEnrollmentsResponse
 	_, err := handleRequestWithTokenRefresh(func(reqD *requestDetails) error {
@@ -241,14 +247,21 @@ func CourseSubmissionSummaryHandler(w http.ResponseWriter, r *http.Request, ps h
 
 	// authorizer
 
-	userID, rdP, sess := authorizer(w, r, []oauth2.Scope{oauth2.ScopeSubmissions}, &oauth2.AuthorizerAPICall{
+	userID, rdP, sess, errCtx := authorizer(w, r, []oauth2.Scope{oauth2.ScopeSubmissions}, &oauth2.AuthorizerAPICall{
 		Method:    "GET",
 		RoutePath: "courses/:courseID/submission_summary/users",
 		Query:     &r.URL.RawQuery,
 	})
-	if (userID == nil || rdP == nil) && sess == nil {
+	if (userID == nil || rdP == nil || errCtx == nil) && sess == nil {
 		return
 	}
+
+	errCtx.AddCustomFields(map[string]interface{}{
+		"course_id":          courseID,
+		"user_ids":           userIDs,
+		"use_cache":          useCache,
+		"include_late_count": lateCount,
+	})
 
 	rd := *rdP
 
@@ -263,12 +276,12 @@ func CourseSubmissionSummaryHandler(w http.ResponseWriter, r *http.Request, ps h
 
 	users, err := userssvc.List(db, &userssvc.ListRequest{ID: *userID})
 	if err != nil {
-		handleISE(w, fmt.Errorf("error getting calling user in submission summary: %w", err))
+		handleISE(w, errCtx.Apply(fmt.Errorf("error getting calling user in submission summary: %w", err)))
 		return
 	}
 
 	if len(*users) < 1 {
-		handleISE(w, fmt.Errorf("couldn't find calling user in submission summary with user ID %d", *userID))
+		handleISE(w, errCtx.Apply(fmt.Errorf("couldn't find calling user in submission summary with user ID %d", *userID)))
 		return
 	}
 
@@ -305,7 +318,7 @@ func CourseSubmissionSummaryHandler(w http.ResponseWriter, r *http.Request, ps h
 		handleError(w, gradesErrorUnknownCanvasErrorResponse, util.CanvasProxyErrorCode)
 		return
 	} else if err != nil {
-		handleISE(w, fmt.Errorf("error getting canvas course enrollments in submission summary: %w", err))
+		handleISE(w, errCtx.Apply(fmt.Errorf("error getting canvas course enrollments in submission summary: %w", err)))
 		return
 	}
 
@@ -316,6 +329,8 @@ func CourseSubmissionSummaryHandler(w http.ResponseWriter, r *http.Request, ps h
 	}
 
 	callingUserEnrollmentType = enrollments.MostPermissiveType(types...)
+
+	errCtx.AddCustomField("calling_user_enrollment_type", callingUserEnrollmentType)
 
 	if !callingUserEnrollmentType.Valid() {
 		util.SendUnauthorized(w, "unable to find a valid enrollment for you in this course")
@@ -365,6 +380,9 @@ func CourseSubmissionSummaryHandler(w http.ResponseWriter, r *http.Request, ps h
 	// force cache for entire class
 	if callingUserEnrollmentType == enrollments.TypeTeacher && userDidSpecifyIDs {
 		useCache = true
+		errCtx.AddCustomField("force_use_cache", true)
+	} else {
+		errCtx.AddCustomField("force_use_cache", false)
 	}
 
 	// initialize response
@@ -379,8 +397,8 @@ func CourseSubmissionSummaryHandler(w http.ResponseWriter, r *http.Request, ps h
 			SeparateLate: lateCount,
 		})
 		if err != nil {
-			handleISE(w, fmt.Errorf("error getting course user submission summary from db for"+
-				" course %d and user(s) %v: %w", cID, uIDs, err))
+			handleISE(w, errCtx.Apply(fmt.Errorf("error getting course user submission summary from db for"+
+				" course %d and user(s) %v: %w", cID, uIDs, err)))
 			return
 		}
 
@@ -452,7 +470,7 @@ func CourseSubmissionSummaryHandler(w http.ResponseWriter, r *http.Request, ps h
 			handleError(w, gradesErrorUnknownCanvasErrorResponse, util.CanvasProxyErrorCode)
 			return
 		} else if err != nil {
-			handleISE(w, fmt.Errorf("error getting canvas course submissions for summary: %w", err))
+			handleISE(w, errCtx.Apply(fmt.Errorf("error getting canvas course submissions for summary: %w", err)))
 			return
 		}
 

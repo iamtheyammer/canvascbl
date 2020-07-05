@@ -23,13 +23,16 @@ func AlignmentsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 		return
 	}
 
-	userID, rdP, sess := authorizer(w, r, []oauth2.Scope{oauth2.ScopeAlignments}, &oauth2.AuthorizerAPICall{
+	userID, rdP, sess, errCtx := authorizer(w, r, []oauth2.Scope{oauth2.ScopeAlignments}, &oauth2.AuthorizerAPICall{
 		Method:    "GET",
 		RoutePath: "courses/:courseID/outcome_alignments",
 	})
-	if (userID == nil || rdP == nil) && sess == nil {
+	if (userID == nil || rdP == nil || errCtx == nil) && sess == nil {
 		return
 	}
+
+	errCtx.AddCustomField("course_id", cID)
+	errCtx.AddCustomField("student_id", sID)
 
 	var alignments *http.Response
 	_, err := handleRequestWithTokenRefresh(func(reqD *requestDetails) error {
@@ -51,14 +54,14 @@ func AlignmentsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 		handleError(w, gradesErrorUnknownCanvasErrorResponse, util.CanvasProxyErrorCode)
 		return
 	} else if err != nil {
-		handleISE(w, fmt.Errorf("error getting assignments for course %s: %w", cID, err))
+		handleISE(w, errCtx.Apply(fmt.Errorf("error getting assignments for course %s: %w", cID, err)))
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	_, err = io.Copy(w, alignments.Body)
 	if err != nil {
-		handleISE(w, fmt.Errorf("error copying body for outcome alignments: %w", err))
+		handleISE(w, errCtx.Apply(fmt.Errorf("error copying body for outcome alignments: %w", err)))
 		return
 	}
 

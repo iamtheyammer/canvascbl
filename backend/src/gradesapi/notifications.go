@@ -33,17 +33,17 @@ type listNotificationSettingsResponse struct {
 
 // ListNotificationTypesHandler lists notification types.
 func ListNotificationTypesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	userID, rdP, sess := authorizer(w, r, []oauth2.Scope{oauth2.ScopeNotifications}, &oauth2.AuthorizerAPICall{
+	userID, rdP, sess, errCtx := authorizer(w, r, []oauth2.Scope{oauth2.ScopeNotifications}, &oauth2.AuthorizerAPICall{
 		Method:    "GET",
 		RoutePath: "notifications/types",
 	})
-	if (userID == nil || rdP == nil) && sess == nil {
+	if (userID == nil || rdP == nil || errCtx == nil) && sess == nil {
 		return
 	}
 
 	ts, err := notifications.ListTypes(db, &notifications.ListTypesRequest{})
 	if err != nil {
-		handleISE(w, fmt.Errorf("error listing notification types: %w", err))
+		handleISE(w, errCtx.Apply(fmt.Errorf("error listing notification types: %w", err)))
 		return
 	}
 
@@ -59,7 +59,7 @@ func ListNotificationTypesHandler(w http.ResponseWriter, r *http.Request, _ http
 
 	jRet, err := json.Marshal(&nts)
 	if err != nil {
-		handleISE(w, fmt.Errorf("error marshaling notification types in list notification types handler: %w", err))
+		handleISE(w, errCtx.Apply(fmt.Errorf("error marshaling notification types in list notification types handler: %w", err)))
 		return
 	}
 
@@ -69,15 +69,16 @@ func ListNotificationTypesHandler(w http.ResponseWriter, r *http.Request, _ http
 
 // ListNotificationSettingsHandler lists notification settings.
 func ListNotificationSettingsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	userID, rdP, sess := authorizer(w, r, []oauth2.Scope{oauth2.ScopeNotifications}, &oauth2.AuthorizerAPICall{
+	userID, rdP, sess, errCtx := authorizer(w, r, []oauth2.Scope{oauth2.ScopeNotifications}, &oauth2.AuthorizerAPICall{
 		Method:    "GET",
-		RoutePath: "notifications/types",
+		RoutePath: "notifications/settings",
 	})
-	if (userID == nil || rdP == nil) && sess == nil {
+	if (userID == nil || rdP == nil || errCtx == nil) && sess == nil {
 		return
 	}
 
 	includeTypes := r.URL.Query().Get("include[]") == "notification_types"
+	errCtx.AddCustomField("include_types", includeTypes)
 
 	var (
 		wg       = sync.WaitGroup{}
@@ -133,20 +134,15 @@ func ListNotificationSettingsHandler(w http.ResponseWriter, r *http.Request, _ h
 	wg.Wait()
 
 	if err != nil {
-		handleISE(w, fmt.Errorf("error in list notification settings handler: %w", err))
+		handleISE(w, errCtx.Apply(fmt.Errorf("error in list notification settings handler: %w", err)))
 		return
 	}
 
-	jRet, err := json.Marshal(&listNotificationSettingsResponse{
+	sendJSON(w, &listNotificationSettingsResponse{
 		NotificationSettings: settings,
 		NotificationTypes:    types,
 	})
-	if err != nil {
-		handleISE(w, fmt.Errorf("error marshaling list notification settings response: %w", err))
-		return
-	}
 
-	util.SendJSONResponse(w, jRet)
 	return
 }
 
@@ -172,13 +168,18 @@ func PutNotificationSettingsHandler(w http.ResponseWriter, r *http.Request, ps h
 		return
 	}
 
-	userID, rdP, sess := authorizer(w, r, []oauth2.Scope{oauth2.ScopeNotifications}, &oauth2.AuthorizerAPICall{
+	userID, rdP, sess, errCtx := authorizer(w, r, []oauth2.Scope{oauth2.ScopeNotifications}, &oauth2.AuthorizerAPICall{
 		Method:    "PUT",
 		RoutePath: "notifications/types/:notificationTypeID",
 	})
-	if (userID == nil || rdP == nil) && sess == nil {
+	if (userID == nil || rdP == nil || errCtx == nil) && sess == nil {
 		return
 	}
+
+	errCtx.AddCustomFields(map[string]interface{}{
+		"notification_type_id": notificationTypeID,
+		"medium":               medium,
+	})
 
 	err = notifications.InsertNotificationSettings(db, &notifications.InsertNotificationSettingsRequest{
 		UserID: *userID,
@@ -193,7 +194,7 @@ func PutNotificationSettingsHandler(w http.ResponseWriter, r *http.Request, ps h
 			}
 			return
 		}
-		handleISE(w, fmt.Errorf("error inserting notification settings"))
+		handleISE(w, errCtx.Apply(fmt.Errorf("error inserting notification settings: %w", err)))
 		return
 	}
 
@@ -221,13 +222,18 @@ func DeleteNotificationSettingHandler(w http.ResponseWriter, r *http.Request, ps
 		return
 	}
 
-	userID, rdP, sess := authorizer(w, r, []oauth2.Scope{oauth2.ScopeNotifications}, &oauth2.AuthorizerAPICall{
+	userID, rdP, sess, errCtx := authorizer(w, r, []oauth2.Scope{oauth2.ScopeNotifications}, &oauth2.AuthorizerAPICall{
 		Method:    "DELETE",
 		RoutePath: "notifications/types/:notificationTypeID",
 	})
-	if (userID == nil || rdP == nil) && sess == nil {
+	if (userID == nil || rdP == nil || errCtx == nil) && sess == nil {
 		return
 	}
+
+	errCtx.AddCustomFields(map[string]interface{}{
+		"medium":               medium,
+		"notification_type_id": notificationTypeID,
+	})
 
 	err = notifications.DeleteNotificationSetting(db, &notifications.DeleteNotificationSettingRequest{
 		UserID: *userID,
@@ -235,7 +241,7 @@ func DeleteNotificationSettingHandler(w http.ResponseWriter, r *http.Request, ps
 		Medium: medium,
 	})
 	if err != nil {
-		handleISE(w, fmt.Errorf("error deleting a notification setting: %w", err))
+		handleISE(w, errCtx.Apply(fmt.Errorf("error deleting a notification setting: %w", err)))
 		return
 	}
 

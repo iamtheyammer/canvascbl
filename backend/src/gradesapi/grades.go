@@ -19,7 +19,6 @@ import (
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/users"
 	"github.com/iamtheyammer/canvascbl/backend/src/email"
 	"github.com/iamtheyammer/canvascbl/backend/src/env"
-	"github.com/iamtheyammer/canvascbl/backend/src/middlewares"
 	"github.com/iamtheyammer/canvascbl/backend/src/oauth2"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
 	"github.com/julienschmidt/httprouter"
@@ -263,61 +262,17 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 		}
 	}
 
-	var (
-		at, tokenIsOK = middlewares.Bearer(w, r, false)
-		session       *sessions.VerifiedSession
-		userID        uint64
-	)
+	scopes := req.toScopes()
 
-	if !tokenIsOK {
-		handleError(w, GradesErrorResponse{
-			Error: gradesErrorInvalidAccessToken,
-		}, http.StatusUnauthorized)
-		return
+	call := oauth2.AuthorizerAPICall{
+		RoutePath: "grades",
+		Method:    "GET",
+		Query:     &r.URL.RawQuery,
 	}
 
-	if len(at) < 1 {
-		// session time
-		session = middlewares.Session(w, r, true)
-		if session == nil {
-			return
-		}
-
-		userID = session.UserID
-	} else {
-		// oauth2
-		if req.Session {
-			// invalid
-			handleError(w, GradesErrorResponse{
-				Error: gradesErrorInvalidInclude,
-			}, http.StatusBadRequest)
-			return
-		}
-		grant, err := oauth2.Authorizer(at, req.toScopes(), &oauth2.AuthorizerAPICall{
-			RoutePath: "grades",
-			Method:    "GET",
-			Query:     &r.URL.RawQuery,
-		})
-		if err != nil {
-			if errors.Is(err, oauth2.GrantMissingScopeError) {
-				handleError(w, GradesErrorResponse{
-					Error: gradesErrorUnauthorizedScope,
-				}, http.StatusUnauthorized)
-				return
-			}
-
-			if errors.Is(err, oauth2.InvalidAccessTokenError) {
-				handleError(w, GradesErrorResponse{
-					Error: oauth2.InvalidAccessTokenError.Error(),
-				}, http.StatusForbidden)
-				return
-			}
-
-			handleISE(w, fmt.Errorf("error using oauth2.Authorizer in GradesHandler: %w", err))
-			return
-		}
-
-		userID = grant.UserID
+	userID, rdP, session, errCtx := authorizer(w, r, scopes, &call)
+	if (userID == nil || rdP == nil || errCtx == nil) && session == nil {
+		return
 	}
 
 	// a fetch is considered manual if it's initiated with a session.
@@ -328,13 +283,13 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 	}
 
 	g, _, gep := GradesForUser(&UserGradesRequest{
-		UserID:         userID,
+		UserID:         *userID,
 		DetailedGrades: req.DetailedGrades,
 		ManualFetch:    manualFetch,
 	})
 	if gep != nil {
 		if gep.InternalError != nil {
-			handleISE(w, gep.InternalError)
+			handleISE(w, errCtx.Apply(gep.InternalError))
 			return
 		}
 		handleError(w, *gep, gep.StatusCode)
@@ -406,12 +361,12 @@ func DistanceLearningOverviewHandler(w http.ResponseWriter, r *http.Request, _ h
 	}
 
 	// check for TeacherEnrollment (first, validate user)
-	userID, rdP, sess := authorizer(w, r, []oauth2.Scope{oauth2.ScopeGrades}, &oauth2.AuthorizerAPICall{
+	userID, rdP, sess, errCtx := authorizer(w, r, []oauth2.Scope{oauth2.ScopeGrades}, &oauth2.AuthorizerAPICall{
 		Method:    "GET",
 		RoutePath: "grades/distance_learning/overview",
 		Query:     &r.URL.RawQuery,
 	})
-	if (userID == nil || rdP == nil) && sess == nil {
+	if (userID == nil || rdP == nil || errCtx == nil) && sess == nil {
 		return
 	}
 
@@ -421,7 +376,7 @@ func DistanceLearningOverviewHandler(w http.ResponseWriter, r *http.Request, _ h
 		Type:     enrollments.TypeTeacher,
 	})
 	if err != nil {
-		handleISE(w, fmt.Errorf("error listing enrollments in distance learning overview handler: %w", err))
+		handleISE(w, errCtx.Apply(fmt.Errorf("error listing enrollments in distance learning overview handler: %w", err)))
 		return
 	}
 
@@ -452,7 +407,7 @@ func DistanceLearningOverviewHandler(w http.ResponseWriter, r *http.Request, _ h
 		After: time.Now().Add(-(time.Hour * 48)),
 	})
 	if err != nil {
-		handleISE(w, fmt.Errorf("error listing distance learning grades in distance learning overview handler: %w", err))
+		handleISE(w, errCtx.Apply(fmt.Errorf("error listing distance learning grades in distance learning overview handler: %w", err)))
 		return
 	}
 

@@ -1,7 +1,6 @@
 package gradesapi
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/iamtheyammer/canvascbl/backend/src/oauth2"
@@ -17,21 +16,15 @@ func OutcomeHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 		return
 	}
 
-	userID, rdP, sess := authorizer(w, r, []oauth2.Scope{oauth2.ScopeOutcomes}, &oauth2.AuthorizerAPICall{
+	userID, rdP, sess, errCtx := authorizer(w, r, []oauth2.Scope{oauth2.ScopeOutcomes}, &oauth2.AuthorizerAPICall{
 		Method:    "GET",
 		RoutePath: "outcomes/:outcomeID",
 	})
-	if (userID == nil || rdP == nil) && sess == nil {
+	if (userID == nil || rdP == nil || errCtx == nil) && sess == nil {
 		return
 	}
 
-	if rdP.TokenID < 1 {
-		handleError(w, GradesErrorResponse{
-			Error:  gradesErrorNoTokens,
-			Action: gradesErrorActionRedirectToOAuth,
-		}, http.StatusForbidden)
-		return
-	}
+	errCtx.AddCustomField("outcome_id", oID)
 
 	var o *canvasOutcomeResponse
 	_, err := handleRequestWithTokenRefresh(func(reqD *requestDetails) error {
@@ -53,17 +46,12 @@ func OutcomeHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 		handleError(w, gradesErrorUnknownCanvasErrorResponse, util.CanvasProxyErrorCode)
 		return
 	} else if err != nil {
-		handleISE(w, fmt.Errorf("error getting outcome %s: %w", oID, err))
+		handleISE(w, errCtx.Apply(fmt.Errorf("error getting outcome %s: %w", oID, err)))
 		return
 	}
 
 	go saveOutcomeToDB((*canvasOutcome)(o))
 
-	jO, err := json.Marshal(&o)
-	if err != nil {
-		handleISE(w, fmt.Errorf("error marshaling outcome for outcome ID %s: %w", oID, err))
-	}
-
-	util.SendJSONResponse(w, jO)
+	sendJSON(w, o)
 	return
 }

@@ -31,14 +31,16 @@ func UserProfileHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 		return
 	}
 
-	userID, rdP, sess := authorizer(w, r, []oauth2.Scope{oauth2.ScopeProfile}, &oauth2.AuthorizerAPICall{
+	userID, rdP, sess, errCtx := authorizer(w, r, []oauth2.Scope{oauth2.ScopeProfile}, &oauth2.AuthorizerAPICall{
 		Method:    "GET",
 		RoutePath: "users/:userID/profile",
 		Query:     &r.URL.RawQuery,
 	})
-	if (userID == nil || rdP == nil) && sess == nil {
+	if (userID == nil || rdP == nil || errCtx == nil) && sess == nil {
 		return
 	}
+
+	errCtx.AddCustomField("requested_user_id", requestedUserID)
 
 	if requestedUserID != "self" && fmt.Sprintf("%d", *userID) != requestedUserID {
 		util.SendUnauthorized(w, "insufficient permissions")
@@ -47,12 +49,12 @@ func UserProfileHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 
 	profiles, err := userssvc.List(db, &userssvc.ListRequest{ID: *userID})
 	if err != nil {
-		handleISE(w, fmt.Errorf("error listing profiles in user profile handler: %w", err))
+		handleISE(w, errCtx.Apply(fmt.Errorf("error listing profiles in user profile handler: %w", err)))
 		return
 	}
 
 	if len(*profiles) < 1 {
-		handleISE(w, errors.New("zero users returned when listing profiles in user profile handler"))
+		handleISE(w, errCtx.Apply(errors.New("zero users returned when listing profiles in user profile handler")))
 		return
 	}
 
