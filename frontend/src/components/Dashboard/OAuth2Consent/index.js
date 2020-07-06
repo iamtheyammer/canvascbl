@@ -162,7 +162,7 @@ function OAuth2Consent(props) {
               <Typography.Text strong>
                 {consentInfo.credential_name}
               </Typography.Text>{' '}
-              would like to access to following data:
+              would like to access the following data:
             </Typography.Text>
             <Padding all={10} />
             <List
