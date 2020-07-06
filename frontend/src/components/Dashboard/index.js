@@ -163,6 +163,7 @@ function Dashboard(props) {
 
   const err = error[getInitialDataId];
   if (err && err.res && err.res.data) {
+    loginReturnTo.set(location);
     if (err.res.data.error) {
       if (err.res.data.error.action === 'redirect_to_oauth') {
         loginReturnTo.set(location);
