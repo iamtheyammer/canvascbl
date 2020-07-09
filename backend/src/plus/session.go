@@ -17,7 +17,6 @@ type sessionInformation struct {
 	Status               int    `json:"status"`
 	Email                string `json:"email"`
 	HasValidSubscription bool   `json:"hasValidSubscription"`
-	SubscriptionStatus   string `json:"subscriptionStatus"`
 }
 
 func GetSessionInformationHandler(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
@@ -32,7 +31,6 @@ func GetSessionInformationHandler(w http.ResponseWriter, req *http.Request, _ ht
 		Status:               sess.UserStatus,
 		Email:                sess.Email,
 		HasValidSubscription: sess.HasValidSubscription,
-		SubscriptionStatus:   sess.SubscriptionStatus,
 	})
 	if err != nil {
 		util.HandleError(errors.Wrap(err, "error marshaling get session information struct"))

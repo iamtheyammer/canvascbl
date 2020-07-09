@@ -176,13 +176,12 @@ export const itemTypes = {
  * Tracks dashboard loads. We're defining a load as someone visiting the dashboard, whether
  * they have to reauthenticate or not. This function does four things:
  * - It identifies the user (mixpanel.identify)
- * - It sets some super properties (like subscription status)
+ * - It sets some super properties (like whether the user has a valid subscription)
  * - It sets people properties (to help mixpanel identify the user)
  * - It tracks a sign in event
  * @param {string} name The user's full name
  * @param {string} email The user's email
  * @param {boolean} hasValidSubscription Whether the user has a valid subscription.
- * @param {string} subscriptionStatus The user's subscription status (ex: active)
  * @param {number} userId The user's ID (from CanvasCBL, not Canvas)
  * @param {number} canvasUserId The user's Canvas ID
  * @param {number} activeUserId The active user's Canvas ID
@@ -193,7 +192,6 @@ export function trackDashboardLoad(
   name,
   email,
   hasValidSubscription,
-  subscriptionStatus,
   userId,
   canvasUserId,
   activeUserId,
@@ -203,7 +201,6 @@ export function trackDashboardLoad(
   mp.identify(userId);
 
   mp.register({
-    'Subscription Status': subscriptionStatus,
     'User Has Valid Subscription': hasValidSubscription,
     'Current Version': `${currentVersion}`,
     'Active User ID': activeUserId
@@ -214,8 +211,7 @@ export function trackDashboardLoad(
     $email: email,
     'CanvasCBL User ID': userId,
     'Canvas User ID': canvasUserId,
-    'Has Valid Subscription': hasValidSubscription,
-    'Subscription Status': subscriptionStatus
+    'Has Valid Subscription': hasValidSubscription
   });
 
   mp.track('Dashboard Load', {

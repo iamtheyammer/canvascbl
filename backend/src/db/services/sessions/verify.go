@@ -16,7 +16,6 @@ type VerifiedSession struct {
 	UserStatus           int    `json:"status"`
 	Email                string `json:"email"`
 	HasValidSubscription bool   `json:"has_valid_subscription"`
-	SubscriptionStatus   string `json:"subscription_status"`
 	SessionIsExpired     bool   `json:"-"`
 }
 
@@ -32,20 +31,15 @@ func Verify(db services.DB, sessionString string) (*VerifiedSession, error) {
 			"users.status AS user_status",
 			//"google_users.id AS google_users_id",
 			"users.email AS email",
-			"(CASE WHEN subscriptions.status IN ('active', 'trialing') "+
-				"AND subscriptions.current_period_end > NOW() THEN "+
-				"TRUE ELSE FALSE END) AS has_valid_subscription",
-			"subscriptions.status AS subscription_status",
+			"users.has_valid_subscription AS has_valid_subscription",
 			"(CASE WHEN sessions.inserted_at + interval '2 weeks' < NOW() THEN TRUE ELSE FALSE END) "+
 				"AS session_is_expired",
 		).
-		From("subscriptions").
-		RightJoin("users ON subscriptions.user_id = users.id").
+		From("users").
 		//RightJoin("google_users ON LOWER(users.email) = LOWER(google_users.email)").
 		//Join("sessions ON (users.canvas_user_id = sessions.canvas_user_id OR google_users.id = sessions.google_users_id)").
 		Join("sessions ON users.canvas_user_id = sessions.canvas_user_id").
 		Where(sq.Eq{"sessions.session_string": sessionString}).
-		OrderBy("has_valid_subscription DESC").
 		Limit(1).
 		ToSql()
 	if err != nil {
@@ -55,9 +49,9 @@ func Verify(db services.DB, sessionString string) (*VerifiedSession, error) {
 	row := db.QueryRow(query, args...)
 
 	var (
-		vs                        VerifiedSession
-		userID, canvasUserID      sql.NullInt64
-		email, subscriptionStatus sql.NullString
+		vs                   VerifiedSession
+		userID, canvasUserID sql.NullInt64
+		email                sql.NullString
 		//googleUsersID             sql.NullString
 	)
 
@@ -68,7 +62,6 @@ func Verify(db services.DB, sessionString string) (*VerifiedSession, error) {
 		//&googleUsersID,
 		&email,
 		&vs.HasValidSubscription,
-		&subscriptionStatus,
 		&vs.SessionIsExpired,
 	)
 	if err != nil {
@@ -92,10 +85,6 @@ func Verify(db services.DB, sessionString string) (*VerifiedSession, error) {
 
 	if email.Valid {
 		vs.Email = email.String
-	}
-
-	if subscriptionStatus.Valid {
-		vs.SubscriptionStatus = subscriptionStatus.String
 	}
 
 	vs.SessionString = sessionString

@@ -98,7 +98,6 @@ function Dashboard(props) {
       user.name,
       session.email,
       session.has_valid_subscription,
-      session.subscription_status,
       session.user_id,
       user.id,
       activeUserId,

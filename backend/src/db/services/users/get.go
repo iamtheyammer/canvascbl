@@ -33,12 +33,13 @@ type User struct {
 	ID   uint64
 	Name string
 	// almost always blank
-	StripeCustomerID string
-	Email            string
-	LTIUserID        string
-	CanvasUserID     uint64
-	InsertedAt       time.Time
-	Status           int
+	StripeCustomerID     string
+	Email                string
+	LTIUserID            string
+	CanvasUserID         uint64
+	InsertedAt           time.Time
+	Status               int
+	HasValidSubscription bool
 }
 
 type Observee struct {
@@ -52,7 +53,7 @@ type Observee struct {
 
 func List(db services.DB, req *ListRequest) (*[]User, error) {
 	q := util.Sq.
-		Select("id", "name", "email", "lti_user_id", "canvas_user_id", "inserted_at", "status").
+		Select("id", "name", "email", "lti_user_id", "canvas_user_id", "inserted_at", "status", "has_valid_subscription").
 		From("users").
 		Limit(services.DefaultSelectLimit)
 
@@ -107,6 +108,7 @@ func List(db services.DB, req *ListRequest) (*[]User, error) {
 			&u.CanvasUserID,
 			&u.InsertedAt,
 			&u.Status,
+			&u.HasValidSubscription,
 		)
 		if err != nil {
 			return nil, errors.Wrap(err, "error scanning users")
