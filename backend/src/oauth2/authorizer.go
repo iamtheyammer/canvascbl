@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services/oauth2"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
-	"sync"
 	"time"
 )
 
@@ -43,94 +42,40 @@ You are welcome to leave call as nil-- fill it only if your authorization includ
 call-- it will be inserted into the oauth2_api_calls table.
 */
 func Authorizer(accessToken string, scopes []Scope, call *AuthorizerAPICall) (*Grant, error) {
-	var (
-		wg          = sync.WaitGroup{}
-		mutex       = sync.Mutex{}
-		err         error
-		g           oauth2.Grant
-		scopesAreOK bool
-	)
-
-	// go get grant
-	wg.Add(1)
-	go func(at string) {
-		defer wg.Done()
-
-		gr, grErr := oauth2.GetGrant(util.DB, &oauth2.ListGrantsRequest{
-			AccessToken:              at,
-			AllowRevoked:             false,
-			AllowInactiveCredentials: false,
-			AllowExpiredTokens:       false,
-		})
-		if grErr != nil {
-			mutex.Lock()
-			err = fmt.Errorf("error listing grants in oauth2 authorizer: %w", grErr)
-			mutex.Unlock()
-		}
-
-		// careful not to dereference nil
-		if gr != nil {
-			g = *gr
-		}
-	}(accessToken)
-
-	// go get scopes
-	wg.Add(1)
-	go func(at string, reqScopes []Scope) {
-		defer wg.Done()
-
-		s, sErr := oauth2.ListGrantScopes(util.DB, &oauth2.ListGrantScopesRequest{
-			AccessToken:              at,
-			AllowInactiveCredentials: false,
-			AllowRevoked:             false,
-		})
-		if sErr != nil {
-			mutex.Lock()
-			err = fmt.Errorf("error listing grant scopes in oauth2 authorizer: %w", sErr)
-			mutex.Unlock()
-		}
-
-		if s == nil {
-			// we can return as the lack of a grant will make up for it
-			return
-		}
-
-		if len(*s) < 1 {
-			return
-		}
-
-		// go through requested scope
-		for _, rs := range reqScopes {
-			scopeIsOK := false
-
-			// see if this scope came back from the database
-			for _, sc := range *s {
-				if sc.ShortName == string(rs) {
-					// if so, mark as such and move to the next scope
-					scopeIsOK = true
-					break
-				}
-			}
-
-			// if not, stop
-			if !scopeIsOK {
-				scopesAreOK = false
-				return
-			}
-		}
-
-		scopesAreOK = true
-		return
-	}(accessToken, scopes)
-
-	wg.Wait()
-
+	grant, grantScopes, err := oauth2.GetGrantAndScopesByAccessToken(util.DB, &oauth2.GetGrantAndScopesByAccessTokenRequest{
+		AccessToken:              accessToken,
+		AllowInactiveCredentials: false,
+		AllowRevokedGrants:       false,
+		AllowExpiredGrants:       false,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("error getting grant or listing grant scopes in oauth2 authorizer: %w", err)
 	}
 
-	if g.ID < 1 {
+	if grant == nil {
 		return nil, InvalidAccessTokenError
+	}
+
+	scopesAreOK := true
+
+	// go through requested scope
+	for _, s := range scopes {
+		scopeIsOK := false
+
+		// see if this scope came back from the database
+		for _, gs := range *grantScopes {
+			if gs == string(s) {
+				// if so, mark as such and move to the next scope
+				scopeIsOK = true
+				break
+			}
+		}
+
+		// if not, stop
+		if !scopeIsOK {
+			scopesAreOK = false
+			break
+		}
 	}
 
 	if !scopesAreOK {
@@ -138,9 +83,9 @@ func Authorizer(accessToken string, scopes []Scope, call *AuthorizerAPICall) (*G
 	}
 
 	if call != nil {
-		go func(grant oauth2.Grant, c *AuthorizerAPICall) {
+		go func(grantID uint64, c *AuthorizerAPICall) {
 			err := oauth2.InsertAPICall(util.DB, &oauth2.InsertAPICallRequest{
-				GrantID:   grant.ID,
+				GrantID:   grantID,
 				RoutePath: c.RoutePath,
 				Method:    c.Method,
 				Query:     c.Query,
@@ -151,18 +96,18 @@ func Authorizer(accessToken string, scopes []Scope, call *AuthorizerAPICall) (*G
 				util.HandleError(fmt.Errorf("error inserting oauth2 api call: %w", err))
 				return
 			}
-		}(g, call)
+		}(grant.ID, call)
 	}
 
 	return &Grant{
-		ID:                 g.ID,
-		UserID:             g.UserID,
-		OAuth2CredentialID: g.OAuth2CredentialID,
-		RedirectURIID:      g.RedirectURIID,
-		AccessToken:        g.AccessToken,
-		RefreshToken:       g.RefreshToken,
-		TokenExpiresAt:     g.TokenExpiresAt,
-		RevokedAt:          &g.RevokedAt,
-		InsertedAt:         g.InsertedAt,
+		ID:                 grant.ID,
+		UserID:             grant.UserID,
+		OAuth2CredentialID: grant.OAuth2CredentialID,
+		RedirectURIID:      grant.RedirectURIID,
+		AccessToken:        grant.AccessToken,
+		RefreshToken:       grant.RefreshToken,
+		TokenExpiresAt:     grant.TokenExpiresAt,
+		RevokedAt:          &grant.RevokedAt,
+		InsertedAt:         grant.InsertedAt,
 	}, nil
 }
