@@ -7,6 +7,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/iamtheyammer/canvascbl/backend/src/db/services"
 	"github.com/iamtheyammer/canvascbl/backend/src/util"
+	"github.com/lib/pq"
 	"time"
 )
 
@@ -132,8 +133,16 @@ type ListGrantScopesRequest struct {
 	Limit                    uint64
 }
 
+type GetGrantAndScopesByAccessTokenRequest struct {
+	AccessToken string
+
+	AllowInactiveCredentials bool
+	AllowRevokedGrants       bool
+	AllowExpiredGrants       bool
+}
+
 /*
-GetOAuth2Credential scopes returns a list of Scopes on the Credential (if one exists) along
+GetOAuth2CredentialScopes returns a list of Scopes on the Credential (if one exists) along
 with the credential's ID (again, if one exists).
 */
 func GetOAuth2CredentialScopes(db services.DB, req *GetOAuth2CredentialScopesRequest) (*[]Scope, *uint64, error) {
@@ -609,4 +618,95 @@ func ListGrantScopes(db services.DB, req *ListGrantScopesRequest) (*[]Scope, err
 	}
 
 	return &scopes, nil
+}
+
+// GetGrantAndScopesByAccessToken is intended to authorize an OAuth2 API Call.
+func GetGrantAndScopesByAccessToken(db services.DB, req *GetGrantAndScopesByAccessTokenRequest) (*Grant, *[]string, error) {
+	q := util.Sq.
+		Select(
+			"oauth2_grants.id",
+			"oauth2_grants.user_id",
+			"oauth2_grants.purpose",
+			"oauth2_grants.oauth2_credential_id",
+			"oauth2_grants.redirect_uri_id",
+			"oauth2_grants.access_token",
+			"oauth2_grants.refresh_token",
+			"oauth2_grants.token_expires_at",
+			"oauth2_grants.revoked_at",
+			"oauth2_grants.inserted_at",
+			"ARRAY_AGG(oauth2_scopes.short_name) oauth2_scopes",
+		).
+		From("oauth2_grants").
+		Join("oauth2_credentials ON oauth2_grants.oauth2_credential_id = oauth2_credentials.id").
+		Join("oauth2_scope_grants ON oauth2_grants.id = oauth2_scope_grants.oauth2_grant_id").
+		Join("oauth2_scopes ON oauth2_scope_grants.scope_id = oauth2_scopes.id").
+		GroupBy(
+			"oauth2_grants.id",
+			"oauth2_grants.user_id",
+			"oauth2_grants.purpose",
+			"oauth2_grants.oauth2_credential_id",
+			"oauth2_grants.redirect_uri_id",
+			"oauth2_grants.access_token",
+			"oauth2_grants.refresh_token",
+			"oauth2_grants.token_expires_at",
+			"oauth2_grants.revoked_at",
+			"oauth2_grants.inserted_at",
+		).
+		Where(sq.Eq{"oauth2_grants.access_token": req.AccessToken})
+
+	if !req.AllowInactiveCredentials {
+		q = q.Where(sq.Eq{"oauth2_credentials.is_active": true})
+	}
+
+	if !req.AllowRevokedGrants {
+		q = q.Where(sq.Eq{"oauth2_grants.revoked_at": nil})
+	}
+
+	if !req.AllowExpiredGrants {
+		q = q.Where("oauth2_grants.token_expires_at > NOW()")
+	}
+
+	query, args, err := q.ToSql()
+	if err != nil {
+		return nil, nil, fmt.Errorf("error building get grant and scopes by access token sql: %w", err)
+	}
+
+	row := db.QueryRow(query, args...)
+
+	var (
+		g         Grant
+		purpose   sql.NullString
+		revokedAt sql.NullTime
+		sl        []string
+	)
+
+	err = row.Scan(
+		&g.ID,
+		&g.UserID,
+		&purpose,
+		&g.OAuth2CredentialID,
+		&g.RedirectURIID,
+		&g.AccessToken,
+		&g.RefreshToken,
+		&g.TokenExpiresAt,
+		&revokedAt,
+		&g.InsertedAt,
+		pq.Array(&sl),
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil, nil
+		}
+		return nil, nil, fmt.Errorf("error scanning get grant and scopes by access token sql: %w", err)
+	}
+
+	if purpose.Valid {
+		g.Purpose = purpose.String
+	}
+
+	if revokedAt.Valid {
+		g.RevokedAt = revokedAt.Time
+	}
+
+	return &g, &sl, nil
 }
