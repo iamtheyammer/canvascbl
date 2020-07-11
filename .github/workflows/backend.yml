@@ -1,11 +1,9 @@
 name: Backend
 
-on: [push]
-
-# on:
-#   push:
-#     paths:
-#       - /backend
+on:
+  push:
+    paths:
+      - /backend
 
 jobs:
 
@@ -36,8 +34,7 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
     needs: build
-#     We'll test on every branch but will normally do this only on master
-#     if: github.ref == "refs/heads/master" || github.ref == "refs/heads/staging"
+    if: github.ref == "refs/heads/master" || github.ref == "refs/heads/staging"
     steps: 
 
       - name: Checkout code
