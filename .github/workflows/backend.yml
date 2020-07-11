@@ -25,6 +25,7 @@ jobs:
 
     - name: Build
       run: |
+        cd $GITHUB_WORKSPACE
         go build -o bin/backend src/*.go
 
   deploy-prod:
