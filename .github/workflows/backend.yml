@@ -54,11 +54,11 @@ jobs:
         env:
           MASTER_HEROKU_APP_NAME: ${{ secrets.MASTER_HEROKU_APP_NAME }}
           STAGING_HEROKU_APP_NAME: ${{ secrets.STAGING_HEROKU_APP_NAME }}
-          GITHUB-ACTIONS_APP_NAME: ${{ secrets.MASTER_HEROKU_APP_NAME }}
           
       - name: Build, deploy to Heroku
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+          HEROKU_APP_NAME: canvascbl-test
         run: |
           cd $WORKDIR
           heroku container:login
