@@ -25,7 +25,8 @@ jobs:
 
     - name: Build
       run: |
-        cd $GITHUB_WORKSPACE && ls && pwd && go build -o bin/backend src/*.go
+        cd $GITHUB_WORKSPACE/backend
+        go build -o bin/backend src/*.go
 
   deploy-prod:
     name: Deploy to Production
