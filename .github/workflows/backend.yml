@@ -33,20 +33,28 @@ jobs:
         go build -o bin/backend src/*.go
 
   deploy-prod:
-    name: Deploy to Production
+    name: Deploy
     runs-on: ubuntu-latest
     needs: build
 #     We'll test on every branch but will normally do this only on master
-#     if: github.ref == "master"
+#     if: github.ref == "refs/heads/master" || github.ref == "refs/heads/staging"
     steps: 
 
-      - name: Check out code into the Go module directory
+      - name: Checkout code
         uses: actions/checkout@v2
       
       - name: Set workdir
         run: |
           echo "::set-env name=WORKDIR::$GITHUB_WORKSPACE/backend"
-
+          
+      - name: Set Heroku app name
+        uses: cobraz/branch-environment-action@v1.0.0-alpha.1
+        with:
+          name: HEROKU_APP_NAME
+        env:
+          MASTER_HEROKU_APP_NAME: ${{ secrets.MASTER_HEROKU_APP_NAME }}
+          STAGING_HEROKU_APP_NAME: ${{ secrets.STAGING_HEROKU_APP_NAME }}
+          
       - name: Build, deploy to Heroku
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
@@ -55,7 +63,7 @@ jobs:
           cd $WORKDIR
           heroku container:login
           heroku container:push web -a "$HEROKU_APP_NAME_PROD"
-          heroku container:release "$HEROKU_APP_NAME_PROD" -a web
+          heroku container:release web -a "$HEROKU_APP_NAME_PROD"
           
           
           
