@@ -56,6 +56,8 @@ jobs:
           STAGING_HEROKU_APP_NAME: ${{ secrets.STAGING_HEROKU_APP_NAME }}
           
       - name: Build, deploy to Heroku
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
           cd $WORKDIR
           heroku container:login
