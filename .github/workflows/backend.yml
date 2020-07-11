@@ -1,0 +1,57 @@
+name: Backend
+
+on: [push]
+
+# on:
+#   push:
+#     paths:
+#       - /backend
+
+jobs:
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v2
+      with:
+        go-version: ^1.13
+      id: go
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+
+    - name: Get dependencies
+      run: |
+        go get -v -t -d ./...
+
+    - name: Build
+      run: go build -v .
+
+  deploy-prod:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build
+#     We'll test on every branch but will normally do this only on master
+#     if: github.ref == "master"
+    steps: 
+      - name: Build, deploy to Heroku
+        uses: jctaveras/heroku-deploy@v2.0.0
+        with:
+          # this is used as the username for the heroku registry which doesnt matter
+          email: _
+          api_key: ${{ secrets.HEROKU_API_KEY }}
+          app_name: ${{ secrets.HEROKU_APP_NAME_PROD }}
+          dockerfile_path: $GITHUB_WORKSPACE
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
