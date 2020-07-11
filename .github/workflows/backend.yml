@@ -54,6 +54,7 @@ jobs:
         env:
           MASTER_HEROKU_APP_NAME: ${{ secrets.MASTER_HEROKU_APP_NAME }}
           STAGING_HEROKU_APP_NAME: ${{ secrets.STAGING_HEROKU_APP_NAME }}
+          GITHUB-ACTIONS_APP_NAME: ${{ secrets.MASTER_HEROKU_APP_NAME }}
           
       - name: Build, deploy to Heroku
         env:
