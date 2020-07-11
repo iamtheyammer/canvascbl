@@ -43,10 +43,6 @@ jobs:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
 
-      - name: Set workdir
-        run: |
-          echo "::set-env name=WORKDIR::$GITHUB_WORKSPACE/backend"
-
       - name: Build, deploy to Heroku
         uses: jctaveras/heroku-deploy@v2.0.0
         with:
@@ -54,7 +50,7 @@ jobs:
           email: _
           api_key: ${{ secrets.HEROKU_API_KEY }}
           app_name: ${{ secrets.HEROKU_APP_NAME_PROD }}
-          dockerfile_path: $WORKDIR
+          dockerfile_path: $GITHUB_WORKSPACE/backend
           
           
           
