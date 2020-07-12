@@ -64,10 +64,11 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: react-app
-          path: "react-app.zip"
+          path: ${{ env.GITHUB_WORKSPACE }}/react-app.zip
       
       - name: Unzip built react app
         run: |
+          cd $GITHUB_WORKSPACE
           mkdir react-app
           unzip -d react-app react-app.zip
       
@@ -91,4 +92,5 @@ jobs:
           # For testing
           FRONTEND_S3_BUCKET_NAME: canvascbl-test
         run: |
+          cd $GITHUB_WORKSPACE
           aws s3 sync ./react-app s3://$FRONTEND_S3_BUCKET_NAME --delete
