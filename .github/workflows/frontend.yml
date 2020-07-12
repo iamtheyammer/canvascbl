@@ -38,7 +38,7 @@ jobs:
         cache-name: cache-node-modules-frontend
       with:
         path: ${{ env.WORKDIR }}/node_modules
-        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('${{ env.WORKDIR }}/yarn.lock') }}
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('frontend/yarn.lock') }}
 
     - name: Install dependencies
       run: |
