@@ -6,7 +6,7 @@ name: Teacher Frontend
 on:
   push:
     paths:
-      - /teacher-frontend
+      - /teacher_frontend
 
 jobs:
   build:
@@ -19,7 +19,7 @@ jobs:
       
     - name: Set workdir and node version
       run: |
-        WORKDIR=$GITHUB_WORKSPACE/teacher-frontend
+        WORKDIR=$GITHUB_WORKSPACE/teacher_frontend
         echo "::set-env name=WORKDIR::$WORKDIR"
         echo "::set-env name=PROJECT_NODE_VERSION::$(cat $WORKDIR/.nvmrc)"
     - name: Use Node.js ${{ env.PROJECT_NODE_VERSION }} from .nvmrc
@@ -31,10 +31,10 @@ jobs:
       id: fetch-cache
       uses: actions/cache@v2
       env:
-        cache-name: cache-node-modules-teacher-frontend
+        cache-name: cache-node-modules-teacher_frontend
       with:
         path: ${{ env.WORKDIR }}/node_modules
-        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('teacher-frontend/yarn.lock') }}
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('teacher_frontend/yarn.lock') }}
 
     - name: Install dependencies
       run: |
