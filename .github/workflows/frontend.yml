@@ -64,7 +64,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: react-app
-          path: ${{ env.GITHUB_WORKSPACE }}/react-app.zip
+          path: ${{ env.GITHUB_WORKSPACE }}
       
       - name: Unzip built react app
         run: |
