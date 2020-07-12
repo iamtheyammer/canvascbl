@@ -30,6 +30,15 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ env.PROJECT_NODE_VERSION }}
+        
+    - name: Fetch cache
+      id: fetch-cache
+      uses: actions/cache@v2
+      env:
+        cache-name: cache-node-modules-frontend
+      with:
+        path: ${{ env.WORKDIR }}/node_modules
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('${{ env.WORKDIR }}/yarn.lock') }}
 
     - name: Install dependencies
       run: |
