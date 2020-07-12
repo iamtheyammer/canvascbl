@@ -6,7 +6,7 @@ name: Teacher Frontend
 on:
   push:
     paths:
-      - /teacher_frontend
+      - /teacher_frontend/*
 
 jobs:
   build:

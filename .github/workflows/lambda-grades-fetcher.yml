@@ -3,7 +3,7 @@ name: Lambda Grades Fetcher
 on:
   push:
     paths:
-      - /lambda_grades_fetcher
+      - /lambda_grades_fetcher/*
 
 jobs:
 

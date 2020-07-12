@@ -6,7 +6,7 @@ name: Frontend
 on:
   push:
     paths:
-      - /frontend
+      - /frontend/*
 
 jobs:
   build:

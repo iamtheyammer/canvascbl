@@ -6,7 +6,7 @@ name: Account Frontend
 on:
   push:
     paths:
-      - /account_frontend
+      - /account_frontend/*
 
 jobs:
   build:
