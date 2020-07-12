@@ -3,13 +3,10 @@
 
 name: Frontend
 
-# Testing
-on: [push]
-
-# on:
-#   push:
-#     paths:
-#       - /frontend
+on:
+  push:
+    paths:
+      - /frontend
 
 jobs:
   build:
@@ -65,8 +62,7 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
     needs: build
-    #Testing
-#     if: github.ref == "refs/heads/master" || github.ref == "refs/heads/staging"
+    if: github.ref == "refs/heads/master" || github.ref == "refs/heads/staging"
     
     steps:
       - name: Download built react app
@@ -94,7 +90,7 @@ jobs:
           name: FRONTEND_S3_BUCKET_NAME
         env:
           MASTER_S3_BUCKET_NAME: ${{ secrets.FRONTEND_S3_BUCKET_NAME_PROD }}
-          STAGING_S3_BUCKET_NAME: ${{ secrets.STAGING_S3_BUCKET_NAME_STG }}
+          STAGING_S3_BUCKET_NAME: ${{ secrets.FRONTEND_S3_BUCKET_NAME_STG }}
                     
       - name: Upload react app
         env:
