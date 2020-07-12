@@ -93,9 +93,6 @@ jobs:
           STAGING_S3_BUCKET_NAME: ${{ secrets.FRONTEND_S3_BUCKET_NAME_STG }}
                     
       - name: Upload react app
-        env:
-          # For testing
-          FRONTEND_S3_BUCKET_NAME: canvascbl-test
         run: |
           cd $GITHUB_WORKSPACE
           aws s3 sync ./react-app s3://$FRONTEND_S3_BUCKET_NAME --delete
