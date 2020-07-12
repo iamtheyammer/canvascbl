@@ -49,8 +49,8 @@ jobs:
     - name: Upload built react app
       uses: actions/upload-artifact@v2
       with:
-        name: frontend
-        path: ${{ env.WORKDIR }}/bin/react-app.zip
+        name: react-app
+        path: ${{ env.WORKDIR }}/build/react-app.zip
         
   deploy:
     name: Deploy
