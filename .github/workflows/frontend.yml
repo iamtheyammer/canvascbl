@@ -38,8 +38,8 @@ jobs:
         key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('frontend/yarn.lock') }}
 
     - name: Set current version
-        run: |
-          echo "::set-env name=REACT_APP_CURRENT_VERSION::$(NODE_DISABLE_COLORS=1 node -e 'console.log(Date.now())')"
+      run: |
+        echo "::set-env name=REACT_APP_CURRENT_VERSION::$(NODE_DISABLE_COLORS=1 node -e 'console.log(Date.now())')"
 
     - name: Set environment variables
       uses: iamtheyammer/branch-env-vars@v1.0.0
