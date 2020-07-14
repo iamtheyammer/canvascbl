@@ -43,14 +43,13 @@ jobs:
       - name: Set workdir
         run: |
           echo "::set-env name=WORKDIR::$GITHUB_WORKSPACE/backend"
-          
+
       - name: Set Heroku app name
-        uses: cobraz/branch-environment-action@v1.0.0-alpha.1
+        uses: iamtheyammer/branch-env-vars@v1.0.0
         with:
-          name: HEROKU_APP_NAME
-        env:
-          MASTER_HEROKU_APP_NAME: ${{ secrets.MASTER_HEROKU_APP_NAME }}
-          STAGING_HEROKU_APP_NAME: ${{ secrets.STAGING_HEROKU_APP_NAME }}
+          HEROKU_APP_NAME: |
+            master:${{ secrets.HEROKU_APP_NAME_PROD }}
+            staging:${{ secrets.HEROKU_APP_NAME_STG }}
           
       - name: Build, deploy to Heroku
         env:

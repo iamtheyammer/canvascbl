@@ -36,6 +36,38 @@ jobs:
         path: ${{ env.WORKDIR }}/node_modules
         key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('teacher_frontend/yarn.lock') }}
 
+    - name: Set current version
+        run: |
+          echo "::set-env name=REACT_APP_CURRENT_VERSION::$(NODE_DISABLE_COLORS=1 node -e 'console.log(Date.now())')"
+
+    - name: Set environment variables
+        uses: iamtheyammer/branch-env-vars@v1.0.0
+        with:
+          REACT_APP_DEFAULT_API_URI: |
+            master:${{ secrets.REACT_APP_DEFAULT_API_URI_PROD }}
+            staging:${{ secrets.REACT_APP_DEFAULT_API_URI_STG }}
+          REACT_APP_BUILD_BRANCH: |
+            master:master
+            staging:staging
+            !default:other
+          REACT_APP_GOOGLE_ANALYTICS_ID: |
+            master:${{ secrets.REACT_APP_GOOGLE_ANALYTICS_ID_PROD }}
+            staging:${{ secrets.REACT_APP_GOOGLE_ANALYTICS_ID_STG }}
+          REACT_APP_CANVASCBL_URL: |
+            master:${{ secrets.REACT_APP_CANVASCBL_URL_PROD }}
+            staging:${{ secrets.REACT_APP_CANVASCBL_URL_STG }}
+          REACT_APP_TEACHER_URL: |
+            master:${{ secrets.REACT_APP_TEACHER_URL_PROD }}
+            staging:${{ secrets.REACT_APP_TEACHER_URL_STG }}
+          REACT_APP_ACCOUNT_URL: |
+            master:${{ secrets.REACT_APP_ACCOUNT_URL_PROD }}
+            staging:${{ secrets.REACT_APP_ACCOUNT_URL_STG }}
+          REACT_APP_PRIVACY_POLICY_URL: ${{ secrets.REACT_APP_PRIVACY_POLICY_URL }}
+          REACT_APP_TERMS_OF_SERVICE_URL: ${{ secrets.REACT_APP_TERMS_OF_SERVICE_URL }}
+          REACT_APP_TEACHER_MIXPANEL_TOKEN: |
+            master:${{ secrets.REACT_APP_TEACHER_MIXPANEL_TOKEN_PROD }}
+            staging:${{ secrets.REACT_APP_TEACHER_MIXPANEL_TOKEN_STG }}
+
     - name: Install dependencies
       run: |
         cd $WORKDIR
@@ -82,14 +114,13 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-2
-      
+
       - name: Get S3 bucket name
-        uses: cobraz/branch-environment-action@v1.0.0-alpha.1
-        with:
-          name: TEACHER_FRONTEND_S3_BUCKET_NAME
-        env:
-          MASTER_TEACHER_FRONTEND_S3_BUCKET_NAME: ${{ secrets.TEACHER_FRONTEND_S3_BUCKET_NAME_PROD }}
-          STAGING_TEACHER_FRONTEND_S3_BUCKET_NAME: ${{ secrets.TEACHER_FRONTEND_S3_BUCKET_NAME_STG }}
+          uses: iamtheyammer@branch-env-vars@v1.0.0
+          with:
+            TEACHER_FRONTEND_S3_BUCKET_NAME: |
+              master:${{ secrets.TEACHER_FRONTEND_S3_BUCKET_NAME_PROD }}
+              staging:${{ secrets.TEACHER_FRONTEND_S3_BUCKET_NAME_STG }}
                     
       - name: Upload react app
         run: |

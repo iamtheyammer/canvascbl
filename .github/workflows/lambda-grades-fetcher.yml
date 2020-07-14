@@ -60,15 +60,14 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-2
-          
+
       - name: Get Lambda function name
-        uses: cobraz/branch-environment-action@v1.0.0-alpha.1
-        with:
-          name: LAMBDA_GRADES_FETCHER_FUNCTION_NAME
-        env:
-          MASTER_LAMBDA_GRADES_FETCHER_FUNCTION_NAME: ${{ secrets.LAMBDA_GRADES_FETCHER_FUNCTION_NAME_PROD }}
-          STAGING_LAMBDA_GRADES_FETCHER_FUNCTION_NAME: ${{ secrets.LAMBDA_GRADES_FETCHER_FUNCTION_NAME_STG }}
-          
+          uses: iamtheyammer@branch-env-vars@v1.0.0
+          with:
+            LAMBDA_GRADES_FETCHER_FUNCTION_NAME: |
+              master:${{ secrets.LAMBDA_GRADES_FETCHER_FUNCTION_NAME_PROD }}
+              staging:${{ secrets.LAMBDA_GRADES_FETCHER_FUNCTION_NAME_STG }}
+
       - name: Update lambda function code
         run: |
           cd $WORKDIR
