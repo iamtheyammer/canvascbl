@@ -42,39 +42,39 @@ jobs:
           echo "::set-env name=REACT_APP_CURRENT_VERSION::$(NODE_DISABLE_COLORS=1 node -e 'console.log(Date.now())')"
 
     - name: Set environment variables
-        uses: iamtheyammer/branch-env-vars@v1.0.0
-        with:
-          REACT_APP_DEFAULT_API_URI: |
-            master:${{ secrets.REACT_APP_DEFAULT_API_URI_PROD }}
-            staging:${{ secrets.REACT_APP_DEFAULT_API_URI_STG }}
-          REACT_APP_BUILD_BRANCH: |
-            master:master
-            staging:staging
-            !default:other
-          REACT_APP_GOOGLE_ANALYTICS_ID: |
-            master:${{ secrets.REACT_APP_GOOGLE_ANALYTICS_ID_PROD }}
-            staging:${{ secrets.REACT_APP_GOOGLE_ANALYTICS_ID_STG }}
-          REACT_APP_CANVASCBL_URL: |
-            master:${{ secrets.REACT_APP_CANVASCBL_URL_PROD }}
-            staging:${{ secrets.REACT_APP_CANVASCBL_URL_STG }}
-          REACT_APP_TEACHER_URL: |
-            master:${{ secrets.REACT_APP_TEACHER_URL_PROD }}
-            staging:${{ secrets.REACT_APP_TEACHER_URL_STG }}
-          REACT_APP_ACCOUNT_URL: |
-            master:${{ secrets.REACT_APP_ACCOUNT_URL_PROD }}
-            staging:${{ secrets.REACT_APP_ACCOUNT_URL_STG }}
-          REACT_APP_PRIVACY_POLICY_URL: ${{ secrets.REACT_APP_PRIVACY_POLICY_URL }}
-          REACT_APP_TERMS_OF_SERVICE_URL: ${{ secrets.REACT_APP_TERMS_OF_SERVICE_URL }}
-          REACT_APP_STRIPE_API_KEY_PUB: |
-            master:${{ secrets.REACT_APP_STRIPE_API_KEY_PUB_PROD }}
-            staging:${{ secrets.REACT_APP_STRIPE_API_KEY_PUB_STG }}
-          REACT_APP_UPGRADES_PURCHASABLE_PRODUCT_ID: |
-            master:${{ secrets.REACT_APP_UPGRADES_PURCHASABLE_PRODUCT_ID_PROD }}
-            staging:${{ secrets.REACT_APP_UPGRADES_PURCHASABLE_PRODUCT_ID_STG }}
-          REACT_APP_MIXPANEL_TOKEN: |
-            master:${{ secrets.REACT_APP_MIXPANEL_TOKEN_PROD }}
-            staging:${{ secrets.REACT_APP_MIXPANEL_TOKEN_STG }}
-          REACT_APP_DEFAULT_SUBDOMAIN: ${{ secrets.REACT_APP_DEFAULT_SUBDOMAIN }}
+      uses: iamtheyammer/branch-env-vars@v1.0.0
+      with:
+        REACT_APP_DEFAULT_API_URI: |
+          master:${{ secrets.REACT_APP_DEFAULT_API_URI_PROD }}
+          staging:${{ secrets.REACT_APP_DEFAULT_API_URI_STG }}
+        REACT_APP_BUILD_BRANCH: |
+          master:master
+          staging:staging
+          !default:other
+        REACT_APP_GOOGLE_ANALYTICS_ID: |
+          master:${{ secrets.REACT_APP_GOOGLE_ANALYTICS_ID_PROD }}
+          staging:${{ secrets.REACT_APP_GOOGLE_ANALYTICS_ID_STG }}
+        REACT_APP_CANVASCBL_URL: |
+          master:${{ secrets.REACT_APP_CANVASCBL_URL_PROD }}
+          staging:${{ secrets.REACT_APP_CANVASCBL_URL_STG }}
+        REACT_APP_TEACHER_URL: |
+          master:${{ secrets.REACT_APP_TEACHER_URL_PROD }}
+          staging:${{ secrets.REACT_APP_TEACHER_URL_STG }}
+        REACT_APP_ACCOUNT_URL: |
+          master:${{ secrets.REACT_APP_ACCOUNT_URL_PROD }}
+          staging:${{ secrets.REACT_APP_ACCOUNT_URL_STG }}
+        REACT_APP_PRIVACY_POLICY_URL: ${{ secrets.REACT_APP_PRIVACY_POLICY_URL }}
+        REACT_APP_TERMS_OF_SERVICE_URL: ${{ secrets.REACT_APP_TERMS_OF_SERVICE_URL }}
+        REACT_APP_STRIPE_API_KEY_PUB: |
+          master:${{ secrets.REACT_APP_STRIPE_API_KEY_PUB_PROD }}
+          staging:${{ secrets.REACT_APP_STRIPE_API_KEY_PUB_STG }}
+        REACT_APP_UPGRADES_PURCHASABLE_PRODUCT_ID: |
+          master:${{ secrets.REACT_APP_UPGRADES_PURCHASABLE_PRODUCT_ID_PROD }}
+          staging:${{ secrets.REACT_APP_UPGRADES_PURCHASABLE_PRODUCT_ID_STG }}
+        REACT_APP_MIXPANEL_TOKEN: |
+          master:${{ secrets.REACT_APP_MIXPANEL_TOKEN_PROD }}
+          staging:${{ secrets.REACT_APP_MIXPANEL_TOKEN_STG }}
+        REACT_APP_DEFAULT_SUBDOMAIN: ${{ secrets.REACT_APP_DEFAULT_SUBDOMAIN }}
 
     - name: Install dependencies
       run: |
