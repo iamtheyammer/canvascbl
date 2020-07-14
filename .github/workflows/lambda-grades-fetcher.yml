@@ -62,7 +62,7 @@ jobs:
           aws-region: us-east-2
 
       - name: Get Lambda function name
-          uses: iamtheyammer@branch-env-vars@v1.0.0
+          uses: iamtheyammer/branch-env-vars@v1.0.0
           with:
             LAMBDA_GRADES_FETCHER_FUNCTION_NAME: |
               master:${{ secrets.LAMBDA_GRADES_FETCHER_FUNCTION_NAME_PROD }}

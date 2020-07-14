@@ -116,7 +116,7 @@ jobs:
           aws-region: us-east-2
 
       - name: Get S3 bucket name
-          uses: iamtheyammer@branch-env-vars@v1.0.0
+          uses: iamtheyammer/branch-env-vars@v1.0.0
           with:
             TEACHER_FRONTEND_S3_BUCKET_NAME: |
               master:${{ secrets.TEACHER_FRONTEND_S3_BUCKET_NAME_PROD }}
