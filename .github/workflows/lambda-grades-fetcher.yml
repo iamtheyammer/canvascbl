@@ -1,0 +1,79 @@
+name: Lambda Grades Fetcher
+
+on:
+  push:
+    paths:
+      - 'lambda_grades_fetcher/**'
+
+jobs:
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v2
+      with:
+        go-version: ^1.13
+      id: go
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+  
+    - name: Set workdir
+      run: |
+        echo "::set-env name=WORKDIR::$GITHUB_WORKSPACE/lambda_grades_fetcher"
+
+    - name: Build
+      run: |
+        cd $WORKDIR
+        GOOS=linux go build -o bin/lambda_grades_fetcher ./*.go
+        
+    - name: Zip binary
+      run: |
+        cd $WORKDIR
+        zip bin/lambda_grades_fetcher.zip bin/lambda_grades_fetcher
+        
+    - name: Upload binary
+      uses: actions/upload-artifact@v2
+      with:
+        name: lgf-binary
+        path: ${{ env.WORKDIR }}/build/lgf-binary.zip
+        
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: build
+    if: endsWith(github.ref, 'heads/master') || endsWith(github.ref, 'heads/staging')
+    
+    steps:
+    - name: Download compiled binary
+      uses: actions/download-artifact@v2
+      with:
+        name: lgf-binary
+        path: ${{ env.GITHUB_WORKSPACE }}
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-2
+
+    - name: Get Lambda function name
+      uses: iamtheyammer/branch-env-vars@v1.0.0
+      with:
+        LAMBDA_GRADES_FETCHER_FUNCTION_NAME: |
+          master:${{ secrets.LAMBDA_GRADES_FETCHER_FUNCTION_NAME_PROD }}
+          staging:${{ secrets.LAMBDA_GRADES_FETCHER_FUNCTION_NAME_STG }}
+
+    - name: Update lambda function code
+      run: |
+        cd $WORKDIR
+        aws lambda update-function-code \
+          --function-name "$LAMBDA_GRADES_FETCHER_FUNCTION_NAME" \
+          --zip-file fileb://bin/lambda_grades_fetcher.zip
+        aws lambda update-function-configuration \
+           --function-name "$LAMBDA_GRADES_FETCHER_FUNCTION_NAME" \
+           --description "Built from commit ${GITHUB_SHA:0:7}"
