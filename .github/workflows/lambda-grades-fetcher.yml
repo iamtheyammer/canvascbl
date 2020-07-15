@@ -74,7 +74,7 @@ jobs:
         cd $WORKDIR
         aws lambda update-function-code \
           --function-name "$LAMBDA_GRADES_FETCHER_FUNCTION_NAME" \
-          --zip-file fileb://bin/lambda_grades_fetcher.zip
+          --zip-file fileb://lgf-binary.zip
         aws lambda update-function-configuration \
            --function-name "$LAMBDA_GRADES_FETCHER_FUNCTION_NAME" \
            --description "Built from commit ${GITHUB_SHA:0:7}"
