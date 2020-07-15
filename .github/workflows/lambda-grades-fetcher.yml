@@ -71,7 +71,7 @@ jobs:
 
     - name: Update lambda function code
       run: |
-        cd $WORKDIR
+        cd $GITHUB_WORKSPACE
         aws lambda update-function-code \
           --function-name "$LAMBDA_GRADES_FETCHER_FUNCTION_NAME" \
           --zip-file fileb://lgf-binary.zip
