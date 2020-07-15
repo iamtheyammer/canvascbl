@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'lambda_grades_fetcher/**'
+      - '.github/workflows/lambda-grades-fetcher.*'
 
 jobs:
 
@@ -33,13 +34,13 @@ jobs:
     - name: Zip binary
       run: |
         cd $WORKDIR
-        zip bin/lambda_grades_fetcher.zip bin/lambda_grades_fetcher
+        zip bin/lgf-binary.zip bin/lambda_grades_fetcher
         
     - name: Upload binary
       uses: actions/upload-artifact@v2
       with:
         name: lgf-binary
-        path: ${{ env.WORKDIR }}/build/lgf-binary.zip
+        path: ${{ env.WORKDIR }}/bin/lgf-binary.zip
         
   deploy:
     name: Deploy

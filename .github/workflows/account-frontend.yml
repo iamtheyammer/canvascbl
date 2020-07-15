@@ -7,6 +7,7 @@ on:
   push:
     paths:
       - 'account_frontend/**'
+      - '.github/workflows/account-frontend.*'
 
 jobs:
   build:

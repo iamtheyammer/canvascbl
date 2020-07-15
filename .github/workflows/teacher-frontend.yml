@@ -7,6 +7,7 @@ on:
   push:
     paths:
       - 'teacher_frontend/**'
+      - '.github/workflows/teacher-frontend.*'
 
 jobs:
   build:
