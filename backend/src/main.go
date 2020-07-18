@@ -44,6 +44,8 @@ func getRouter() *httprouter.Router {
 		},
 	}
 
+	router.GET("/healthcheck", util.Healthcheck)
+
 	/*
 		Canvas OAuth2
 	*/
