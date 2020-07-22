@@ -35,28 +35,62 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
     needs: build
-    if: endsWith(github.ref, 'heads/master') || endsWith(github.ref, 'heads/staging')
+# test workflow
+#     if: endsWith(github.ref, 'heads/master') || endsWith(github.ref, 'heads/staging')
     steps: 
 
     - name: Checkout code
       uses: actions/checkout@v2
-
-    - name: Set workdir
+    
+    - name: Set workdir and image tag
       run: |
         echo "::set-env name=WORKDIR::$GITHUB_WORKSPACE/backend"
-
-    - name: Set Heroku app name
+        echo "::set-env name=IMAGE_SHA::${GITHUB_SHA:0:7}"
+    
+    - name: Set environment variables
       uses: iamtheyammer/branch-env-vars@v1.0.0
       with:
-        HEROKU_APP_NAME: |
-          master:${{ secrets.HEROKU_APP_NAME_PROD }}
-          staging:${{ secrets.HEROKU_APP_NAME_STG }}
-
-    - name: Build, deploy to Heroku
-      env:
-        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        IMAGE_TAG: canvascbl-backend:${{ env.IMAGE_SHA }}
+        ECR_REPOSITORY: ${{ secrets.BACKEND_ECR_REPOSITORY }}
+        ECS_CLUSTER: |
+          master:${{ secrets.ECS_CLUSTER_PROD }}
+          staging:${{ secrets.ECS_CLUSTER_STG }}
+        ECS_SERVICE_NAME: |
+          master:${{ secrets.ECS_SERVICE_NAME_PROD }}
+          staging:${{ secrets.ECS_SERVICE_NAME_STG }}
+      
+    - name: Configure AWS credentials
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-2
+        
+    - name: Login to ECR
+      uses: aws-actions/amazon-ecr-login@v1
+          
+    - name: Build and push container to ECR
       run: |
         cd $WORKDIR
-        heroku container:login
-        heroku container:push web -a "$HEROKU_APP_NAME"
-        heroku container:release web -a "$HEROKU_APP_NAME"
+        docker build -t ${ECR_REPOSITORY}:${IMAGE_SHA} .
+        docker push ${ECR_REPOSITORY}:${IMAGE_SHA}
+        
+        echo "::set-env name=IMAGE::${ECR_REPOSITORY}:${IMAGE_SHA}"
+        
+    - name: Get current ECS task definition
+      run: |
+        aws ecs describe-task-definition --task-definition canvascbl-backend > $HOME/canvascbl-backend-task-def.json
+        
+    - name: Render new ECS task definition
+      id: render-ecs-task-definition
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: ${{ env.HOME }}/canvascbl-backend-task-def.json
+        container-name: canvascbl-backend
+        image: ${{ env.IMAGE }}
+  
+    - name: Update ECS service task definition
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      with:
+        task-definition: ${{ render-ecs-task-definition.outputs.task-definition }}
+        service: ${{ env.ECS_SERVICE_NAME }}
+        cluster: ${{ env.ECS_CLUSTER }}
