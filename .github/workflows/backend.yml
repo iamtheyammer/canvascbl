@@ -92,6 +92,6 @@ jobs:
     - name: Update ECS service task definition
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
       with:
-        task-definition: ${{ render-ecs-task-definition.outputs.task-definition }}
+        task-definition: ${{ steps.render-ecs-task-definition.outputs.task-definition }}
         service: ${{ env.ECS_SERVICE_NAME }}
         cluster: ${{ env.ECS_CLUSTER }}
