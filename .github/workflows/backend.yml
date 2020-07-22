@@ -78,13 +78,14 @@ jobs:
         
     - name: Get current ECS task definition
       run: |
-        aws ecs describe-task-definition --task-definition canvascbl-backend > $HOME/canvascbl-backend-task-def.json
+        cd $GITHUB_WORKSPACE
+        aws ecs describe-task-definition --task-definition canvascbl-backend --query taskDefinition > canvascbl-backend-task-def.json
         
     - name: Render new ECS task definition
       id: render-ecs-task-definition
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
-        task-definition: ${{ env.HOME }}/canvascbl-backend-task-def.json
+        task-definition: ${{ env.GITHUB_WORKSPACE }}/canvascbl-backend-task-def.json
         container-name: canvascbl-backend
         image: ${{ env.IMAGE }}
   
