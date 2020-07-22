@@ -55,8 +55,8 @@ jobs:
           master:${{ secrets.ECS_CLUSTER_PROD }}
           staging:${{ secrets.ECS_CLUSTER_STG }}
         ECS_SERVICE_NAME: |
-          master:${{ secrets.ECS_SERVICE_NAME_PROD }}
-          staging:${{ secrets.ECS_SERVICE_NAME_STG }}
+          master:${{ secrets.BACKEND_ECS_SERVICE_NAME_PROD }}
+          staging:${{ secrets.BACKEND_ECS_SERVICE_NAME_STG }}
       
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
