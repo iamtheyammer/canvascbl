@@ -28,8 +28,7 @@ function* getInitialData({ id }) {
         'courses',
         'outcome_results',
         'detailed_grades',
-        'gpa',
-        'distance_learning'
+        'gpa'
       ]
     });
     const {
@@ -39,8 +38,7 @@ function* getInitialData({ id }) {
       courses,
       outcome_results,
       detailed_grades,
-      gpa,
-      distance_learning
+      gpa
     } = gradesRequest.data;
     yield put(gotSessionInformation(session));
     yield put(
@@ -52,8 +50,7 @@ function* getInitialData({ id }) {
           Object.keys(detailed_grades).map((uID) => parseInt(uID)),
         outcome_results,
         detailed_grades,
-        gpa,
-        distance_learning
+        gpa
       )
     );
   } catch (e) {

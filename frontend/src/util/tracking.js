@@ -384,34 +384,6 @@ export function trackChangedHiddenCourseVisibility(hiddenCourseVisibility) {
   });
 }
 
-/**
- * Tracks a change of the Grades view type. View type codenames will be converted before
- * they are sent to Mixpanel.
- * @param {string} prevViewType The codename for the type (ex: individualCourses)
- * @param {string} newViewType The codename for the type (ex: passIncomplete)
- */
-export function trackChangedGradesViewType(prevViewType, newViewType) {
-  function convertViewType(vt) {
-    switch (vt) {
-      case 'passIncomplete':
-        return 'Pass/Incomplete';
-      case 'individualCourses':
-        return 'Individual Courses';
-      case 'both':
-        return 'Both';
-      case '':
-        return 'Default';
-      default:
-        return 'Unknown';
-    }
-  }
-
-  mp.track('Changed Grades View Type', {
-    'Previous View Type': convertViewType(prevViewType),
-    'New View Type': convertViewType(newViewType)
-  });
-}
-
 /*
 
 Components
