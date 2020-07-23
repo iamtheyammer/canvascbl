@@ -15,8 +15,7 @@ import (
 )
 
 type listCoursesResponse struct {
-	Courses               *canvasCoursesResponse  `json:"courses"`
-	DistanceLearningPairs *[]distanceLearningPair `json:"distance_learning_pairs,omitempty"`
+	Courses *canvasCoursesResponse `json:"courses"`
 }
 
 type listEnrollmentsResponse struct {
@@ -57,11 +56,6 @@ func ListCoursesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Par
 		return
 	}
 
-	returnDLPairs := false
-	if r.URL.Query().Get("include[]") == "distance_learning_pairs" {
-		returnDLPairs = true
-	}
-
 	var cs *canvasCoursesResponse
 	_, err := handleRequestWithTokenRefresh(func(reqD *requestDetails) error {
 		tCourses, tErr := getCanvasCourses(*reqD)
@@ -88,14 +82,8 @@ func ListCoursesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Par
 
 	go saveCoursesToDB((*[]canvasCourse)(cs))
 
-	var dlPairs *[]distanceLearningPair
-	if returnDLPairs {
-		dlPairs = findDistanceLearningCoursePairs(*cs)
-	}
-
 	j, err := json.Marshal(&listCoursesResponse{
-		Courses:               cs,
-		DistanceLearningPairs: dlPairs,
+		Courses: cs,
 	})
 	if err != nil {
 		handleISE(w, errCtx.Apply(fmt.Errorf("error marshaling list courses response to json: %w", err)))

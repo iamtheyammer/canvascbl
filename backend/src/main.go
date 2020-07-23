@@ -104,7 +104,6 @@ func getRouter() *httprouter.Router {
 
 	// grades
 	router.GET("/api/v1/grades", gradesapi.GradesHandler)
-	router.GET("/api/v1/grades/distance_learning/overview", gradesapi.DistanceLearningOverviewHandler)
 	router.GET("/api/v1/grades/fetch_all", gradesapi.GradesForAllHandler)
 
 	// courses
