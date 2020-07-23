@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Redirect, Route, Switch } from 'react-router-dom';
+import { Route, Switch } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { Breadcrumb, Icon, Layout, Modal, Popover, Typography } from 'antd';
 import DashboardNav from './DashboardNav';
@@ -19,8 +19,9 @@ import {
 import UpdateHandler from './UpdateHandler';
 import Courses from './Courses';
 import { getCourses, getUserProfile } from '../../actions/canvas';
-import CourseOverview from './Courses/CourseOverview';
+// import CourseOverview from './Courses/CourseOverview';
 import PopoutLink from '../PopoutLink';
+import ComingSoon from './ComingSoon';
 
 const { Content, Footer } = Layout;
 
@@ -48,22 +49,23 @@ const getBreadcrumbNameMap = (courses = []) => {
 
 const routes = (
   <Switch>
-    <Route
-      exact
-      path="/dashboard"
-      render={() => <Redirect to="/dashboard/courses" />}
-    />
-    <Route exact path="/dashboard/courses" component={Courses} />
-    <Route
-      exact
-      path="/dashboard/courses/:courseId"
-      render={() => <Redirect to={'/dashboard/courses'} />}
-    />
-    <Route
-      exact
-      path="/dashboard/courses/:courseId/overview"
-      component={CourseOverview}
-    />
+    <Route path="/dashboard" component={ComingSoon} />
+    {/*<Route*/}
+    {/*  exact*/}
+    {/*  path="/dashboard"*/}
+    {/*  render={() => <Redirect to="/dashboard/courses" />}*/}
+    {/*/>*/}
+    {/*<Route exact path="/dashboard/courses" component={Courses} />*/}
+    {/*<Route*/}
+    {/*  exact*/}
+    {/*  path="/dashboard/courses/:courseId"*/}
+    {/*  render={() => <Redirect to={'/dashboard/courses'} />}*/}
+    {/*/>*/}
+    {/*<Route*/}
+    {/*  exact*/}
+    {/*  path="/dashboard/courses/:courseId/overview"*/}
+    {/*  component={CourseOverview}*/}
+    {/*/>*/}
   </Switch>
 );
 
