@@ -17,7 +17,7 @@ import {
   vias
 } from '../../util/tracking';
 import UpdateHandler from './UpdateHandler';
-import Courses from './Courses';
+// import Courses from './Courses';
 import { getCourses, getUserProfile } from '../../actions/canvas';
 // import CourseOverview from './Courses/CourseOverview';
 import PopoutLink from '../PopoutLink';
