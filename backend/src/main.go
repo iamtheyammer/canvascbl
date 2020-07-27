@@ -142,14 +142,6 @@ func (_ MiddlewareRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 
-	if env.Env == env.EnvironmentStaging {
-		if r.URL.Path != "/api/checkout/webhook" {
-			if ok := util.CloudflareAccessVerifier.HandlerMiddleware(w, r); ok {
-				return
-			}
-		}
-	}
-
 	router.ServeHTTP(w, r)
 }
 
