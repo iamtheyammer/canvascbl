@@ -491,41 +491,6 @@ func saveGPAToDB(g gpa, manualFetch bool) {
 	}
 }
 
-func prepareDistanceLearningGradesForDB(dlg distanceLearningGrades, manualFetch bool) *[]grades.InsertDistanceLearningRequest {
-	var req []grades.InsertDistanceLearningRequest
-
-	for uID, gs := range dlg {
-		for _, g := range gs {
-			if g.Grade.Grade == "N/A" {
-				continue
-			}
-
-			req = append(req, grades.InsertDistanceLearningRequest{
-				DistanceLearningCourseID: g.DistanceLearningCourseID,
-				OriginalCourseID:         g.OriginalCourseID,
-				Grade:                    g.Grade.Grade,
-				UserCanvasID:             uID,
-				ManualFetch:              manualFetch,
-			})
-		}
-	}
-
-	return &req
-}
-
-func saveDistanceLearningGradesToDB(dlg distanceLearningGrades, manualFetch bool) {
-	req := prepareDistanceLearningGradesForDB(dlg, manualFetch)
-	if len(*req) < 1 {
-		return
-	}
-
-	err := grades.InsertDistanceLearning(db, req)
-	if err != nil {
-		util.HandleError(fmt.Errorf("error saving distance learning grades to db: %w", err))
-		return
-	}
-}
-
 func prepareCanvasOAuth2GrantForDB(grant *canvasTokenGrantResponse) *canvas_tokens.InsertRequest {
 	expAt := time.Now().Add(time.Duration(grant.ExpiresIn) * time.Second)
 
@@ -664,8 +629,7 @@ func handleBatchGradesDBRequests(dbReqs []UserGradesDBRequests) {
 			currentRollupScoreChunk       = 0
 			currentRollupScoreChunkLength = 0
 
-			gpaReqs                    []gpas.InsertRequest
-			distanceLearningGradesReqs []grades.InsertDistanceLearningRequest
+			gpaReqs []gpas.InsertRequest
 
 			// chunked in 7281 due to postgres's 65535 parameter limit
 			// 9 params each
@@ -768,10 +732,6 @@ func handleBatchGradesDBRequests(dbReqs []UserGradesDBRequests) {
 
 			if r.GPA != nil {
 				gpaReqs = append(gpaReqs, *r.GPA...)
-			}
-
-			if r.DistanceLearningGrades != nil {
-				distanceLearningGradesReqs = append(distanceLearningGradesReqs, *r.DistanceLearningGrades...)
 			}
 
 			if r.Enrollments != nil {
@@ -955,22 +915,11 @@ func handleBatchGradesDBRequests(dbReqs []UserGradesDBRequests) {
 			}
 		}
 
-		//err = gpas.InsertMultiple(trx, &gpaReqs)
-		//if err != nil {
-		//	rb("gpas")
-		//	util.HandleError(fmt.Errorf("error inserting multiple gpas in insert fetch_all data: %w", err))
-		//	return
-		//}
-
-		if len(distanceLearningGradesReqs) > 0 {
-			err = grades.InsertDistanceLearning(trx, &distanceLearningGradesReqs)
-			if err != nil {
-				rb("distance learning grades")
-				util.HandleError(
-					fmt.Errorf("error inserting distance learning grades in insert fetch_all data: %w", err),
-				)
-				return
-			}
+		err = gpas.InsertMultiple(trx, &gpaReqs)
+		if err != nil {
+			rb("gpas")
+			util.HandleError(fmt.Errorf("error inserting multiple gpas in insert fetch_all data: %w", err))
+			return
 		}
 
 		for i, req := range chunkedEnrollments {

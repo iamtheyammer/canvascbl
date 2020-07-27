@@ -69,19 +69,6 @@ type calculatedGPA struct {
 // gpa represents more than one user's GPA
 type gpa map[uint64]calculatedGPA
 
-type distanceLearningGrade struct {
-	CourseName string `json:"course_name"`
-	Grade      struct {
-		Grade string `json:"grade"`
-		Rank  int    `json:"rank"`
-	} `json:"grade"`
-	OriginalCourseID         uint64 `json:"original_course_id"`
-	DistanceLearningCourseID uint64 `json:"distance_learning_course_id"`
-}
-
-// map[userID<uint64>][]distanceLearningGrade
-type distanceLearningGrades map[uint64][]distanceLearningGrade
-
 const (
 	gradesErrorNoTokens              = "no stored tokens for this user"
 	gradesErrorRevokedToken          = "the token/refresh token has been revoked or no longer works"
@@ -94,26 +81,24 @@ const (
 	gradesErrorActionRedirectToOAuth = gradesErrorAction("redirect_to_oauth")
 	gradesErrorActionRetryOnce       = gradesErrorAction("retry_once")
 
-	gradesIncludeSession          = gradesInclude("session")
-	gradesIncludeUserProfile      = gradesInclude("user_profile")
-	gradesIncludeObservees        = gradesInclude("observees")
-	gradesIncludeCourses          = gradesInclude("courses")
-	gradesIncludeOutcomeResults   = gradesInclude("outcome_results")
-	gradesIncludeSimpleGrades     = gradesInclude("simple_grades")
-	gradesIncludeDetailedGrades   = gradesInclude("detailed_grades")
-	gradesIncludeGPA              = gradesInclude("gpa")
-	gradesIncludeDistanceLearning = gradesInclude("distance_learning")
+	gradesIncludeSession        = gradesInclude("session")
+	gradesIncludeUserProfile    = gradesInclude("user_profile")
+	gradesIncludeObservees      = gradesInclude("observees")
+	gradesIncludeCourses        = gradesInclude("courses")
+	gradesIncludeOutcomeResults = gradesInclude("outcome_results")
+	gradesIncludeSimpleGrades   = gradesInclude("simple_grades")
+	gradesIncludeDetailedGrades = gradesInclude("detailed_grades")
+	gradesIncludeGPA            = gradesInclude("gpa")
 )
 
 type gradesHandlerRequest struct {
-	Session          bool
-	UserProfile      bool
-	Observees        bool
-	Courses          bool
-	OutcomeResults   bool
-	DetailedGrades   bool
-	GPA              bool
-	DistanceLearning bool
+	Session        bool
+	UserProfile    bool
+	Observees      bool
+	Courses        bool
+	OutcomeResults bool
+	DetailedGrades bool
+	GPA            bool
 }
 
 // UserGradesRequest represents a request for GradesForUser.
@@ -127,20 +112,20 @@ type UserGradesRequest struct {
 	ManualFetch      bool
 	ReturnDBRequests bool
 	Rd               *requestDetails
+	FetchAssignments bool
 }
 
 // UserGradesResponse is all possible info from a GradesForUser call.
 // It is JSON-serializable.
 type UserGradesResponse struct {
-	Session          *sessions.VerifiedSession `json:"session,omitempty"`
-	UserProfile      *canvasUserProfile        `json:"user_profile,omitempty"`
-	Observees        *[]canvasObservee         `json:"observees,omitempty"`
-	Courses          *[]canvasCourse           `json:"courses,omitempty"`
-	OutcomeResults   processedOutcomeResults   `json:"outcome_results,omitempty"`
-	SimpleGrades     simpleGrades              `json:"simple_grades,omitempty"`
-	DetailedGrades   detailedGrades            `json:"detailed_grades,omitempty"`
-	GPA              gpa                       `json:"gpa,omitempty"`
-	DistanceLearning distanceLearningGrades    `json:"distance_learning,omitempty"`
+	Session        *sessions.VerifiedSession `json:"session,omitempty"`
+	UserProfile    *canvasUserProfile        `json:"user_profile,omitempty"`
+	Observees      *[]canvasObservee         `json:"observees,omitempty"`
+	Courses        *[]canvasCourse           `json:"courses,omitempty"`
+	OutcomeResults processedOutcomeResults   `json:"outcome_results,omitempty"`
+	SimpleGrades   simpleGrades              `json:"simple_grades,omitempty"`
+	DetailedGrades detailedGrades            `json:"detailed_grades,omitempty"`
+	GPA            gpa                       `json:"gpa,omitempty"`
 }
 
 /*
@@ -152,17 +137,16 @@ It is returned from GradesForUser if req.ReturnDBRequests is true.
 Note that observees are excluded due to their special upsert nature.
 */
 type UserGradesDBRequests struct {
-	Profile                *users.UpsertRequest
-	Courses                *[]coursessvc.UpsertRequest
-	OutcomeResults         *[]coursessvc.OutcomeResultInsertRequest
-	Grades                 *[]gradessvc.InsertRequest
-	RollupScores           *[]coursessvc.OutcomeRollupInsertRequest
-	GPA                    *[]gpas.InsertRequest
-	DistanceLearningGrades *[]gradessvc.InsertDistanceLearningRequest
-	Enrollments            []enrollments.UpsertRequest
-	Submissions            []submissions.UpsertRequest
-	SubmissionAttachments  []submissions.AttachmentUpsertRequest
-	Assignments            []coursessvc.AssignmentUpsertRequest
+	Profile               *users.UpsertRequest
+	Courses               *[]coursessvc.UpsertRequest
+	OutcomeResults        *[]coursessvc.OutcomeResultInsertRequest
+	Grades                *[]gradessvc.InsertRequest
+	RollupScores          *[]coursessvc.OutcomeRollupInsertRequest
+	GPA                   *[]gpas.InsertRequest
+	Enrollments           []enrollments.UpsertRequest
+	Submissions           []submissions.UpsertRequest
+	SubmissionAttachments []submissions.AttachmentUpsertRequest
+	Assignments           []coursessvc.AssignmentUpsertRequest
 }
 
 // GradesErrorResponse represents an error from GradesForUser.
@@ -177,8 +161,6 @@ type GradesErrorResponse struct {
 
 func (r gradesHandlerRequest) toScopes() []oauth2.Scope {
 	var s []oauth2.Scope
-
-	gradesScope := false
 
 	// session not supported
 
@@ -201,12 +183,6 @@ func (r gradesHandlerRequest) toScopes() []oauth2.Scope {
 	if r.DetailedGrades {
 		s = append(s, oauth2.ScopeDetailedGrades)
 	} else {
-		gradesScope = true
-		s = append(s, oauth2.ScopeGrades)
-	}
-
-	if r.DistanceLearning && !gradesScope {
-		gradesScope = true
 		s = append(s, oauth2.ScopeGrades)
 	}
 
@@ -215,18 +191,6 @@ func (r gradesHandlerRequest) toScopes() []oauth2.Scope {
 	}
 
 	return s
-}
-
-type distanceLearningOverviewGrade struct {
-	UserID uint64 `json:"user_id"`
-	Grade  struct {
-		Grade string `json:"grade"`
-	} `json:"grade"`
-	Timestamp string `json:"timestamp"`
-}
-
-type distanceLearningOverviewResponse struct {
-	DistanceLearningGradesOverview *[]distanceLearningOverviewGrade `json:"distance_learning_grades_overview"`
 }
 
 // GradesHandler handles /api/v1/grades
@@ -250,10 +214,7 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 		case gradesIncludeDetailedGrades:
 			req.DetailedGrades = true
 		case gradesIncludeGPA:
-		// Distance Learning
-		//req.GPA = true
-		case gradesIncludeDistanceLearning:
-			req.DistanceLearning = true
+			req.GPA = true
 		default:
 			handleError(w, GradesErrorResponse{
 				Error: gradesErrorInvalidInclude,
@@ -328,10 +289,6 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 		resp.GPA = g.GPA
 	}
 
-	if req.DistanceLearning {
-		resp.DistanceLearning = g.DistanceLearning
-	}
-
 	jResp, err := json.Marshal(&resp)
 	if err != nil {
 		handleISE(w, fmt.Errorf("error marshaling grades handler response into JSON: %w", err))
@@ -339,92 +296,6 @@ func GradesHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 	}
 	util.SendJSONResponse(w, jResp)
 
-	return
-}
-
-// DistanceLearningOverviewHandler handles /api/v1/grades/distance_learning/overview
-func DistanceLearningOverviewHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	// get and validate IDs
-	dlCourseID := intFromQuery(w, "distance_learning_course_id", r.URL.Query())
-	if dlCourseID < 1 {
-		return
-	}
-
-	oriCourseID := intFromQuery(w, "original_course_id", r.URL.Query())
-	if oriCourseID < 1 {
-		return
-	}
-
-	if dlCourseID == oriCourseID {
-		util.SendBadRequest(w, "distance_learning_course_id and original_course_id are the same")
-		return
-	}
-
-	// check for TeacherEnrollment (first, validate user)
-	userID, rdP, sess, errCtx := authorizer(w, r, []oauth2.Scope{oauth2.ScopeGrades}, &oauth2.AuthorizerAPICall{
-		Method:    "GET",
-		RoutePath: "grades/distance_learning/overview",
-		Query:     &r.URL.RawQuery,
-	})
-	if (userID == nil || rdP == nil || errCtx == nil) && sess == nil {
-		return
-	}
-
-	enrolls, err := enrollments.List(db, &enrollments.ListRequest{
-		CourseID: 0,
-		UserID:   *userID,
-		Type:     enrollments.TypeTeacher,
-	})
-	if err != nil {
-		handleISE(w, errCtx.Apply(fmt.Errorf("error listing enrollments in distance learning overview handler: %w", err)))
-		return
-	}
-
-	var hasDLEnroll, hasOriEnroll bool
-	for _, e := range *enrolls {
-		// don't need to bother checking if it's a teacher enrollments as we only requested those
-		switch e.CourseID {
-		case dlCourseID:
-			hasDLEnroll = true
-		case oriCourseID:
-			hasOriEnroll = true
-		default:
-		}
-	}
-
-	if !hasDLEnroll || !hasOriEnroll {
-		util.SendUnauthorized(w, "you are not enrolled as a teacher in both courses "+
-			"(note that it can take up to three hours for enrollments to sync to CanvasCBL)")
-		return
-	}
-
-	// user is authorized, return grades
-
-	dlGradesList, err := gradessvc.ListDistanceLearning(db, &gradessvc.ListDistanceLearningRequest{
-		DistanceLearningCourseID: dlCourseID,
-		OriginalCourseID:         oriCourseID,
-		// 48 hours
-		After: time.Now().Add(-(time.Hour * 48)),
-	})
-	if err != nil {
-		handleISE(w, errCtx.Apply(fmt.Errorf("error listing distance learning grades in distance learning overview handler: %w", err)))
-		return
-	}
-
-	dlGrades := []distanceLearningOverviewGrade{}
-	for _, g := range *dlGradesList {
-		dlGrades = append(dlGrades, distanceLearningOverviewGrade{
-			UserID: g.UserCanvasID,
-			Grade: struct {
-				Grade string `json:"grade"`
-			}{
-				g.Grade,
-			},
-			Timestamp: g.InsertedAt.Format(time.RFC3339),
-		})
-	}
-
-	sendJSON(w, &distanceLearningOverviewResponse{DistanceLearningGradesOverview: &dlGrades})
 	return
 }
 
@@ -684,6 +555,7 @@ func GradesForAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 			ManualFetch:      false,
 			ReturnDBRequests: true,
 			Rd:               &rd,
+			FetchAssignments: true,
 		})
 		if err != nil {
 			if err.InternalError != nil {
@@ -1085,73 +957,73 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *UserGradesDBRe
 	assignments := make(map[uint64]canvasAssignmentsResponse)
 	submits := make(map[uint64]canvasSubmissionsResponse, len(*allCourses))
 	for i, c := range courses {
-		if c.EnrollmentTermID != spring20DLEnrollmentTermID {
-			// cID is a string of the course ID
-			cID := strconv.Itoa(int(c.ID))
+		// cID is a string of the course ID
+		cID := strconv.Itoa(int(c.ID))
 
-			// uIDs is a string slice of all graded users in the course
-			var uIDs []string
-			for _, uID := range gradedUsers[c.ID] {
-				uIDs = append(uIDs, strconv.Itoa(int(uID)))
-			}
-
-			if _, ok := hiddenCourses[c.ID]; ok {
-				courses[i].CanvasCBLHidden = true
-			}
-
-			// results
-			wg.Add(1)
-			go func(courseIDS string, courseID uint64) {
-				defer wg.Done()
-
-				rs, rErr := getCanvasOutcomeResults(
-					rd,
-					courseIDS,
-					uIDs,
-				)
-				if rErr != nil {
-					mutex.Lock()
-					err = rErr
-					mutex.Unlock()
-					return
-				}
-
-				processedResults, processErr := processOutcomeResults(&rs.OutcomeResults)
-				if processErr != nil {
-					mutex.Lock()
-					err = processErr
-					mutex.Unlock()
-					return
-				}
-
-				mutex.Lock()
-				results[courseID] = *processedResults
-				mutex.Unlock()
-				return
-			}(cID, c.ID)
+		// uIDs is a string slice of all graded users in the course
+		var uIDs []string
+		for _, uID := range gradedUsers[c.ID] {
+			uIDs = append(uIDs, strconv.Itoa(int(uID)))
 		}
 
-		// fetch assignments
+		if _, ok := hiddenCourses[c.ID]; ok {
+			courses[i].CanvasCBLHidden = true
+		}
+
+		// results
 		wg.Add(1)
-		go func(courseID uint64) {
+		go func(courseIDS string, courseID uint64) {
 			defer wg.Done()
 
-			as, aErr := getCanvasCourseAssignments(
+			rs, rErr := getCanvasOutcomeResults(
 				rd,
-				fmt.Sprintf("%d", courseID),
-				[]string{},
+				courseIDS,
+				uIDs,
 			)
-			if aErr != nil {
+			if rErr != nil {
 				mutex.Lock()
-				err = aErr
+				err = rErr
+				mutex.Unlock()
+				return
+			}
+
+			processedResults, processErr := processOutcomeResults(&rs.OutcomeResults)
+			if processErr != nil {
+				mutex.Lock()
+				err = processErr
 				mutex.Unlock()
 				return
 			}
 
 			mutex.Lock()
-			assignments[courseID] = *as
+			results[courseID] = *processedResults
 			mutex.Unlock()
-		}(c.ID)
+			return
+		}(cID, c.ID)
+
+		// fetch assignments
+		if req.FetchAssignments {
+			wg.Add(1)
+			go func(courseID uint64) {
+				defer wg.Done()
+
+				as, aErr := getCanvasCourseAssignments(
+					rd,
+					fmt.Sprintf("%d", courseID),
+					[]string{},
+				)
+				if aErr != nil {
+					mutex.Lock()
+					err = aErr
+					mutex.Unlock()
+					return
+				}
+
+				mutex.Lock()
+				assignments[courseID] = *as
+				mutex.Unlock()
+			}(c.ID)
+		}
 
 		// fetch submissions
 		if rd.hasScopeVersion(2) {
@@ -1228,20 +1100,22 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *UserGradesDBRe
 			dbReqs.OutcomeResults = resReq
 		}()
 
-		dbReqsWg.Add(1)
-		go func() {
-			defer dbReqsWg.Done()
+		if req.FetchAssignments {
+			dbReqsWg.Add(1)
+			go func() {
+				defer dbReqsWg.Done()
 
-			for cID, as := range assignments {
-				ass, err := prepareAssignmentsForDB(as, fmt.Sprintf("%d", cID))
-				if err != nil {
-					util.HandleError(fmt.Errorf("error preparing assignments for db: %w", err))
-					return
+				for cID, as := range assignments {
+					ass, err := prepareAssignmentsForDB(as, fmt.Sprintf("%d", cID))
+					if err != nil {
+						util.HandleError(fmt.Errorf("error preparing assignments for db: %w", err))
+						return
+					}
+
+					dbReqs.Assignments = append(dbReqs.Assignments, *ass...)
 				}
-
-				dbReqs.Assignments = append(dbReqs.Assignments, *ass...)
-			}
-		}()
+			}()
+		}
 
 		if rd.hasScopeVersion(2) {
 			dbReqsWg.Add(1)
@@ -1286,65 +1160,6 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *UserGradesDBRe
 		}
 
 		for _, uID := range uIDs {
-			if c.EnrollmentTermID == spring20DLEnrollmentTermID {
-				// we will be using Canvas's grade, found in the enrollment object.
-				var e canvasEnrollment
-				for _, en := range c.Enrollments {
-					if en.UserID == uID {
-						e = en
-						break
-					}
-				}
-
-				// if a computed current grade exists
-				if len(e.ComputedCurrentGrade) > 0 {
-					if !req.DetailedGrades {
-						mutex.Lock()
-						if sGrades[c.Name] == nil {
-							sGrades[c.Name] = make(map[uint64]string)
-						}
-
-						// drop it into simple grades (easy!)
-						sGrades[c.Name][uID] = e.ComputedCurrentGrade
-						mutex.Unlock()
-					} else {
-						mutex.Lock()
-						if grades[uID] == nil {
-							grades[uID] = make(map[uint64]computedGrade)
-						}
-
-						grades[uID][cID] = computedGrade{
-							// just make a new grade object.
-							Grade: grade{Grade: e.ComputedCurrentGrade},
-							// so we get [] instead of null
-							//Averages: make(map[uint64]computedAverage),
-						}
-						mutex.Unlock()
-					}
-				} else {
-					mutex.Lock()
-					if !req.DetailedGrades {
-						if sGrades[c.Name] == nil {
-							sGrades[c.Name] = make(map[uint64]string)
-						}
-						sGrades[c.Name][uID] = naGrade.Grade
-					}
-
-					if grades[uID] == nil {
-						grades[uID] = make(map[uint64]computedGrade)
-					}
-
-					grades[uID][cID] = computedGrade{
-						Grade: naGrade,
-						// so we get [] instead of null
-						Averages: make(map[uint64]computedAverage),
-					}
-					mutex.Unlock()
-				}
-
-				continue
-			}
-
 			wg.Add(1)
 			go func(courseID uint64, userID uint64) {
 				defer wg.Done()
@@ -1392,50 +1207,23 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *UserGradesDBRe
 		go saveGradesToDB(grades, req.ManualFetch)
 	}
 
-	dlGrades := distanceLearningGrades{}
-
-	for userID, dg := range grades {
-		wg.Add(1)
-		go func(uID uint64, ac []canvasCourse, detGra map[uint64]computedGrade) {
-			defer wg.Done()
-
-			//fmt.Printf("detailed grades for user %d: %+v\n\n", uID, detGra)
-			dlg := calculateDistanceLearningGrades(ac, detGra)
-
-			mutex.Lock()
-			dlGrades[uID] = dlg
-			mutex.Unlock()
-		}(userID, *allCourses, dg)
-	}
-
 	wg.Wait()
+
+	cGPA := calculateGPAFromDetailedGrades(grades)
 
 	if req.ReturnDBRequests {
 		dbReqsWg.Add(1)
 		go func() {
 			defer dbReqsWg.Done()
 
-			dbReqs.DistanceLearningGrades = prepareDistanceLearningGradesForDB(dlGrades, req.ManualFetch)
+			dbReqs.GPA = prepareGPAForDB(cGPA, req.ManualFetch)
 		}()
-	} else {
-		go saveDistanceLearningGradesToDB(dlGrades, req.ManualFetch)
-	}
 
-	//cGPA := calculateGPAFromDetailedGrades(grades)
-	//
-	//if req.ReturnDBRequests {
-	//	dbReqsWg.Add(1)
-	//	go func() {
-	//		defer dbReqsWg.Done()
-	//
-	//		dbReqs.GPA = prepareGPAForDB(cGPA, req.ManualFetch)
-	//	}()
-	//
-	//	// wait for them all to finish
-	//	dbReqsWg.Wait()
-	//} else {
-	//	go saveGPAToDB(cGPA, req.ManualFetch)
-	//}
+		// wait for them all to finish
+		dbReqsWg.Wait()
+	} else {
+		go saveGPAToDB(cGPA, req.ManualFetch)
+	}
 
 	if req.ReturnDBRequests {
 		dbReqsWg.Wait()
@@ -1449,8 +1237,7 @@ func GradesForUser(req *UserGradesRequest) (*UserGradesResponse, *UserGradesDBRe
 		OutcomeResults: results,
 		SimpleGrades:   sGrades,
 		DetailedGrades: grades,
-		//GPA:            cGPA,
-		DistanceLearning: dlGrades,
+		GPA:            cGPA,
 	}, &dbReqs, nil
 }
 
@@ -1622,48 +1409,41 @@ func AllGradesForTeacher(req *UserGradesRequest) (*UserGradesResponse, *UserGrad
 	assignments := make(map[uint64]canvasAssignmentsResponse)
 	enrolls := make(map[uint64][]canvasFullEnrollment, len(*allCourses))
 	submits := make(map[uint64]canvasSubmissionsResponse, len(*allCourses))
-	var (
-		allEnrolls  []canvasFullEnrollment
-		dlCourseIDs []uint64
-	)
+	var allEnrolls []canvasFullEnrollment
 
 	// get outcome results
 	for _, c := range *allCourses {
-		if c.EnrollmentTermID != spring20DLEnrollmentTermID {
-			// results
-			wg.Add(1)
-			go func(courseID uint64) {
-				defer wg.Done()
+		// results
+		wg.Add(1)
+		go func(courseID uint64) {
+			defer wg.Done()
 
-				rs, rErr := getCanvasOutcomeResults(
-					rd,
-					fmt.Sprintf("%d", courseID),
-					// we want for all!
-					[]string{},
-				)
-				if rErr != nil {
-					mutex.Lock()
-					err = rErr
-					mutex.Unlock()
-					return
-				}
-
-				processedResults, processErr := processOutcomeResults(&rs.OutcomeResults)
-				if processErr != nil {
-					mutex.Lock()
-					err = processErr
-					mutex.Unlock()
-					return
-				}
-
+			rs, rErr := getCanvasOutcomeResults(
+				rd,
+				fmt.Sprintf("%d", courseID),
+				// we want for all!
+				[]string{},
+			)
+			if rErr != nil {
 				mutex.Lock()
-				results[courseID] = *processedResults
+				err = rErr
 				mutex.Unlock()
 				return
-			}(c.ID)
-		} else {
-			dlCourseIDs = append(dlCourseIDs, c.ID)
-		}
+			}
+
+			processedResults, processErr := processOutcomeResults(&rs.OutcomeResults)
+			if processErr != nil {
+				mutex.Lock()
+				err = processErr
+				mutex.Unlock()
+				return
+			}
+
+			mutex.Lock()
+			results[courseID] = *processedResults
+			mutex.Unlock()
+			return
+		}(c.ID)
 
 		// fetch enrollments
 		wg.Add(1)
@@ -1821,26 +1601,6 @@ func AllGradesForTeacher(req *UserGradesRequest) (*UserGradesResponse, *UserGrad
 
 	grades := detailedGrades{}
 
-	// first, distance learning
-	for _, cID := range dlCourseIDs {
-		for _, e := range enrolls[cID] {
-			if len(e.Grades.CurrentGrade) < 1 {
-				continue
-			}
-
-			if grades[e.UserID] == nil {
-				grades[e.UserID] = map[uint64]computedGrade{
-					e.CourseID: {Grade: grade{Grade: e.Grades.CurrentGrade}}}
-			} else {
-				grades[e.UserID][e.CourseID] = computedGrade{
-					Grade: grade{Grade: e.Grades.CurrentGrade},
-				}
-			}
-		}
-	}
-
-	// second, CBL
-
 	for cID, us := range results {
 		for uID, rs := range us {
 			wg.Add(1)
@@ -1881,50 +1641,21 @@ func AllGradesForTeacher(req *UserGradesRequest) (*UserGradesResponse, *UserGrad
 		go saveGradesToDB(grades, req.ManualFetch)
 	}
 
-	dlGrades := distanceLearningGrades{}
-
-	for userID, dg := range grades {
-		wg.Add(1)
-		go func(uID uint64, ac []canvasCourse, detGra map[uint64]computedGrade) {
-			defer wg.Done()
-
-			//fmt.Printf("detailed grades for user %d: %+v\n\n", uID, detGra)
-			dlg := calculateDistanceLearningGrades(ac, detGra)
-
-			mutex.Lock()
-			dlGrades[uID] = dlg
-			mutex.Unlock()
-		}(userID, *allCourses, dg)
-	}
-
-	wg.Wait()
+	cGPA := calculateGPAFromDetailedGrades(grades)
 
 	if req.ReturnDBRequests {
 		dbReqsWg.Add(1)
 		go func() {
 			defer dbReqsWg.Done()
 
-			dbReqs.DistanceLearningGrades = prepareDistanceLearningGradesForDB(dlGrades, req.ManualFetch)
+			dbReqs.GPA = prepareGPAForDB(cGPA, req.ManualFetch)
 		}()
-	} else {
-		go saveDistanceLearningGradesToDB(dlGrades, req.ManualFetch)
-	}
 
-	//cGPA := calculateGPAFromDetailedGrades(grades)
-	//
-	//if req.ReturnDBRequests {
-	//	dbReqsWg.Add(1)
-	//	go func() {
-	//		defer dbReqsWg.Done()
-	//
-	//		dbReqs.GPA = prepareGPAForDB(cGPA, req.ManualFetch)
-	//	}()
-	//
-	//	// wait for them all to finish
-	//	dbReqsWg.Wait()
-	//} else {
-	//	go saveGPAToDB(cGPA, req.ManualFetch)
-	//}
+		// wait for them all to finish
+		dbReqsWg.Wait()
+	} else {
+		go saveGPAToDB(cGPA, req.ManualFetch)
+	}
 
 	if req.ReturnDBRequests {
 		dbReqsWg.Wait()
@@ -1936,7 +1667,6 @@ func AllGradesForTeacher(req *UserGradesRequest) (*UserGradesResponse, *UserGrad
 		Courses:        allCourses,
 		OutcomeResults: results,
 		DetailedGrades: grades,
-		//GPA:            cGPA,
-		DistanceLearning: dlGrades,
+		GPA:            cGPA,
 	}, &dbReqs, nil
 }

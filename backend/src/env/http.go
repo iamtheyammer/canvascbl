@@ -14,6 +14,9 @@ var (
 	ScriptKey = getEnv("SCRIPT_KEY", "default_script_key")
 	// Allowed CORS Origins for Access-Control-Allow-Origin. Comma-separated.
 	ProxyAllowedCORSOrigins = getProxyAllowedCORSOrgins()
+	// HTTPProxyURL, if present, is the proxy URL to route all Canvas requests through.
+	// It should include the protocol, like http://localhost:8888. */
+	HTTPProxyURL = getEnv("HTTP_PROXY_URL", "")
 )
 
 func getProxyAllowedCORSOrgins() map[string]struct{} {
