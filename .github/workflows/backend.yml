@@ -47,7 +47,7 @@ jobs:
         echo "::set-env name=IMAGE_SHA::${GITHUB_SHA:0:7}"
     
     - name: Set environment variables
-      uses: iamtheyammer/branch-env-vars@v1.0.0
+      uses: iamtheyammer/branch-env-vars@v1.0.1
       with:
         IMAGE_TAG: canvascbl-backend:${{ env.IMAGE_SHA }}
         ECR_REPOSITORY: ${{ secrets.BACKEND_ECR_REPOSITORY }}
@@ -57,6 +57,9 @@ jobs:
         ECS_SERVICE_NAME: |
           master:${{ secrets.BACKEND_ECS_SERVICE_NAME_PROD }}
           staging:${{ secrets.BACKEND_ECS_SERVICE_NAME_STG }}
+        ECS_TASK_DEFINITION_FAMILY: |
+          master:${{ secrets.BACKEND_ECS_TASK_DEFINITION_FAMILY_PROD }}
+          staging:${{ secrets.BACKEND_ECS_TASK_DEFINITION_FAMILY_STG }}
       
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -78,13 +81,13 @@ jobs:
         
     - name: Get current ECS task definition
       run: |
-        aws ecs describe-task-definition --task-definition canvascbl-backend --query taskDefinition > canvascbl-backend-task-def.json
+        aws ecs describe-task-definition --task-definition $ECS_TASK_DEFINITION_FAMILY --query taskDefinition > task-def.json
         
     - name: Render new ECS task definition
       id: render-ecs-task-definition
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
-        task-definition: canvascbl-backend-task-def.json
+        task-definition: task-def.json
         container-name: canvascbl-backend
         image: ${{ env.IMAGE }}
   
