@@ -42,7 +42,7 @@ jobs:
         echo "::set-env name=REACT_APP_CURRENT_VERSION::$(NODE_DISABLE_COLORS=1 node -e 'console.log(Date.now())')"
 
     - name: Set environment variables
-      uses: iamtheyammer/branch-env-vars@v1.0.0
+      uses: iamtheyammer/branch-env-vars@v1.0.1
       with:
         REACT_APP_DEFAULT_API_URI: |
           master:${{ secrets.REACT_APP_DEFAULT_API_URI_PROD }}
@@ -117,7 +117,7 @@ jobs:
         aws-region: us-east-2
 
     - name: Get S3 bucket name
-      uses: iamtheyammer/branch-env-vars@v1.0.0
+      uses: iamtheyammer/branch-env-vars@v1.0.1
       with:
         TEACHER_FRONTEND_S3_BUCKET_NAME: |
           master:${{ secrets.TEACHER_FRONTEND_S3_BUCKET_NAME_PROD }}
